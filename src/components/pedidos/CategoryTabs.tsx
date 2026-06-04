@@ -4,8 +4,8 @@ import { Categoria } from '@/types';
 
 interface CategoryTabsProps {
   categorias: Categoria[];
-  selectedCategoryId: string | null;
-  onSelectCategory: (categoryId: string | null) => void;
+  selectedCategoryId: number | null;
+  onSelectCategory: (categoryId: number | null) => void;
 }
 
 export const CategoryTabs: React.FC<CategoryTabsProps> = ({

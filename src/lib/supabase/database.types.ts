@@ -11,54 +11,51 @@ export interface Database {
     Tables: {
       categorias: {
         Row: {
-          id: string
+          id: number
           nombre: string
-          descripcion: string | null
+          orden: number
           created_at: string
         }
         Insert: {
-          id?: string
+          id?: number
           nombre: string
-          descripcion?: string | null
+          orden?: number
           created_at?: string
         }
         Update: {
-          id?: string
+          id?: number
           nombre?: string
-          descripcion?: string | null
+          orden?: number
           created_at?: string
         }
         Relationships: []
       }
       productos: {
         Row: {
-          id: string
+          id: number
           nombre: string
-          descripcion: string | null
           precio: number
-          imagen_url: string | null
-          categoria_id: string | null
-          disponible: boolean
+          categoria_id: number | null
+          activo: boolean
+          es_adicion: boolean
           created_at: string
         }
         Insert: {
-          id?: string
+          id?: number
           nombre: string
-          descripcion?: string | null
           precio: number
-          imagen_url?: string | null
-          categoria_id?: string | null
-          disponible?: boolean
+          categoria_id?: number | null
+          activo?: boolean
+          es_adicion?: boolean
           created_at?: string
         }
         Update: {
-          id?: string
+          id?: number
           nombre?: string
-          descripcion?: string | null
           precio?: number
-          imagen_url?: string | null
-          categoria_id?: string | null
-          disponible?: boolean
+          categoria_id?: number | null
+          activo?: boolean
+          es_adicion?: boolean
           created_at?: string
         }
         Relationships: [
@@ -73,54 +70,78 @@ export interface Database {
       }
       pedidos: {
         Row: {
-          id: string
-          cliente_nombre: string
+          id: number
+          tipo: string
+          numero_mesa: number | null
+          cliente_nombre: string | null
           cliente_telefono: string | null
+          cliente_direccion: string | null
           estado: string
+          metodo_pago: string | null
+          subtotal: number
+          recargo: number
           total: number
           created_at: string
+          closed_at: string | null
         }
         Insert: {
-          id?: string
-          cliente_nombre: string
+          id?: number
+          tipo: string
+          numero_mesa?: number | null
+          cliente_nombre?: string | null
           cliente_telefono?: string | null
+          cliente_direccion?: string | null
           estado?: string
+          metodo_pago?: string | null
+          subtotal?: number
+          recargo?: number
           total?: number
           created_at?: string
+          closed_at?: string | null
         }
         Update: {
-          id?: string
-          cliente_nombre?: string
+          id?: number
+          tipo?: string
+          numero_mesa?: number | null
+          cliente_nombre?: string | null
           cliente_telefono?: string | null
+          cliente_direccion?: string | null
           estado?: string
+          metodo_pago?: string | null
+          subtotal?: number
+          recargo?: number
           total?: number
           created_at?: string
+          closed_at?: string | null
         }
         Relationships: []
       }
       detalle_pedidos: {
         Row: {
-          id: string
-          pedido_id: string
-          producto_id: string
+          id: number
+          pedido_id: number
+          producto_id: number
           cantidad: number
           precio_unitario: number
+          notas: string | null
           created_at: string
         }
         Insert: {
-          id?: string
-          pedido_id: string
-          producto_id: string
+          id?: number
+          pedido_id: number
+          producto_id: number
           cantidad?: number
           precio_unitario: number
+          notas?: string | null
           created_at?: string
         }
         Update: {
-          id?: string
-          pedido_id?: string
-          producto_id?: string
+          id?: number
+          pedido_id?: number
+          producto_id?: number
           cantidad?: number
           precio_unitario?: number
+          notas?: string | null
           created_at?: string
         }
         Relationships: [

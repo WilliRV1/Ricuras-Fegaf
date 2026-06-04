@@ -18,7 +18,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
   initialProductos,
 }) => {
   // Estado del menú
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
   // Estado del pedido
   const [orderType, setOrderType] = useState<OrderType>(null);

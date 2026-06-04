@@ -22,9 +22,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, onAdd }) => 
       <div className={styles.content}>
         <div className={styles.info}>
           <h3 className={styles.title}>{producto.nombre}</h3>
-          {producto.descripcion && (
-            <p className={styles.description}>{producto.descripcion}</p>
-          )}
         </div>
         <div className={styles.priceRow}>
           <span className={styles.price}>{formattedPrice}</span>
@@ -32,9 +29,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, onAdd }) => 
             size="sm" 
             variant="primary" 
             onClick={() => onAdd(producto)}
-            disabled={!producto.disponible}
+            disabled={!producto.activo}
           >
-            {producto.disponible ? 'Agregar' : 'Agotado'}
+            {producto.activo ? 'Agregar' : 'Agotado'}
           </Button>
         </div>
       </div>

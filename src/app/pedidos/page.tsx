@@ -11,17 +11,17 @@ export default async function PedidosPage() {
   const { data: categorias, error: catError } = await (await supabase)
     .from('categorias')
     .select('*')
-    .order('created_at', { ascending: true }); // Ordenamos por fecha ya que 'orden' no existe en DB.
+    .order('orden', { ascending: true });
 
   if (catError) {
     console.error('Error obteniendo categorias:', catError);
   }
 
-  // Traer productos (solo disponibles)
+  // Traer productos (solo activos)
   const { data: productos, error: prodError } = await (await supabase)
     .from('productos')
     .select('*')
-    .eq('disponible', true);
+    .eq('activo', true);
 
   if (prodError) {
     console.error('Error obteniendo productos:', prodError);
