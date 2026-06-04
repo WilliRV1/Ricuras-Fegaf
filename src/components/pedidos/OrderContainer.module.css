@@ -117,7 +117,8 @@
   -webkit-backdrop-filter: blur(2px);
   border-radius: var(--radius-lg);
   z-index: 2;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: not-allowed;
 }
 
 .lockOverlay {

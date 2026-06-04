@@ -62,6 +62,8 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
    * Muestra un toast de éxito con el nombre del producto.
    */
   const handleAddProduct = useCallback((producto: Producto) => {
+    if (!orderType) return;
+
     // TODO: Día 3 — Conectar con useCart hook
     toast.success(
       <>
@@ -71,7 +73,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
         agregado al pedido
       </>
     );
-  }, []);
+  }, [orderType]);
 
   /**
    * Cambia el tipo de atención y resetea el formulario de datos.
