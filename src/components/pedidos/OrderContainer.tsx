@@ -29,10 +29,16 @@ interface OrderContainerProps {
   initialProductos: Producto[];
 }
 
+import { useCart, cartStore } from '@/hooks/useCart';
+import { submitOrder } from '@/app/actions/pedidos';
+import { Cart } from './Cart';
+
 export const OrderContainer: React.FC<OrderContainerProps> = ({
   initialCategorias,
   initialProductos,
 }) => {
+  const { addItem } = useCart();
+
   /* ----------------------------------------------------------------
      Estado del menú
      ---------------------------------------------------------------- */
@@ -58,13 +64,14 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
      ---------------------------------------------------------------- */
 
   /**
-   * Agrega un producto al carrito (placeholder para Día 3).
+   * Agrega un producto al carrito
    * Muestra un toast de éxito con el nombre del producto.
    */
   const handleAddProduct = useCallback((producto: Producto) => {
     if (!orderType) return;
 
-    // TODO: Día 3 — Conectar con useCart hook
+    addItem(producto, 1);
+
     toast.success(
       <>
         <span style={{ fontWeight: 700, color: 'var(--color-primary-light)' }}>
@@ -73,7 +80,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
         agregado al pedido
       </>
     );
-  }, [orderType]);
+  }, [orderType, addItem]);
 
   /**
    * Cambia el tipo de atención y resetea el formulario de datos.
@@ -83,6 +90,35 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
     setOrderDetails({});
     setFormErrors({});
   }, []);
+
+
+
+  /**
+   * Envía el pedido completo a Supabase.
+   */
+  const handleEnviarCocina = async () => {
+    if (!orderType || !isFormValid) {
+      toast.error('Completa los datos obligatorios del pedido.');
+      return;
+    }
+
+    const { items } = cartStore.getSnapshot();
+    if (items.length === 0) {
+      toast.error('El carrito está vacío.');
+      return;
+    }
+
+    const res = await submitOrder(orderType, orderDetails, items);
+    
+    if (!res.success) {
+      throw new Error(res.error || 'Error desconocido al enviar pedido');
+    }
+    
+    // Limpiar el formulario para un nuevo pedido
+    setOrderType(null);
+    setOrderDetails({});
+    setFormErrors({});
+  };
 
   /**
    * Valida los campos requeridos según el tipo de atención.
@@ -124,96 +160,106 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
 
   return (
     <div className={styles.container}>
-
-      {/* ============================================================
-          PASO 1 — Tipo de Atención + Datos del Cliente
-          ============================================================ */}
-      <section className={styles.orderSetupSection}>
-        {/* Indicador de paso 1 */}
-        <div className={styles.stepIndicator}>
-          <span className={`${styles.stepBadge} ${isStep1Complete ? styles.completed : ''}`}>
-            {isStep1Complete ? '✓' : '1'}
-          </span>
-          <span className={styles.stepLabel}>
-            Tipo de Atención
-            {orderType && (
-              <span className={styles.stepLabelMuted}>
-                {' — '}
-                {orderType === TIPOS_ATENCION.MESA ? '🍽️ Mesa' : '🛵 Domicilio'}
-              </span>
-            )}
-          </span>
-        </div>
-
-        <OrderTypeSelector selectedType={orderType} onSelectType={handleTypeSelect} />
-
-        {/* Indicador de paso 2 (visible cuando ya se seleccionó tipo) */}
-        {orderType && (
-          <>
-            <div className={styles.stepIndicator}>
-              <span className={`${styles.stepBadge} ${isStep2Complete ? styles.completed : ''}`}>
-                {isStep2Complete ? '✓' : '2'}
-              </span>
-              <span className={styles.stepLabel}>
-                {orderType === TIPOS_ATENCION.MESA ? 'Número de Mesa' : 'Datos del Cliente'}
-              </span>
-            </div>
-
-            <DeliveryForm
-              orderType={orderType}
-              details={orderDetails}
-              onChange={setOrderDetails}
-              errors={formErrors}
-            />
-          </>
-        )}
-      </section>
-
-      {/* ============================================================
-          PASO 3 — Menú Digital (bloqueado si no se seleccionó tipo)
-          ============================================================ */}
-      <section className={styles.menuSection}>
-        {/* Header del menú */}
-        <div className={styles.menuHeader}>
+      
+      <div className={styles.mainColumn}>
+        {/* ============================================================
+            PASO 1 — Tipo de Atención + Datos del Cliente
+            ============================================================ */}
+        <section className={styles.orderSetupSection}>
+          {/* Indicador de paso 1 */}
           <div className={styles.stepIndicator}>
-            <span className={styles.stepBadge}>3</span>
-            <h2 className={styles.menuTitle}>
-              <span className={styles.menuTitleIcon}>📋</span>
-              Menú Digital
-            </h2>
+            <span className={`${styles.stepBadge} ${isStep1Complete ? styles.completed : ''}`}>
+              {isStep1Complete ? '✓' : '1'}
+            </span>
+            <span className={styles.stepLabel}>
+              Tipo de Atención
+              {orderType && (
+                <span className={styles.stepLabelMuted}>
+                  {' — '}
+                  {orderType === TIPOS_ATENCION.MESA ? '🍽️ Mesa' : '🛵 Domicilio'}
+                </span>
+              )}
+            </span>
           </div>
-          <span className={styles.productCount}>
-            {filteredProducts.length} producto{filteredProducts.length !== 1 ? 's' : ''}
-          </span>
-        </div>
 
-        {/* Pestañas de categoría siempre visibles */}
-        <CategoryTabs
-          categorias={initialCategorias}
-          selectedCategoryId={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
+          <OrderTypeSelector selectedType={orderType} onSelectType={handleTypeSelect} />
 
-        {/* Grid de productos — con overlay de bloqueo si no hay tipo seleccionado */}
-        {!orderType ? (
-          <div className={styles.menuLocked}>
+          {/* Indicador de paso 2 (visible cuando ya se seleccionó tipo) */}
+          {orderType && (
+            <>
+              <div className={styles.stepIndicator}>
+                <span className={`${styles.stepBadge} ${isStep2Complete ? styles.completed : ''}`}>
+                  {isStep2Complete ? '✓' : '2'}
+                </span>
+                <span className={styles.stepLabel}>
+                  {orderType === TIPOS_ATENCION.MESA ? 'Número de Mesa' : 'Datos del Cliente'}
+                </span>
+              </div>
+
+              <DeliveryForm
+                orderType={orderType}
+                details={orderDetails}
+                onChange={setOrderDetails}
+                errors={formErrors}
+              />
+            </>
+          )}
+        </section>
+
+        {/* ============================================================
+            PASO 3 — Menú Digital (bloqueado si no se seleccionó tipo)
+            ============================================================ */}
+        <section className={styles.menuSection}>
+          {/* Header del menú */}
+          <div className={styles.menuHeader}>
+            <div className={styles.stepIndicator}>
+              <span className={styles.stepBadge}>3</span>
+              <h2 className={styles.menuTitle}>
+                <span className={styles.menuTitleIcon}>📋</span>
+                Menú Digital
+              </h2>
+            </div>
+            <span className={styles.productCount}>
+              {filteredProducts.length} producto{filteredProducts.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+
+          {/* Pestañas de categoría siempre visibles */}
+          <CategoryTabs
+            categorias={initialCategorias}
+            selectedCategoryId={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
+
+          {/* Grid de productos — con overlay de bloqueo si no hay tipo seleccionado */}
+          {!orderType ? (
+            <div 
+              className={styles.menuLocked} 
+              onClick={() => toast.error('Debes elegir un tipo de atención (Mesa o Domicilio) para poder escoger productos.')}
+            >
+              <MenuGrid
+                productos={filteredProducts}
+                onAddProduct={handleAddProduct}
+              />
+              <div className={styles.lockOverlay}>
+                <span className={styles.lockIcon}>🔒</span>
+                <span className={styles.lockText}>Selecciona un tipo de atención primero</span>
+                <span className={styles.lockSubtext}>Elige &quot;Mesa&quot; o &quot;Domicilio&quot; para comenzar</span>
+              </div>
+            </div>
+          ) : (
             <MenuGrid
               productos={filteredProducts}
               onAddProduct={handleAddProduct}
             />
-            <div className={styles.lockOverlay}>
-              <span className={styles.lockIcon}>🔒</span>
-              <span className={styles.lockText}>Selecciona un tipo de atención primero</span>
-              <span className={styles.lockSubtext}>Elige &quot;Mesa&quot; o &quot;Domicilio&quot; para comenzar</span>
-            </div>
-          </div>
-        ) : (
-          <MenuGrid
-            productos={filteredProducts}
-            onAddProduct={handleAddProduct}
-          />
-        )}
-      </section>
+          )}
+        </section>
+      </div>
+
+      <div className={styles.cartColumn}>
+        <Cart isValidOrder={isFormValid} onEnviarCocina={handleEnviarCocina} />
+      </div>
+
     </div>
   );
-};
+}

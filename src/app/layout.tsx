@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "Sistema operativo para toma de pedidos y KDS",
 };
 
+import { Header } from '@/components/ui/Header';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -20,7 +22,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={inter.variable}>
-      <body>{children}</body>
+      <body>
+        <Header />
+        <main className="main-content">
+          {children}
+        </main>
+      </body>
     </html>
   );
 }

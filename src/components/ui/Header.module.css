@@ -1,0 +1,109 @@
+/* ============================================================
+   Header — Barra de navegación global
+   ============================================================ */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 64px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 800;
+  border-radius: var(--radius-md);
+  font-size: 1.1rem;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--color-text);
+  display: none;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.navLink:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.navLink.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.navIcon {
+  font-size: 1.125rem;
+}
+
+/* ----------------------------------------------------------
+   Responsive
+   ---------------------------------------------------------- */
+@media (min-width: 640px) {
+  .title {
+    display: block;
+  }
+  .nav {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 16px;
+  }
+  
+  .navLink {
+    padding: 8px 10px;
+  }
+
+  .navLabel {
+    display: none;
+  }
+}

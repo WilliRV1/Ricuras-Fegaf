@@ -15,3 +15,9 @@ export interface OrderDetails {
   cliente_telefono?: string;
   cliente_direccion?: string;
 }
+
+export interface CartItem {
+  producto: Producto;
+  cantidad: number;
+  notas?: string;
+}

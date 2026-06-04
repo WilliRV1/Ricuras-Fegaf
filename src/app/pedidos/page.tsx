@@ -47,21 +47,10 @@ export default async function PedidosPage() {
       </header>
 
       <div className={styles.content}>
-        <div className={styles.mainColumn}>
-          <OrderContainer 
-            initialCategorias={categorias || []} 
-            initialProductos={productos || []} 
-          />
-        </div>
-        
-        <div className={styles.cartColumn}>
-          {/* Placeholder del carrito — se reemplazará en el Día 3 */}
-          <div className={styles.emptyCartPlaceholder}>
-            <span className={styles.cartPlaceholderIcon}>🛒</span>
-            <h3>Carrito de Compras</h3>
-            <p>Agrega productos desde el menú para ver tu pedido aquí.</p>
-          </div>
-        </div>
+        <OrderContainer 
+          initialCategorias={categorias || []} 
+          initialProductos={productos || []} 
+        />
       </div>
 
       {/* Sistema global de notificaciones toast */}
