@@ -1,3 +1,7 @@
+/* ============================================================
+   OrderTypeSelector — Botones de selección Mesa / Domicilio
+   ============================================================ */
+
 .container {
   display: flex;
   flex-direction: column;
@@ -6,7 +10,7 @@
 }
 
 .title {
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   color: var(--color-text);
   margin: 0;
@@ -14,7 +18,7 @@
 
 .selectorGroup {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
 }
 
@@ -25,28 +29,96 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 16px;
+  padding: 18px 16px;
+  min-height: 88px;   /* Touch target grande */
   background-color: var(--color-surface);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-lg);
   color: var(--color-text-muted);
   font-weight: 600;
   font-size: 1rem;
-  transition: all var(--transition-fast);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto de onda sutil al hacer hover */
+.typeButton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 107, 53, 0.06) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity var(--transition-normal);
 }
 
 .typeButton:hover {
   background-color: var(--color-surface-hover);
   border-color: var(--color-text-muted);
+  transform: translateY(-1px);
 }
 
+.typeButton:hover::before {
+  opacity: 1;
+}
+
+.typeButton:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Estado activo */
 .typeButton.active {
-  background-color: rgba(255, 107, 53, 0.1);
+  background-color: rgba(255, 107, 53, 0.08);
   border-color: var(--color-primary);
   color: var(--color-primary);
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.18);
 }
 
+.typeButton.active::before {
+  opacity: 1;
+}
+
+/* Ícono del botón */
 .icon {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  line-height: 1;
+  transition: transform var(--transition-fast);
+}
+
+.typeButton:hover .icon {
+  transform: scale(1.1);
+}
+
+.typeButton.active .icon {
+  transform: scale(1.15);
+  animation: iconBounce 0.4s ease-out;
+}
+
+@keyframes iconBounce {
+  0% { transform: scale(0.7); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1.15); }
+}
+
+/* ----------------------------------------------------------
+   Responsive: Móvil (≤ 480px)
+   ---------------------------------------------------------- */
+@media (max-width: 480px) {
+  .selectorGroup {
+    gap: 10px;
+  }
+
+  .typeButton {
+    min-height: 76px;
+    padding: 14px 12px;
+    font-size: 0.9375rem;
+  }
+
+  .icon {
+    font-size: 1.5rem;
+  }
 }

@@ -8,11 +8,18 @@ interface MenuGridProps {
   onAddProduct: (producto: Producto) => void;
 }
 
+/**
+ * MenuGrid — Grilla responsiva que renderiza los productos filtrados.
+ *
+ * Incluye un estado vacío (empty state) cuando no hay productos
+ * en la categoría seleccionada.
+ */
 export const MenuGrid: React.FC<MenuGridProps> = ({ productos, onAddProduct }) => {
   if (productos.length === 0) {
     return (
       <div className={styles.emptyState}>
-        <p>No hay productos disponibles en esta categoría.</p>
+        <span className={styles.emptyIcon}>🍽️</span>
+        <p className={styles.emptyText}>No hay productos disponibles en esta categoría.</p>
       </div>
     );
   }

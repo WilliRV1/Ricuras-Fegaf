@@ -1,0 +1,178 @@
+/* ============================================================
+   OrderContainer — Layout y estilos del orquestador de pedidos
+   ============================================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+/* ----------------------------------------------------------
+   Sección superior: Tipo de atención + Formulario
+   ---------------------------------------------------------- */
+.orderSetupSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 28px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Indicador de paso (Step indicator) */
+.stepIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.stepBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.stepBadge.completed {
+  background: var(--color-success);
+}
+
+.stepLabel {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.stepLabelMuted {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* ----------------------------------------------------------
+   Sección inferior: Menú Digital
+   ---------------------------------------------------------- */
+.menuSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.menuHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.menuTitle {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menuTitleIcon {
+  font-size: 1.25rem;
+}
+
+/* Contador de productos encontrados */
+.productCount {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  background: var(--color-surface);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------
+   Overlay de bloqueo del menú (antes de seleccionar tipo)
+   ---------------------------------------------------------- */
+.menuLocked {
+  position: relative;
+}
+
+.menuLocked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border-radius: var(--radius-lg);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.lockOverlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.lockIcon {
+  font-size: 2.5rem;
+  line-height: 1;
+  filter: grayscale(0.3);
+}
+
+.lockText {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.lockSubtext {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0);
+  }
+}
+
+/* ----------------------------------------------------------
+   Responsive
+   ---------------------------------------------------------- */
+@media (max-width: 768px) {
+  .menuHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .menuTitle {
+    font-size: 1.25rem;
+  }
+}

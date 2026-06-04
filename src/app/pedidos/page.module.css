@@ -1,64 +1,140 @@
+/* ============================================================
+   Página de Pedidos — Layout responsivo premium
+   ============================================================ */
+
 .main {
   min-height: 100vh;
-  padding: 24px;
+  padding: 20px 16px 100px; /* Bottom padding extra para móvil */
   max-width: 1400px;
   margin: 0 auto;
 }
 
+/* ----------------------------------------------------------
+   Header con gradiente sutil
+   ---------------------------------------------------------- */
 .header {
-  margin-bottom: 32px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .title {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.75rem;
+  font-weight: 800;
   color: var(--color-text);
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
   color: var(--color-text-muted);
   margin: 0;
+  font-size: 0.9375rem;
 }
 
+/* ----------------------------------------------------------
+   Layout principal: dos columnas
+   ---------------------------------------------------------- */
 .content {
-  display: flex;
-  gap: 32px;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 28px;
   align-items: flex-start;
 }
 
+/* Columna principal (menú + formulario) */
 .mainColumn {
-  flex: 1;
-  min-width: 0; /* Para evitar overflow en grid */
+  min-width: 0; /* Prevenir overflow en grid */
 }
 
+/* Columna del carrito (sticky) */
 .cartColumn {
-  width: 350px;
   position: sticky;
-  top: 24px;
+  top: 20px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
+/* Placeholder del carrito (Día 3) */
 .emptyCartPlaceholder {
-  background-color: var(--color-surface);
+  background: linear-gradient(
+    135deg,
+    var(--color-surface) 0%,
+    rgba(30, 41, 59, 0.7) 100%
+  );
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 32px;
+  padding: 40px 24px;
   text-align: center;
   color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.cartPlaceholderIcon {
+  font-size: 2.5rem;
+  line-height: 1;
+  filter: grayscale(0.5);
 }
 
 .emptyCartPlaceholder h3 {
   color: var(--color-text);
-  margin-bottom: 8px;
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
 }
 
+.emptyCartPlaceholder p {
+  margin: 0;
+  font-size: 0.875rem;
+  max-width: 200px;
+  line-height: 1.5;
+}
+
+/* ----------------------------------------------------------
+   Responsive: Tablet (≤ 1024px)
+   ---------------------------------------------------------- */
 @media (max-width: 1024px) {
   .content {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
-  
+
   .cartColumn {
-    width: 100%;
     position: static;
+    max-height: none;
+    order: -1; /* Carrito arriba en tablet */
+  }
+}
+
+/* ----------------------------------------------------------
+   Responsive: Móvil (≤ 640px)
+   ---------------------------------------------------------- */
+@media (max-width: 640px) {
+  .main {
+    padding: 16px 12px 120px;
+  }
+
+  .header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
+  }
+
+  .content {
+    gap: 20px;
+  }
+
+  .emptyCartPlaceholder {
+    padding: 28px 16px;
   }
 }

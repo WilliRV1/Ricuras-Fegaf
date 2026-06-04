@@ -1,13 +1,33 @@
+/* ============================================================
+   CategoryTabs — Pestañas de filtro por categoría
+   ============================================================ */
+
 .scrollContainer {
   width: 100%;
   overflow-x: auto;
-  padding-bottom: 8px; /* Espacio para la scrollbar */
+  padding-bottom: 6px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+
+  /* Fade edges para indicar que hay scroll */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 8px,
+    black calc(100% - 8px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 8px,
+    black calc(100% - 8px),
+    transparent 100%
+  );
 }
 
 .scrollContainer::-webkit-scrollbar {
-  height: 4px;
+  height: 3px;
 }
 
 .scrollContainer::-webkit-scrollbar-track {
@@ -22,13 +42,13 @@
 .tabsWrapper {
   display: flex;
   gap: 8px;
-  padding: 4px 2px;
+  padding: 4px 10px; /* Padding lateral para las sombras de la mask */
   min-width: max-content;
 }
 
 .tab {
   height: 40px;
-  padding: 0 16px;
+  padding: 0 18px;
   border-radius: var(--radius-full);
   background-color: var(--color-surface);
   color: var(--color-text-muted);
@@ -37,16 +57,40 @@
   border: 1px solid var(--color-border);
   transition: all var(--transition-fast);
   white-space: nowrap;
+  position: relative;
 }
 
 .tab:hover {
   background-color: var(--color-surface-hover);
   color: var(--color-text);
+  transform: translateY(-1px);
 }
 
+.tab:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Estado activo */
 .tab.active {
   background-color: var(--color-primary);
   color: #fff;
   border-color: var(--color-primary);
-  box-shadow: 0 2px 10px rgba(255, 107, 53, 0.3);
+  box-shadow: 0 2px 12px rgba(255, 107, 53, 0.35);
+  font-weight: 600;
+}
+
+.tab.active:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+/* ----------------------------------------------------------
+   Responsive: Móvil (≤ 640px)
+   ---------------------------------------------------------- */
+@media (max-width: 640px) {
+  .tab {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 0.8125rem;
+  }
 }

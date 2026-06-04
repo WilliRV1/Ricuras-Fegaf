@@ -1,19 +1,70 @@
+/* ============================================================
+   MenuGrid — Grilla responsiva de productos
+   ============================================================ */
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 16px;
   width: 100%;
+  animation: gridFadeIn 0.35s ease-out;
 }
 
+/* Animación de entrada de la grilla */
+@keyframes gridFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Empty state estilizado */
 .emptyState {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 20px;
+  gap: 12px;
+  padding: 56px 24px;
   text-align: center;
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   border: 1px dashed var(--color-border);
   color: var(--color-text-muted);
+  animation: gridFadeIn 0.35s ease-out;
+}
+
+.emptyIcon {
+  font-size: 2rem;
+  line-height: 1;
+  filter: grayscale(0.5);
+}
+
+.emptyText {
+  font-size: 0.9375rem;
   font-style: italic;
+  margin: 0;
+}
+
+/* ----------------------------------------------------------
+   Responsive: Móvil pequeño (≤ 480px)
+   ---------------------------------------------------------- */
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* ----------------------------------------------------------
+   Responsive: Tablet (481px – 768px)
+   ---------------------------------------------------------- */
+@media (min-width: 481px) and (max-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

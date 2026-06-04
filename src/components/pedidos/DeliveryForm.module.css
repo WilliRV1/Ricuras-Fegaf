@@ -1,17 +1,25 @@
+/* ============================================================
+   DeliveryForm — Formulario condicional Mesa / Domicilio
+   ============================================================ */
+
 .formContainer {
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  background-color: var(--color-surface);
+  background: linear-gradient(
+    135deg,
+    var(--color-surface) 0%,
+    rgba(30, 41, 59, 0.85) 100%
+  );
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 20px;
-  animation: fadeIn var(--transition-normal) ease-out;
+  animation: formSlideIn var(--transition-normal) ease-out;
 }
 
 .title {
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   color: var(--color-text);
   margin: 0;
@@ -20,16 +28,46 @@
 .fields {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
-@keyframes fadeIn {
+/* Animación de entrada cuando se monta el formulario */
+@keyframes formSlideIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ----------------------------------------------------------
+   Responsive: Domicilio en dos columnas (≥ 640px)
+   ---------------------------------------------------------- */
+@media (min-width: 640px) {
+  .fieldsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .fieldsGrid > :last-child {
+    grid-column: 1 / -1; /* Dirección ocupa todo el ancho */
+  }
+}
+
+/* ----------------------------------------------------------
+   Responsive: Móvil (≤ 640px)
+   ---------------------------------------------------------- */
+@media (max-width: 640px) {
+  .formContainer {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .title {
+    font-size: 1rem;
   }
 }
