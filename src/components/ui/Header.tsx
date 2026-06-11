@@ -24,12 +24,11 @@ export const Header: React.FC = () => {
           <Image
             src="/logo.png"
             alt="Ricuras FegaF"
-            width={40}
-            height={40}
+            width={56}
+            height={56}
             className={styles.logo}
             priority
           />
-          <span className={styles.title}>Ricuras FegaF</span>
         </div>
         <nav className={styles.nav}>
           {links.map((link) => (

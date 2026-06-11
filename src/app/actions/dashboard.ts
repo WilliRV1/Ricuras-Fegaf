@@ -16,8 +16,7 @@ export async function getResumenDelDia(dateStr?: string) {
   const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1).toISOString();
 
   // Consultar todos los pedidos del día para calcular todas las métricas
-  // Nota: 'motivo_cancelacion' fue añadido por migración; cast a any[] hasta regenerar tipos
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('pedidos')
     .select('id, total, subtotal, recargo, metodo_pago, tipo, estado, closed_at, created_at, motivo_cancelacion')
     .gte('created_at', startOfDay)
@@ -28,7 +27,7 @@ export async function getResumenDelDia(dateStr?: string) {
     return null;
   }
 
-  const todosPedidos: any[] = data ?? [];
+  const todosPedidos = data ?? [];
 
   // 1. Filtrar pagados
   const pagados = todosPedidos.filter(p => p.estado === ESTADOS_PEDIDO.PAGADO);

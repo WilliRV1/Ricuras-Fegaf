@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import styles from './page.module.css';
 
@@ -7,6 +8,14 @@ export default function Home() {
       <div className={styles.backgroundGlow}></div>
       
       <header className={styles.header}>
+        <Image
+          src="/logo.png"
+          alt="Ricuras FegaF"
+          width={140}
+          height={140}
+          className={styles.heroLogo}
+          priority
+        />
         <h1 className={styles.title}>
           Ricuras <span className={styles.highlight}>Fegaf</span>
         </h1>

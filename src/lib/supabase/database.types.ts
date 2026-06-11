@@ -81,6 +81,7 @@ export interface Database {
           subtotal: number
           recargo: number
           total: number
+          motivo_cancelacion: string | null
           created_at: string
           closed_at: string | null
         }
@@ -96,6 +97,7 @@ export interface Database {
           subtotal?: number
           recargo?: number
           total?: number
+          motivo_cancelacion?: string | null
           created_at?: string
           closed_at?: string | null
         }
@@ -111,6 +113,7 @@ export interface Database {
           subtotal?: number
           recargo?: number
           total?: number
+          motivo_cancelacion?: string | null
           created_at?: string
           closed_at?: string | null
         }
