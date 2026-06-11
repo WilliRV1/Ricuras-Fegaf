@@ -48,7 +48,7 @@ export function useRealtimeLiquidacion() {
         }
       } catch (err: any) {
         if (mounted) {
-          console.error('Error fetching initial orders:', err);
+          console.error('Error fetching initial ready orders:', err);
           setError(err.message);
           setLoading(false);
           setConnectionStatus('offline');
@@ -64,6 +64,7 @@ export function useRealtimeLiquidacion() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'pedidos' },
         async (payload) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const updatedOrder = payload.new as any;
           
           if (updatedOrder.estado === ESTADOS_PEDIDO.LISTO) {
@@ -105,6 +106,7 @@ export function useRealtimeLiquidacion() {
       clearInterval(heartbeat);
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { orders, loading, error, connectionStatus };

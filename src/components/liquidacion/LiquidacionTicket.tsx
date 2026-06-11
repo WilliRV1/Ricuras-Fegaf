@@ -53,8 +53,8 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order }) =
         toast.error(res.error || 'Error al liquidar pedido');
         setIsSubmitting(false);
       }
-    } catch (err) {
-      toast.error('Error de red al liquidar pedido');
+    } catch {
+      toast.error('Error al cerrar el pedido');
       setIsSubmitting(false);
     }
   };

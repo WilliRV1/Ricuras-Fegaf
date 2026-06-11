@@ -31,7 +31,7 @@ export interface ToastItem {
 /* ------------------------------------------------------------------ */
 
 let toasts: ToastItem[] = [];
-let listeners: Set<() => void> = new Set();
+const listeners: Set<() => void> = new Set();
 
 function emitChange() {
   listeners.forEach((l) => l());

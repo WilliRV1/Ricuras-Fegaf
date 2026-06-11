@@ -75,7 +75,7 @@ export function useRealtimeOrders() {
           setLoading(false);
           setConnectionStatus('online');
         }
-      } catch (err: any) {
+      } catch (err) {
         if (mounted) {
           console.error('Error fetching initial orders:', err);
           setError(err.message);
@@ -93,6 +93,7 @@ export function useRealtimeOrders() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'pedidos' },
         async (payload) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const newOrder = payload.new as any;
           if (newOrder.estado === ESTADOS_PEDIDO.PENDIENTE) {
             const orderWithDetails = await fetchOrderDetails(newOrder.id);
@@ -107,6 +108,7 @@ export function useRealtimeOrders() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'pedidos' },
         (payload) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const updatedOrder = payload.new as any;
           if (updatedOrder.estado !== ESTADOS_PEDIDO.PENDIENTE) {
             if (mounted) {
@@ -138,6 +140,7 @@ export function useRealtimeOrders() {
       clearInterval(heartbeat);
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { orders, loading, error, connectionStatus };

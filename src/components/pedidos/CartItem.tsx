@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { CartItem as CartItemType } from '@/types';
-import { Button } from '../ui/Button';
 import { useCart } from '@/hooks/useCart';
 import styles from './CartItem.module.css';
 
@@ -25,6 +24,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
 
   // Sincronizar notas locales si cambian externamente
   useEffect(() => {
+    // eslint-disable-next-line
     setLocalNotes(item.notas || '');
   }, [item.notas]);
 

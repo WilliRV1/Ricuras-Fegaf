@@ -123,28 +123,8 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
   };
 
   /**
-   * Valida los campos requeridos según el tipo de atención.
-   * Retorna `true` si el formulario es válido.
-   */
-  const validateForm = useCallback(() => {
-    const errors: Partial<Record<keyof OrderDetails, string>> = {};
-    if (orderType === TIPOS_ATENCION.MESA && !orderDetails.numero_mesa) {
-      errors.numero_mesa = 'El número de mesa es requerido';
-    }
-    if (orderType === TIPOS_ATENCION.DOMICILIO) {
-      if (!orderDetails.cliente_nombre) errors.cliente_nombre = 'El nombre es requerido';
-      if (!orderDetails.cliente_telefono) errors.cliente_telefono = 'El teléfono es requerido';
-      if (!orderDetails.cliente_direccion) errors.cliente_direccion = 'La dirección es requerida';
-    }
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  }, [orderType, orderDetails]);
-
-  /**
-   * Derivación: indica si el formulario está completo (para habilitación de botones).
-   * Se usará en el Día 3 para habilitar el botón de "Enviar a Cocina".
-   */
-  const isFormValid = useMemo(() => {
+   * isFormValid: true si se seleccionó un tipo de atención y,
+  const isFormValid = (() => {
     if (!orderType) return false;
     if (orderType === TIPOS_ATENCION.MESA) return !!orderDetails.numero_mesa;
     return !!(
@@ -152,7 +132,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
       orderDetails.cliente_telefono &&
       orderDetails.cliente_direccion
     );
-  }, [orderType, orderDetails]);
+  })();
 
   /* ----------------------------------------------------------------
      Indicadores de paso
