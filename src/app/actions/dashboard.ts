@@ -10,10 +10,11 @@ import { ESTADOS_PEDIDO, METODOS_PAGO, TIPOS_ATENCION } from '@/lib/constants';
 export async function getResumenDelDia(dateStr?: string) {
   const supabase = await createClient();
 
-  const targetDate = dateStr ? new Date(`${dateStr}T00:00:00`) : new Date();
-  
-  const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).toISOString();
-  const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1).toISOString();
+  const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const actualDateStr = dateStr || bogotaDateStr;
+
+  const startOfDay = new Date(`${actualDateStr}T00:00:00-05:00`).toISOString();
+  const endOfDay = new Date(`${actualDateStr}T23:59:59.999-05:00`).toISOString();
 
   // Consultar todos los pedidos del día para calcular todas las métricas
   const { data, error } = await supabase
@@ -34,8 +35,6 @@ export async function getResumenDelDia(dateStr?: string) {
   
   const totalFacturado = pagados.reduce((sum, p) => sum + (p.total ?? 0), 0);
   const totalPedidosPagados = pagados.length;
-  
-  const ticketPromedio = totalPedidosPagados > 0 ? (totalFacturado / totalPedidosPagados) : 0;
 
   const porMetodoPago = {
     efectivo: pagados.filter(p => p.metodo_pago === METODOS_PAGO.EFECTIVO).reduce((s, p) => s + (p.total ?? 0), 0),
@@ -50,9 +49,14 @@ export async function getResumenDelDia(dateStr?: string) {
 
   const totalRecargos = pagados.reduce((sum, p) => sum + (p.recargo ?? 0), 0);
 
-  // 2. Hora Pico
+  // 2. Hora Pico (calculada con hora de Colombia)
   const horas = todosPedidos.reduce((acc: Record<string, number>, p) => {
-    const hora = new Date(p.created_at).getHours();
+    const bogotaHourStr = new Intl.DateTimeFormat('es-CO', {
+      timeZone: 'America/Bogota',
+      hour: 'numeric',
+      hour12: false
+    }).format(new Date(p.created_at));
+    const hora = parseInt(bogotaHourStr, 10);
     acc[hora] = (acc[hora] || 0) + 1;
     return acc;
   }, {});
@@ -66,14 +70,22 @@ export async function getResumenDelDia(dateStr?: string) {
     }
   }
 
-  // 3. Cancelados
+  // 3. Cancelados (con hora de Colombia)
   const cancelados = todosPedidos
     .filter(p => p.estado === ESTADOS_PEDIDO.CANCELADO)
-    .map(p => ({
-      id: p.id,
-      motivo: p.motivo_cancelacion || 'Sin motivo',
-      hora: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }));
+    .map(p => {
+      const horaStr = new Intl.DateTimeFormat('es-CO', {
+        timeZone: 'America/Bogota',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(new Date(p.created_at));
+      return {
+        id: p.id,
+        motivo: p.motivo_cancelacion || 'Sin motivo',
+        hora: horaStr
+      };
+    });
 
   return {
     totalPedidos: totalPedidosPagados,
@@ -81,7 +93,6 @@ export async function getResumenDelDia(dateStr?: string) {
     totalRecargos,
     porMetodoPago,
     porTipo,
-    ticketPromedio,
     horaPico,
     cancelados
   };
@@ -93,9 +104,11 @@ export async function getResumenDelDia(dateStr?: string) {
 export async function getPedidosRecientes(limit: number = 20, dateStr?: string) {
   const supabase = await createClient();
 
-  const targetDate = dateStr ? new Date(`${dateStr}T00:00:00`) : new Date();
-  const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).toISOString();
-  const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1).toISOString();
+  const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const actualDateStr = dateStr || bogotaDateStr;
+
+  const startOfDay = new Date(`${actualDateStr}T00:00:00-05:00`).toISOString();
+  const endOfDay = new Date(`${actualDateStr}T23:59:59.999-05:00`).toISOString();
 
   const { data, error } = await supabase
     .from('pedidos')

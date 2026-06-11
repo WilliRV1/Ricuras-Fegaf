@@ -6,7 +6,6 @@ interface ResumenCardsProps {
   totalPedidos: number;
   totalFacturado: number;
   totalRecargos: number;
-  ticketPromedio: number;
   horaPico: string;
   cancelados: { id: number; motivo: string; hora: string }[];
   porMetodoPago: {
@@ -24,7 +23,6 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
   totalPedidos,
   totalFacturado,
   totalRecargos,
-  ticketPromedio,
   horaPico,
   cancelados,
   porMetodoPago,
@@ -48,14 +46,6 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
         <p className={styles.cardSub}>
           {porTipo.mesa} Mesa · {porTipo.domicilio} Domicilio
         </p>
-      </div>
-
-      {/* Ticket Promedio */}
-      <div className={`${styles.card} ${styles.accentTeal}`}>
-        <div className={styles.cardIcon}>🎫</div>
-        <p className={styles.cardLabel}>Ticket Promedio</p>
-        <p className={styles.cardValue}>{formatCurrency(ticketPromedio)}</p>
-        <p className={styles.cardSub}>Por pedido pagado</p>
       </div>
 
       {/* Hora Pico */}

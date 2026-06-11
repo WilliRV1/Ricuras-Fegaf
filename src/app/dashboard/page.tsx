@@ -14,8 +14,8 @@ interface DashboardPageProps {
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { date } = await searchParams;
 
-  // Calcular la fecha: usar parámetro URL o hoy
-  const todayISO = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
+  // Calcular la fecha en la zona horaria de Colombia (America/Bogota)
+  const todayISO = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   const targetDate = date || todayISO;
 
   const [stats, pedidosRecientes] = await Promise.all([
