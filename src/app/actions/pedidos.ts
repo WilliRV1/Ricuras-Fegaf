@@ -1,13 +1,14 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { CartItem, OrderType, OrderDetails } from '@/types';
-import { ESTADOS_PEDIDO, TIPOS_ATENCION } from '@/lib/constants';
+import { CartItem, OrderType, OrderDetails, MetodoPago } from '@/types';
+import { ESTADOS_PEDIDO, TIPOS_ATENCION, METODOS_PAGO, RECARGO_DATAFONO } from '@/lib/constants';
 
 export async function submitOrder(
   orderType: OrderType,
   orderDetails: OrderDetails,
-  items: CartItem[]
+  items: CartItem[],
+  metodoPago: MetodoPago = null
 ) {
   if (!orderType || items.length === 0) {
     return { success: false, error: 'Faltan datos obligatorios o el carrito está vacío.' };
@@ -18,8 +19,9 @@ export async function submitOrder(
   // Calcular subtotal (suma de items)
   const subtotal = items.reduce((sum, item) => sum + (item.producto.precio * item.cantidad), 0);
   
-  // Calcular recargo (Día 3: asumiendo 0 por ahora, luego se puede integrar lógica de envío/datáfono)
-  const recargo = 0;
+  // Calcular recargo: 5% solo si es domicilio y el pago es con datáfono
+  const aplicaRecargo = orderType === TIPOS_ATENCION.DOMICILIO && metodoPago === METODOS_PAGO.DATAFONO;
+  const recargo = aplicaRecargo ? Math.round(subtotal * RECARGO_DATAFONO) : 0;
   
   // Total final
   const total = subtotal + recargo;
@@ -39,7 +41,7 @@ export async function submitOrder(
       cliente_telefono: orderDetails.cliente_telefono || null,
       cliente_direccion: orderDetails.cliente_direccion || null,
       estado: ESTADOS_PEDIDO.PENDIENTE,
-      metodo_pago: null, // Aún no se ha pagado
+      metodo_pago: orderType === TIPOS_ATENCION.DOMICILIO ? metodoPago : null,
       subtotal,
       recargo,
       total,

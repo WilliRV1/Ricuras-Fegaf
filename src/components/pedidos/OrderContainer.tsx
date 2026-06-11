@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { Categoria, Producto, OrderType, OrderDetails } from '@/types';
+import { Categoria, Producto, OrderType, OrderDetails, MetodoPago } from '@/types';
 import { CategoryTabs } from './CategoryTabs';
 import { MenuGrid } from './MenuGrid';
 import { OrderTypeSelector } from './OrderTypeSelector';
@@ -96,7 +96,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
   /**
    * Envía el pedido completo a Supabase.
    */
-  const handleEnviarCocina = async () => {
+  const handleEnviarCocina = async (metodoPago: MetodoPago) => {
     if (!orderType || !isFormValid) {
       toast.error('Completa los datos obligatorios del pedido.');
       return;
@@ -108,7 +108,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
       return;
     }
 
-    const res = await submitOrder(orderType, orderDetails, items);
+    const res = await submitOrder(orderType, orderDetails, items, metodoPago);
     
     if (!res.success) {
       throw new Error(res.error || 'Error desconocido al enviar pedido');
@@ -257,7 +257,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
       </div>
 
       <div className={styles.cartColumn}>
-        <Cart isValidOrder={isFormValid} onEnviarCocina={handleEnviarCocina} />
+        <Cart orderType={orderType} isValidOrder={isFormValid} onEnviarCocina={handleEnviarCocina} />
       </div>
 
     </div>

@@ -9,11 +9,16 @@ export type DetallePedido = Database['public']['Tables']['detalle_pedidos']['Row
 // Tipos auxiliares para el Frontend
 export type OrderType = 'mesa' | 'domicilio' | null;
 
+/** Métodos de pago — coincide con los valores de la DB */
+export type MetodoPago = 'efectivo' | 'nequi' | 'datafono' | null;
+
 export interface OrderDetails {
   numero_mesa?: string;
   cliente_nombre?: string;
   cliente_telefono?: string;
   cliente_direccion?: string;
+  /** Solo para domicilio: método de pago elegido al momento del pedido */
+  metodo_pago?: MetodoPago;
 }
 
 export interface CartItem {
@@ -21,3 +26,4 @@ export interface CartItem {
   cantidad: number;
   notas?: string;
 }
+

@@ -141,3 +141,133 @@
 .submitBtn {
   flex: 1;
 }
+
+/* ============================================================
+   Sección de Métodos de Pago y Totales
+   ============================================================ */
+
+.paymentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.paymentLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.paymentIcon {
+  font-size: 1rem;
+}
+
+.paymentOptions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.paymentOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 4px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.paymentOption:hover:not(:disabled) {
+  border-color: var(--color-primary-light);
+  background: var(--color-surface-hover);
+}
+
+.paymentSelected {
+  border-color: var(--color-primary);
+  background: rgba(255, 107, 53, 0.1) !important;
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.paymentOptionIcon {
+  font-size: 1.25rem;
+}
+
+.paymentOptionLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.recargoTag {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--color-danger);
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.totals {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recargoRow {
+  opacity: 0.95;
+}
+
+.recargoValue {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.totalRow {
+  border-top: 1px solid var(--color-border);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.totalLabel {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.totalValue {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  text-shadow: var(--shadow-sm);
+}
+
+.mesaNotice {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-info);
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+

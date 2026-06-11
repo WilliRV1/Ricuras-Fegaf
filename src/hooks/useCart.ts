@@ -1,20 +1,57 @@
 import { useSyncExternalStore } from 'react';
 import { Producto, CartItem } from '@/types';
 
+/**
+ * Clave bajo la que se guarda el carrito en localStorage.
+ * Prefijada con el nombre del proyecto para evitar colisiones.
+ */
+const STORAGE_KEY = 'ricuras_fegaf_cart';
+
 interface CartState {
   items: CartItem[];
 }
 
-let cartState: CartState = {
-  items: [],
-};
+// ----------------------------------------------------------------
+// Helpers de persistencia (solo en cliente)
+// ----------------------------------------------------------------
+
+/** Lee el estado guardado desde localStorage. Retorna null si no existe o hay error. */
+function loadFromStorage(): CartState | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as CartState;
+  } catch {
+    return null;
+  }
+}
+
+/** Escribe el estado actual en localStorage. */
+function saveToStorage(state: CartState): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Silenciar errores de cuota o modo privado
+  }
+}
+
+// ----------------------------------------------------------------
+// Estado inicial: intentar restaurar desde localStorage
+// ----------------------------------------------------------------
+let cartState: CartState = loadFromStorage() ?? { items: [] };
 
 const listeners = new Set<() => void>();
 
 const emitChange = () => {
+  saveToStorage(cartState); // Persiste en cada cambio
   listeners.forEach((listener) => listener());
 };
 
+// ----------------------------------------------------------------
+// Store público
+// ----------------------------------------------------------------
 export const cartStore = {
   addItem: (producto: Producto, cantidad: number = 1, notas?: string) => {
     const existingItemIndex = cartState.items.findIndex(
@@ -23,7 +60,10 @@ export const cartStore = {
 
     if (existingItemIndex >= 0) {
       const newItems = [...cartState.items];
-      newItems[existingItemIndex].cantidad += cantidad;
+      newItems[existingItemIndex] = {
+        ...newItems[existingItemIndex],
+        cantidad: newItems[existingItemIndex].cantidad + cantidad,
+      };
       cartState = { items: newItems };
     } else {
       cartState = {
@@ -60,9 +100,8 @@ export const cartStore = {
       }
       return item;
     });
-    
-    // Al actualizar notas, es posible que el item se combine con otro item idéntico que ya tenía esas mismas notas.
-    // Para simplificar y mantener un carrito predecible, los agrupamos si coinciden.
+
+    // Si al cambiar notas coincide con otro ítem existente, los fusionamos.
     const mergedItems = newItems.reduce((acc, current) => {
       const existing = acc.find(
         (i) => i.producto.id === current.producto.id && i.notas === current.notas
