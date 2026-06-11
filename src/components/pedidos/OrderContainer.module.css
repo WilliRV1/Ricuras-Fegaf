@@ -274,7 +274,7 @@
     align-items: center;
     gap: 8px;
     position: fixed;
-    bottom: 84px; /* Above BottomNav */
+    bottom: calc(80px + env(safe-area-inset-bottom)); /* Dynamic position above BottomNav */
     left: 50%;
     transform: translateX(-50%);
     background: var(--color-primary);
@@ -284,8 +284,8 @@
     border-radius: var(--radius-full);
     font-size: 1rem;
     font-weight: 700;
-    box-shadow: var(--shadow-elevated);
-    z-index: 90;
+    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
+    z-index: 110; /* Must be higher than BottomNav (100) */
     transition: all var(--transition-bounce);
   }
 
