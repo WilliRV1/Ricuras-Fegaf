@@ -14,7 +14,7 @@ export async function submitOrder(
     return { success: false, error: 'Faltan datos obligatorios o el carrito está vacío.' };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Calcular subtotal (suma de items)
   const subtotal = items.reduce((sum, item) => sum + (item.producto.precio * item.cantidad), 0);
@@ -32,7 +32,7 @@ export async function submitOrder(
     : null;
 
   // Insertar en tabla `pedidos`
-  const { data: pedidoData, error: pedidoError } = await (await supabase)
+  const { data: pedidoData, error: pedidoError } = await supabase
     .from('pedidos')
     .insert({
       tipo: orderType,
@@ -64,7 +64,7 @@ export async function submitOrder(
   }));
 
   // Insertar masivo en `detalle_pedidos`
-  const { error: detallesError } = await (await supabase)
+  const { error: detallesError } = await supabase
     .from('detalle_pedidos')
     .insert(detallesToInsert);
 

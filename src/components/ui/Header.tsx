@@ -12,6 +12,7 @@ export const Header: React.FC = () => {
     { href: '/', label: 'Inicio', icon: '🏠' },
     { href: '/pedidos', label: 'Pedidos', icon: '📱' },
     { href: '/cocina', label: 'Cocina', icon: '👨‍🍳' },
+    { href: '/liquidacion', label: 'Liquidación', icon: '💰' },
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
   ];
 

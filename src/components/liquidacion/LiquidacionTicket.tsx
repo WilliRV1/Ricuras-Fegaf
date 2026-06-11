@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/Button';
 import { closeOrder } from '@/app/actions/liquidacion';
 import { toast } from '@/components/ui/Toast';
 import { formatCurrency } from '@/lib/utils';
-import styles from './LiquidacionCard.module.css';
+import styles from './LiquidacionTicket.module.css';
 
-interface LiquidacionCardProps {
+interface LiquidacionTicketProps {
   order: PedidoWithDetalles;
 }
 
-export const LiquidacionCard: React.FC<LiquidacionCardProps> = ({ order }) => {
+export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order }) => {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,7 +40,7 @@ export const LiquidacionCard: React.FC<LiquidacionCardProps> = ({ order }) => {
       return;
     }
 
-    if (!window.confirm(`¿Confirmar pago por ${formatCurrency(totalCalculado)}?`)) {
+    if (!window.confirm(`¿Confirmar cobro por ${formatCurrency(totalCalculado)}?`)) {
       return;
     }
 
@@ -49,7 +49,6 @@ export const LiquidacionCard: React.FC<LiquidacionCardProps> = ({ order }) => {
       const res = await closeOrder(order.id, selectedMethod);
       if (res.success) {
         toast.success(`Pedido #${order.id} liquidado correctamente`);
-        // No necesitamos actualizar el estado local aquí porque useRealtimeLiquidacion lo removerá
       } else {
         toast.error(res.error || 'Error al liquidar pedido');
         setIsSubmitting(false);
@@ -61,7 +60,7 @@ export const LiquidacionCard: React.FC<LiquidacionCardProps> = ({ order }) => {
   };
 
   return (
-    <div className={styles.card}>
+    <div className={styles.ticket}>
       <div className={styles.header}>
         <div className={styles.idAndType}>
           <h3 className={styles.orderId}>Pedido #{order.id}</h3>
@@ -135,7 +134,7 @@ export const LiquidacionCard: React.FC<LiquidacionCardProps> = ({ order }) => {
           onClick={handleConfirm}
           disabled={!selectedMethod || isSubmitting}
         >
-          {isSubmitting ? 'Procesando...' : 'Confirmar Pago'}
+          {isSubmitting ? 'Procesando...' : 'Cobrar'}
         </Button>
       </div>
     </div>

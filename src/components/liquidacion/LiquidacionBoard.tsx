@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRealtimeLiquidacion } from '@/hooks/useRealtimeLiquidacion';
-import { LiquidacionCard } from './LiquidacionCard';
+import { LiquidacionTicket } from './LiquidacionTicket';
 import styles from './LiquidacionBoard.module.css';
 
 export const LiquidacionBoard: React.FC = () => {
@@ -35,7 +35,7 @@ export const LiquidacionBoard: React.FC = () => {
     <div className={styles.boardContainer}>
       <div className={styles.grid}>
         {orders.map((order) => (
-          <LiquidacionCard key={order.id} order={order} />
+          <LiquidacionTicket key={order.id} order={order} />
         ))}
       </div>
     </div>
