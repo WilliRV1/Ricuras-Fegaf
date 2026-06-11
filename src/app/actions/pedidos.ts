@@ -31,48 +31,34 @@ export async function submitOrder(
     ? parseInt(orderDetails.numero_mesa, 10)
     : null;
 
-  // Insertar en tabla `pedidos`
-  const { data: pedidoData, error: pedidoError } = await supabase
-    .from('pedidos')
-    .insert({
-      tipo: orderType,
-      numero_mesa,
-      cliente_nombre: orderDetails.cliente_nombre || null,
-      cliente_telefono: orderDetails.cliente_telefono || null,
-      cliente_direccion: orderDetails.cliente_direccion || null,
-      estado: ESTADOS_PEDIDO.PENDIENTE,
-      metodo_pago: orderType === TIPOS_ATENCION.DOMICILIO ? metodoPago : null,
-      subtotal,
-      recargo,
-      total,
-    })
-    .select()
-    .single();
-
-  if (pedidoError || !pedidoData) {
-    console.error('Error insertando pedido:', pedidoError);
-    return { success: false, error: 'No se pudo crear el pedido principal.' };
-  }
-
-  // Mapear items a formato `detalle_pedidos`
-  const detallesToInsert = items.map(item => ({
-    pedido_id: pedidoData.id,
+  // Mapear items a formato JSONB para el RPC
+  const detallesJson = items.map(item => ({
     producto_id: item.producto.id,
     cantidad: item.cantidad,
     precio_unitario: item.producto.precio,
     notas: item.notas || null
   }));
 
-  // Insertar masivo en `detalle_pedidos`
-  const { error: detallesError } = await supabase
-    .from('detalle_pedidos')
-    .insert(detallesToInsert);
+  // Llamar al RPC transaccional
+  // @ts-ignore - Tipos no actualizados con el nuevo RPC
+  const { data: pedidoId, error: rpcError } = await supabase.rpc('create_order_with_details', {
+    p_tipo: orderType,
+    p_numero_mesa: numero_mesa,
+    p_cliente_nombre: orderDetails.cliente_nombre || null,
+    p_cliente_telefono: orderDetails.cliente_telefono || null,
+    p_cliente_direccion: orderDetails.cliente_direccion || null,
+    p_estado: ESTADOS_PEDIDO.PENDIENTE,
+    p_metodo_pago: orderType === TIPOS_ATENCION.DOMICILIO ? metodoPago : null,
+    p_subtotal: subtotal,
+    p_recargo: recargo,
+    p_total: total,
+    p_detalles: detallesJson
+  });
 
-  if (detallesError) {
-    console.error('Error insertando detalles:', detallesError);
-    // Idealmente manejaríamos rollback aquí, pero Supabase RPC / transaction sería mejor.
-    return { success: false, error: 'Pedido creado, pero hubo un error guardando los productos.' };
+  if (rpcError || !pedidoId) {
+    console.error('Error insertando pedido via RPC:', rpcError);
+    return { success: false, error: 'No se pudo crear el pedido de forma segura.' };
   }
 
-  return { success: true, pedidoId: pedidoData.id };
+  return { success: true, pedidoId: pedidoId };
 }

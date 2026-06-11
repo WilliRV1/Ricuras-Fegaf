@@ -3,10 +3,13 @@ import { createClient } from '@/lib/supabase/client';
 import { PedidoWithDetalles } from '@/types';
 import { ESTADOS_PEDIDO } from '@/lib/constants';
 
+export type ConnectionStatus = 'connecting' | 'online' | 'offline';
+
 export function useRealtimeOrders() {
   const [orders, setOrders] = useState<PedidoWithDetalles[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
 
   const supabase = createClient();
 
@@ -30,6 +33,7 @@ export function useRealtimeOrders() {
 
     const fetchInitialOrders = async () => {
       try {
+        if (mounted) setConnectionStatus('connecting');
         const { data, error } = await supabase
           .from('pedidos')
           .select('*, detalle_pedidos(*, productos(nombre))')
@@ -41,12 +45,14 @@ export function useRealtimeOrders() {
         if (mounted) {
           setOrders((data || []) as unknown as PedidoWithDetalles[]);
           setLoading(false);
+          setConnectionStatus('online');
         }
       } catch (err: any) {
         if (mounted) {
           console.error('Error fetching initial orders:', err);
           setError(err.message);
           setLoading(false);
+          setConnectionStatus('offline');
         }
       }
     };
@@ -61,7 +67,6 @@ export function useRealtimeOrders() {
         async (payload) => {
           const newOrder = payload.new as any;
           if (newOrder.estado === ESTADOS_PEDIDO.PENDIENTE) {
-            // El INSERT de Supabase solo trae los campos de 'pedidos', no las relaciones
             const orderWithDetails = await fetchOrderDetails(newOrder.id);
             if (orderWithDetails && mounted) {
               setOrders((prev) => [...prev, orderWithDetails]);
@@ -74,7 +79,6 @@ export function useRealtimeOrders() {
         { event: 'UPDATE', schema: 'public', table: 'pedidos' },
         (payload) => {
           const updatedOrder = payload.new as any;
-          // Si el pedido ya no está pendiente (fue completado o cancelado), lo removemos del tablero
           if (updatedOrder.estado !== ESTADOS_PEDIDO.PENDIENTE) {
             if (mounted) {
               setOrders((prev) => prev.filter((order) => order.id !== updatedOrder.id));
@@ -82,13 +86,30 @@ export function useRealtimeOrders() {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (mounted) {
+          if (status === 'SUBSCRIBED') {
+            setConnectionStatus('online');
+          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            setConnectionStatus('offline');
+          }
+        }
+      });
+
+    // Heartbeat: Verificar conexión cada 15 segundos y reintentar si está offline
+    const heartbeat = setInterval(() => {
+      if (mounted && supabase.getChannels().some(c => c.state === 'errored' || c.state === 'closed')) {
+        setConnectionStatus('offline');
+        fetchInitialOrders(); // Intenta reconectar cargando el initial state
+      }
+    }, 15000);
 
     return () => {
       mounted = false;
+      clearInterval(heartbeat);
       supabase.removeChannel(channel);
     };
   }, []);
 
-  return { orders, loading, error };
+  return { orders, loading, error, connectionStatus };
 }
