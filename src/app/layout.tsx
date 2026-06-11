@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 import { Header } from '@/components/ui/Header';
+import { BottomNav } from '@/components/ui/BottomNav';
 
 export default function RootLayout({
   children,
@@ -27,6 +28,7 @@ export default function RootLayout({
         <main className="main-content">
           {children}
         </main>
+        <BottomNav />
       </body>
     </html>
   );

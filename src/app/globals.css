@@ -113,6 +113,16 @@ body {
   overflow-x: hidden;
 }
 
+.main-content {
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
 /* Componentes nativos básicos */
 a {
   color: inherit;

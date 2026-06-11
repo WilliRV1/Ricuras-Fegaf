@@ -37,7 +37,9 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
   initialCategorias,
   initialProductos,
 }) => {
-  const { addItem } = useCart();
+  const { items, addItem } = useCart();
+  const cartItemCount = items.reduce((acc, item) => acc + item.cantidad, 0);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   /* ----------------------------------------------------------------
      Estado del menú
@@ -256,10 +258,34 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
         </section>
       </div>
 
-      <div className={styles.cartColumn}>
-        <Cart orderType={orderType} isValidOrder={isFormValid} onEnviarCocina={handleEnviarCocina} />
+      {/* Cart Column (Desktop) / Drawer (Mobile) */}
+      <div className={`${styles.cartColumn} ${isMobileCartOpen ? styles.cartOpen : ''}`}>
+        <div className={styles.mobileCartHeader}>
+          <h2>Tu Carrito</h2>
+          <button className={styles.closeCartBtn} onClick={() => setIsMobileCartOpen(false)}>×</button>
+        </div>
+        <Cart orderType={orderType} isValidOrder={isFormValid} onEnviarCocina={(pago) => {
+          handleEnviarCocina(pago);
+          setIsMobileCartOpen(false);
+        }} />
       </div>
 
+      {/* Mobile FAB to open Cart */}
+      {cartItemCount > 0 && (
+        <button 
+          className={`${styles.cartFab} ${isMobileCartOpen ? styles.hidden : ''}`}
+          onClick={() => setIsMobileCartOpen(true)}
+        >
+          <span className={styles.fabIcon}>🛒</span>
+          <span className={styles.fabText}>Ver Pedido</span>
+          <span className={styles.fabBadge}>{cartItemCount}</span>
+        </button>
+      )}
+
+      {/* Overlay background when cart is open */}
+      {isMobileCartOpen && (
+        <div className={styles.cartOverlay} onClick={() => setIsMobileCartOpen(false)} />
+      )}
     </div>
   );
 }

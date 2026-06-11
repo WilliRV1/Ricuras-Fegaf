@@ -109,4 +109,8 @@
   .price {
     font-size: 1.0625rem;
   }
+  
+  .addButton {
+    min-height: 44px; /* Better touch target */
+  }
 }

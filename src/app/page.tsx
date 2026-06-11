@@ -16,9 +16,6 @@ export default function Home() {
           className={styles.heroLogo}
           priority
         />
-        <h1 className={styles.title}>
-          Ricuras <span className={styles.highlight}>Fegaf</span>
-        </h1>
         <p className={styles.subtitle}>Sistema de Gestión Operativa</p>
       </header>
 
