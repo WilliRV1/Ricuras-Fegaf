@@ -264,8 +264,8 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
           <h2>Tu Carrito</h2>
           <button className={styles.closeCartBtn} onClick={() => setIsMobileCartOpen(false)}>×</button>
         </div>
-        <Cart orderType={orderType} isValidOrder={isFormValid} onEnviarCocina={(pago) => {
-          handleEnviarCocina(pago);
+        <Cart orderType={orderType} isValidOrder={isFormValid} onEnviarCocina={async (pago) => {
+          await handleEnviarCocina(pago);
           setIsMobileCartOpen(false);
         }} />
       </div>
