@@ -1,6 +1,9 @@
 -- Archivo Seed: Categorías y productos completos de Ricuras Fegaf
 
--- 1. Insertar categorías
+-- 0. Limpiar datos existentes
+TRUNCATE TABLE public.categorias, public.productos CASCADE;
+
+-- 1. Insertar categorías (ignora las que ya existan)
 INSERT INTO public.categorias (nombre, orden) VALUES
 ('Salchipapas', 1),
 ('Arepas', 2),
@@ -9,7 +12,8 @@ INSERT INTO public.categorias (nombre, orden) VALUES
 ('Aplastados', 5),
 ('Hamburguesas', 6),
 ('Bebidas', 7),
-('Adicionales', 8);
+('Adicionales', 8)
+ON CONFLICT (nombre) DO NOTHING;
 
 -- Función anónima para insertar los productos asociando dinámicamente la categoría
 DO $$

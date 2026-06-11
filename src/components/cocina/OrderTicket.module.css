@@ -1,0 +1,178 @@
+.ticket {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.ticket:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary-light);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+.idAndType {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.orderId {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.orderType {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.clientName {
+  font-size: 0.875rem;
+  color: var(--color-text);
+  opacity: 0.9;
+}
+
+/* Cronómetro */
+.timer {
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.timerNormal {
+  background-color: rgba(16, 185, 129, 0.15); /* Success green */
+  color: var(--color-success);
+}
+
+.timerWarning {
+  background-color: rgba(245, 158, 11, 0.15); /* Warning amber */
+  color: var(--color-warning);
+}
+
+.timerDanger {
+  background-color: rgba(239, 68, 68, 0.15); /* Danger red */
+  color: var(--color-danger);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Lista de ítems */
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.itemRow {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+
+.itemMain {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.itemQty {
+  font-weight: 800;
+  color: var(--color-primary);
+  background: rgba(255, 107, 53, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  min-width: 28px;
+  text-align: center;
+}
+
+.itemName {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text);
+  flex: 1;
+}
+
+/* Notas resaltadas */
+.itemRowHasNotes {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.itemNotes {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5; /* Red 300 for dark mode */
+  border-left: 3px solid var(--color-danger);
+  font-size: 0.875rem;
+  font-weight: 700;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.noteIcon {
+  font-size: 1rem;
+}
+
+/* Acciones */
+.actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+}
+
+.readyBtn {
+  flex: 2;
+  padding: 14px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: var(--radius-sm);
+}

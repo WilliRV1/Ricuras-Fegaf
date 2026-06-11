@@ -27,3 +27,11 @@ export interface CartItem {
   notas?: string;
 }
 
+export interface PedidoWithDetalles extends Pedido {
+  detalle_pedidos: (DetallePedido & {
+    productos: {
+      nombre: string;
+    } | null;
+  })[];
+}
+
