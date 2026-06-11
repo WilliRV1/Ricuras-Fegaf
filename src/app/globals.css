@@ -7,38 +7,88 @@
   --color-primary-light: #FF8F66;
   
   /* Backgrounds & Surfaces (Dark theme por defecto) */
-  --color-background: #0F172A; /* Slate 900 */
-  --color-surface: #1E293B; /* Slate 800 */
-  --color-surface-hover: #334155; /* Slate 700 */
-  --color-border: #334155;
+  --color-background: #0A1628; /* Slate 950 - more premium */
+  --color-surface: #1E293B;   /* Slate 800 */
+  --color-surface-hover: #2D3F55;
+  --color-border: #2D3F55;
+  --color-border-subtle: #1E293B;
   
   /* Text */
-  --color-text: #F8FAFC; /* Slate 50 */
+  --color-text: #F1F5F9;       /* Slate 100 */
   --color-text-muted: #94A3B8; /* Slate 400 */
+  --color-text-subtle: #64748B;/* Slate 500 */
   
   /* Semantic Colors */
-  --color-danger: #EF4444; /* Red 500 */
-  --color-success: #10B981; /* Emerald 500 */
-  --color-warning: #F59E0B; /* Amber 500 */
-  --color-info: #3B82F6; /* Blue 500 */
+  --color-danger: #EF4444;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-info: #3B82F6;
 
   /* Radii */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 15px rgba(255, 107, 53, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 20px rgba(255, 107, 53, 0.35);
+  --shadow-glow-lg: 0 0 40px rgba(255, 107, 53, 0.2);
+  --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.5);
   
   /* Typography */
   --font-family: var(--font-inter), system-ui, sans-serif;
   
   /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 300ms ease;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 450ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============================================================
+   Global Keyframe Animations
+   ============================================================ */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.85) translateY(8px); }
+  70%  { transform: scale(1.04) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes slideOutLeft {
+  0%   { opacity: 1; transform: translateX(0); max-height: 200px; margin-bottom: 8px; padding: 16px; }
+  60%  { opacity: 0; transform: translateX(-60px); }
+  100% { opacity: 0; transform: translateX(-80px); max-height: 0; margin-bottom: 0; padding: 0; }
+}
+
+@keyframes bounceIn {
+  0%   { transform: scale(0.3); opacity: 0; }
+  50%  { transform: scale(1.05); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* Base Reset */

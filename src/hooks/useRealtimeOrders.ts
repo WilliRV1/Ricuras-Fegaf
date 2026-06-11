@@ -5,6 +5,34 @@ import { ESTADOS_PEDIDO } from '@/lib/constants';
 
 export type ConnectionStatus = 'connecting' | 'online' | 'offline';
 
+/**
+ * Reproduce un chime doble sutil usando la Web Audio API del navegador.
+ * No requiere archivos externos. C5 (523Hz) → E5 (659Hz), suavemente.
+ */
+function playOrderChime() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const playTone = (freq: number, startAt: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startAt);
+      gain.gain.setValueAtTime(0, ctx.currentTime + startAt);
+      gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + startAt + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + duration);
+      osc.start(ctx.currentTime + startAt);
+      osc.stop(ctx.currentTime + startAt + duration);
+    };
+    playTone(523.25, 0,    0.30); // C5
+    playTone(659.25, 0.18, 0.40); // E5
+    setTimeout(() => ctx.close(), 800);
+  } catch {
+    // Silencioso si el navegador no soporta Web Audio API
+  }
+}
+
 export function useRealtimeOrders() {
   const [orders, setOrders] = useState<PedidoWithDetalles[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +97,7 @@ export function useRealtimeOrders() {
           if (newOrder.estado === ESTADOS_PEDIDO.PENDIENTE) {
             const orderWithDetails = await fetchOrderDetails(newOrder.id);
             if (orderWithDetails && mounted) {
+              playOrderChime();
               setOrders((prev) => [...prev, orderWithDetails]);
             }
           }

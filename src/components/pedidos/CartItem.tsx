@@ -14,6 +14,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const { updateQuantity, removeItem, updateNotes } = useCart();
   const [localNotes, setLocalNotes] = useState(item.notas || '');
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   // Formateador de precios
   const formattedPrice = new Intl.NumberFormat('es-CO', {
@@ -41,8 +42,16 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
     }
   };
 
+  const handleRemove = () => {
+    setIsExiting(true);
+    // Esperar a que termine la animación antes de remover del estado
+    setTimeout(() => {
+      removeItem(item.producto.id, item.notas);
+    }, 380);
+  };
+
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${isExiting ? styles.exiting : ''}`}>
       <div className={styles.header}>
         <div className={styles.productInfo}>
           <h4 className={styles.productName}>{item.producto.nombre}</h4>
@@ -51,9 +60,10 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
         
         <button 
           className={styles.deleteBtn}
-          onClick={() => removeItem(item.producto.id, item.notas)}
+          onClick={handleRemove}
           aria-label="Eliminar producto"
           title="Eliminar del carrito"
+          disabled={isExiting}
         >
           🗑️
         </button>
@@ -64,7 +74,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
           <button 
             className={styles.qtyBtn} 
             onClick={() => updateQuantity(item.producto.id, item.notas, -1)}
-            disabled={item.cantidad <= 1}
+            disabled={item.cantidad <= 1 || isExiting}
             aria-label="Disminuir cantidad"
           >
             −
@@ -74,6 +84,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
             className={styles.qtyBtn} 
             onClick={() => updateQuantity(item.producto.id, item.notas, 1)}
             aria-label="Aumentar cantidad"
+            disabled={isExiting}
           >
             +
           </button>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import styles from './Header.module.css';
 
@@ -20,7 +21,14 @@ export const Header: React.FC = () => {
     <header className={styles.header}>
       <div className={styles.container}>
         <div className={styles.brand}>
-          <span className={styles.logo}>RF</span>
+          <Image
+            src="/logo.png"
+            alt="Ricuras FegaF"
+            width={40}
+            height={40}
+            className={styles.logo}
+            priority
+          />
           <span className={styles.title}>Ricuras FegaF</span>
         </div>
         <nav className={styles.nav}>
