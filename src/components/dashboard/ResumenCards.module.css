@@ -65,3 +65,6 @@
 .accentWarning  { --card-accent: var(--color-warning); }
 .accentPurple   { --card-accent: #A78BFA; }
 .accentBlue     { --card-accent: #60A5FA; }
+.accentTeal     { --card-accent: #2DD4BF; }
+.accentOrange   { --card-accent: #FB923C; }
+.accentDanger   { --card-accent: var(--color-danger); }

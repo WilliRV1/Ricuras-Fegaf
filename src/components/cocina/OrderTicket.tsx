@@ -45,11 +45,16 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
   };
 
   const handleCancel = async () => {
-    if (!window.confirm(`¿Estás seguro de cancelar el pedido #${order.id}?`)) return;
+    const reason = window.prompt(`¿Por qué deseas cancelar el pedido #${order.id}? (Obligatorio)`);
+    if (reason === null) return; // Usuario clickeó cancelar en el prompt
+    if (reason.trim() === '') {
+      toast.error('Debes ingresar un motivo para cancelar el pedido');
+      return;
+    }
     
     setIsCancelling(true);
     try {
-      const res = await cancelOrder(order.id);
+      const res = await cancelOrder(order.id, reason.trim());
       if (res.success) {
         toast.success(`Pedido #${order.id} cancelado`);
       } else {

@@ -6,6 +6,9 @@ interface ResumenCardsProps {
   totalPedidos: number;
   totalFacturado: number;
   totalRecargos: number;
+  ticketPromedio: number;
+  horaPico: string;
+  cancelados: { id: number; motivo: string; hora: string }[];
   porMetodoPago: {
     efectivo: number;
     nequi: number;
@@ -21,6 +24,9 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
   totalPedidos,
   totalFacturado,
   totalRecargos,
+  ticketPromedio,
+  horaPico,
+  cancelados,
   porMetodoPago,
   porTipo,
 }) => {
@@ -29,9 +35,9 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
       {/* Total Facturado */}
       <div className={`${styles.card} ${styles.accentPrimary}`}>
         <div className={styles.cardIcon}>💰</div>
-        <p className={styles.cardLabel}>Total Facturado (Hoy)</p>
+        <p className={styles.cardLabel}>Total Facturado</p>
         <p className={styles.cardValue}>{formatCurrency(totalFacturado)}</p>
-        <p className={styles.cardSub}>Incluye {formatCurrency(totalRecargos)} en recargos</p>
+        <p className={styles.cardSub}>Incl. {formatCurrency(totalRecargos)} en recargos</p>
       </div>
 
       {/* Total Pedidos */}
@@ -42,6 +48,30 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
         <p className={styles.cardSub}>
           {porTipo.mesa} Mesa · {porTipo.domicilio} Domicilio
         </p>
+      </div>
+
+      {/* Ticket Promedio */}
+      <div className={`${styles.card} ${styles.accentTeal}`}>
+        <div className={styles.cardIcon}>🎫</div>
+        <p className={styles.cardLabel}>Ticket Promedio</p>
+        <p className={styles.cardValue}>{formatCurrency(ticketPromedio)}</p>
+        <p className={styles.cardSub}>Por pedido pagado</p>
+      </div>
+
+      {/* Hora Pico */}
+      <div className={`${styles.card} ${styles.accentOrange}`}>
+        <div className={styles.cardIcon}>🕐</div>
+        <p className={styles.cardLabel}>Hora Pico</p>
+        <p className={styles.cardValue} style={{ fontSize: '1.2rem' }}>{horaPico}</p>
+        <p className={styles.cardSub}>Horario con más pedidos</p>
+      </div>
+
+      {/* Cancelados */}
+      <div className={`${styles.card} ${styles.accentDanger}`}>
+        <div className={styles.cardIcon}>❌</div>
+        <p className={styles.cardLabel}>Cancelados</p>
+        <p className={styles.cardValue}>{cancelados.length}</p>
+        <p className={styles.cardSub}>Pedidos no completados</p>
       </div>
 
       {/* Efectivo */}

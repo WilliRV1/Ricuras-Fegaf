@@ -1,28 +1,56 @@
 import { getResumenDelDia, getPedidosRecientes } from '@/app/actions/dashboard';
 import { ResumenCards } from '@/components/dashboard/ResumenCards';
 import { PedidosTable } from '@/components/dashboard/PedidosTable';
+import { CancelacionesTable } from '@/components/dashboard/CancelacionesTable';
+import { DatePicker } from '@/components/dashboard/DatePicker';
 import styles from './page.module.css';
 
-export const revalidate = 60; // Revalidar cada 60s
+export const dynamic = 'force-dynamic'; // Siempre renderizar en el servidor (sin caché)
 
-export default async function DashboardPage() {
+interface DashboardPageProps {
+  searchParams: Promise<{ date?: string }>;
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const { date } = await searchParams;
+
+  // Calcular la fecha: usar parámetro URL o hoy
+  const todayISO = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
+  const targetDate = date || todayISO;
+
   const [stats, pedidosRecientes] = await Promise.all([
-    getResumenDelDia(),
-    getPedidosRecientes(20),
+    getResumenDelDia(targetDate),
+    getPedidosRecientes(50, targetDate),
   ]);
 
-  const hoy = new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const fechaLabel = new Date(`${targetDate}T12:00:00`).toLocaleDateString('es-CO', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+
+  const esHoy = targetDate === todayISO;
 
   return (
     <main className={styles.main}>
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>📊 Dashboard de Ventas</h1>
-          <p className={styles.subtitle}>{hoy}</p>
+          <p className={styles.subtitle}>
+            {esHoy ? `Hoy — ${fechaLabel}` : fechaLabel}
+          </p>
         </div>
-        <a href="/dashboard" className={styles.refreshBtn}>
-          🔄 Actualizar
-        </a>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <DatePicker currentDate={targetDate} />
+          {!esHoy && (
+            <a href="/dashboard" className={styles.refreshBtn}>
+              📅 Volver a Hoy
+            </a>
+          )}
+          {esHoy && (
+            <a href="/dashboard" className={styles.refreshBtn}>
+              🔄 Actualizar
+            </a>
+          )}
+        </div>
       </header>
 
       {!stats ? (
@@ -34,8 +62,19 @@ export default async function DashboardPage() {
             <ResumenCards {...stats} />
           </section>
 
-          <section className={styles.section} style={{ marginTop: '16px' }}>
-            <h2 className={styles.sectionTitle}>Últimos Pedidos (Hoy)</h2>
+          {stats.cancelados.length > 0 && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                ❌ Pedidos Cancelados ({stats.cancelados.length})
+              </h2>
+              <CancelacionesTable cancelados={stats.cancelados} />
+            </section>
+          )}
+
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              {esHoy ? 'Últimos Pedidos (Hoy)' : `Pedidos del ${fechaLabel}`}
+            </h2>
             <PedidosTable pedidos={pedidosRecientes} />
           </section>
         </>

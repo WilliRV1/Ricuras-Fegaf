@@ -31,14 +31,18 @@ export async function markOrderAsReady(pedidoId: number) {
 /**
  * Cancela un pedido directamente desde cocina.
  * @param pedidoId ID numérico del pedido
+ * @param motivo Opcional, razón de la cancelación
  */
-export async function cancelOrder(pedidoId: number) {
+export async function cancelOrder(pedidoId: number, motivo?: string) {
   try {
     const supabase = await createClient();
 
     const { error } = await supabase
       .from('pedidos')
-      .update({ estado: ESTADOS_PEDIDO.CANCELADO })
+      .update({ 
+        estado: ESTADOS_PEDIDO.CANCELADO,
+        motivo_cancelacion: motivo || null
+      } as any)
       .eq('id', pedidoId);
 
     if (error) {
