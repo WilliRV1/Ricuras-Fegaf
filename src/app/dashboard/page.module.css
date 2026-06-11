@@ -1,0 +1,182 @@
+.main {
+  padding: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  text-transform: capitalize;
+}
+
+.refreshBtn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.refreshBtn:hover {
+  background-color: rgba(255,255,255,0.07);
+}
+
+/* Hero Card — Total del día */
+.heroCard {
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 107, 53, 0.05));
+  border: 1px solid rgba(255, 107, 53, 0.4);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 8px 32px rgba(255, 107, 53, 0.15);
+}
+
+.heroIcon {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.heroLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.heroValue {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--color-primary-light);
+  margin: 0;
+  line-height: 1.1;
+}
+
+/* Secciones */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  border-left: 3px solid var(--color-primary);
+  padding-left: 12px;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.metricCard {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.metricCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.metricIcon {
+  font-size: 1.75rem;
+}
+
+.metricLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.metricValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.metricValueLg {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin: 0;
+}
+
+/* Colores por método de pago */
+.efectivo { border-color: rgba(16, 185, 129, 0.3); }
+.efectivo .metricValue { color: var(--color-success); }
+
+.nequi { border-color: rgba(138, 43, 226, 0.3); }
+.nequi .metricValue { color: #A78BFA; }
+
+.datafono { border-color: rgba(245, 158, 11, 0.3); }
+.datafono .metricValue { color: var(--color-warning); }
+
+/* Pedidos por tipo */
+.total { border-color: rgba(255, 107, 53, 0.3); }
+.total .metricValueLg { color: var(--color-primary-light); }
+
+.mesa { border-color: rgba(59, 130, 246, 0.3); }
+.mesa .metricValueLg { color: #60A5FA; }
+
+.domicilio { border-color: rgba(16, 185, 129, 0.3); }
+.domicilio .metricValueLg { color: var(--color-success); }
+
+.errorState {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  color: var(--color-danger);
+  font-weight: 600;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .main { padding: 1rem; }
+  .heroValue { font-size: 2rem; }
+  .heroCard { padding: 20px; }
+}
