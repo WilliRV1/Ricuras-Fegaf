@@ -38,7 +38,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
         toast.error(res.error || 'Error al actualizar pedido');
         setIsSubmitting(false); // Only re-enable if there's an error, otherwise it unmounts
       }
-    } catch (err) {
+    } catch {
       toast.error('Error de red');
       setIsSubmitting(false);
     }
@@ -61,7 +61,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
         toast.error(res.error || 'Error al cancelar pedido');
         setIsCancelling(false);
       }
-    } catch (err) {
+    } catch {
       toast.error('Error de red');
       setIsCancelling(false);
     }

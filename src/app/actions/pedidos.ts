@@ -40,7 +40,7 @@ export async function submitOrder(
   }));
 
   // Llamar al RPC transaccional
-  // @ts-ignore - Tipos no actualizados con el nuevo RPC
+  // @ts-expect-error - Tipos no actualizados con el nuevo RPC
   const { data: pedidoId, error: rpcError } = await supabase.rpc('create_order_with_details', {
     p_tipo: orderType,
     p_numero_mesa: numero_mesa,

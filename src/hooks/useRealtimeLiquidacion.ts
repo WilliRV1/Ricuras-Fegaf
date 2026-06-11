@@ -46,6 +46,7 @@ export function useRealtimeLiquidacion() {
           setLoading(false);
           setConnectionStatus('online');
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         if (mounted) {
           console.error('Error fetching initial ready orders:', err);

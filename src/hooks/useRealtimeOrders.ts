@@ -11,6 +11,7 @@ export type ConnectionStatus = 'connecting' | 'online' | 'offline';
  */
 function playOrderChime() {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     const playTone = (freq: number, startAt: number, duration: number) => {
       const osc = ctx.createOscillator();
@@ -78,7 +79,7 @@ export function useRealtimeOrders() {
       } catch (err) {
         if (mounted) {
           console.error('Error fetching initial orders:', err);
-          setError(err.message);
+          setError(err instanceof Error ? err.message : 'Unknown error');
           setLoading(false);
           setConnectionStatus('offline');
         }

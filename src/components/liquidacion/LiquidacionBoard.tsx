@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { PedidoWithDetalles } from '@/types';
 import { useRealtimeLiquidacion, ConnectionStatus } from '@/hooks/useRealtimeLiquidacion';
 import { LiquidacionTicket } from './LiquidacionTicket';
 import styles from './LiquidacionBoard.module.css';

@@ -96,6 +96,20 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
 
 
   /**
+   * isFormValid: true si se seleccionó un tipo de atención y,
+   * dependiendo del tipo, se completaron los datos requeridos.
+   */
+  const isFormValid = (() => {
+    if (!orderType) return false;
+    if (orderType === TIPOS_ATENCION.MESA) return !!orderDetails.numero_mesa;
+    return !!(
+      orderDetails.cliente_nombre &&
+      orderDetails.cliente_telefono &&
+      orderDetails.cliente_direccion
+    );
+  })();
+
+  /**
    * Envía el pedido completo a Supabase.
    */
   const handleEnviarCocina = async (metodoPago: MetodoPago) => {
@@ -121,18 +135,6 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
     setOrderDetails({});
     setFormErrors({});
   };
-
-  /**
-   * isFormValid: true si se seleccionó un tipo de atención y,
-  const isFormValid = (() => {
-    if (!orderType) return false;
-    if (orderType === TIPOS_ATENCION.MESA) return !!orderDetails.numero_mesa;
-    return !!(
-      orderDetails.cliente_nombre &&
-      orderDetails.cliente_telefono &&
-      orderDetails.cliente_direccion
-    );
-  })();
 
   /* ----------------------------------------------------------------
      Indicadores de paso

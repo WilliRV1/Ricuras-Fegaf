@@ -24,7 +24,8 @@ export async function closeOrder(pedidoId: number, metodoPago: string) {
       return { success: false, error: 'No se pudo consultar el pedido.' };
     }
 
-    let { subtotal, recargo, total } = pedidoData;
+    const subtotal = pedidoData.subtotal;
+    let { recargo, total } = pedidoData;
 
     // 2. Si el método de pago es Datáfono y no se había cobrado recargo aún, calcularlo
     // (En domicilios el recargo se puede calcular desde el carrito, por eso validamos si ya existe)
