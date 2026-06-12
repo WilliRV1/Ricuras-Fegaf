@@ -221,6 +221,18 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
             </span>
           </div>
 
+          {/* Barra de Búsqueda */}
+          <div className={styles.searchContainer}>
+            <span className={styles.searchIcon}>🔍</span>
+            <input 
+              type="text" 
+              className={styles.searchInput} 
+              placeholder="Buscar plato, bebida..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
           {/* Pestañas de categoría siempre visibles */}
           <CategoryTabs
             categorias={initialCategorias}
