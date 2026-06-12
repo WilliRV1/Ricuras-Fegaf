@@ -3,6 +3,7 @@ import { ResumenCards } from '@/components/dashboard/ResumenCards';
 import { PedidosTable } from '@/components/dashboard/PedidosTable';
 import { CancelacionesTable } from '@/components/dashboard/CancelacionesTable';
 import { DatePicker } from '@/components/dashboard/DatePicker';
+import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import styles from './page.module.css';
 
 export const dynamic = 'force-dynamic'; // Siempre renderizar en el servidor (sin caché)
@@ -79,6 +80,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </section>
         </>
       )}
+
+      {/* Auto-refresco de página cada 60s si estamos viendo "Hoy" */}
+      {esHoy && <AutoRefresh />}
     </main>
   );
 }

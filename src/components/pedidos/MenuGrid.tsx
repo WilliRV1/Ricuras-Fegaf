@@ -19,7 +19,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({ productos, onAddProduct }) =
     return (
       <div className={styles.emptyState}>
         <span className={styles.emptyIcon}>🍽️</span>
-        <p className={styles.emptyText}>No hay productos disponibles en esta categoría.</p>
+        <p className={styles.emptyText}>No encontramos productos que coincidan con los filtros seleccionados.</p>
       </div>
     );
   }

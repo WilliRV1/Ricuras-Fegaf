@@ -45,6 +45,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
      Estado del menú
      ---------------------------------------------------------------- */
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   /* ----------------------------------------------------------------
      Estado del pedido
@@ -57,9 +58,21 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
      Productos filtrados por categoría
      ---------------------------------------------------------------- */
   const filteredProducts = useMemo(() => {
-    if (selectedCategory === null) return initialProductos;
-    return initialProductos.filter((p) => Number(p.categoria_id) === Number(selectedCategory));
-  }, [initialProductos, selectedCategory]);
+    let result = initialProductos;
+    
+    // Filtrar por categoría
+    if (selectedCategory !== null) {
+      result = result.filter((p) => Number(p.categoria_id) === Number(selectedCategory));
+    }
+    
+    // Filtrar por búsqueda de texto
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p => p.nombre.toLowerCase().includes(q));
+    }
+    
+    return result;
+  }, [initialProductos, selectedCategory, searchQuery]);
 
   /* ----------------------------------------------------------------
      Handlers
