@@ -4,17 +4,46 @@ import { createClient } from '@/lib/supabase/server';
 import { ESTADOS_PEDIDO, METODOS_PAGO, TIPOS_ATENCION } from '@/lib/constants';
 
 /**
+ * Calcula la ventana de tiempo para las consultas del Dashboard.
+ * Si es "Hoy" y hay un turno abierto, usa la hora de apertura del turno.
+ * De lo contrario, usa el día calendario estricto.
+ */
+async function getTimeWindow(supabase: any, dateStr?: string) {
+  const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const esHoy = !dateStr || dateStr === bogotaDateStr;
+  const actualDateStr = dateStr || bogotaDateStr;
+
+  if (esHoy) {
+    // Buscar si hay turno abierto
+    const { data: arqueo } = await supabase
+      .from('arqueos_caja')
+      .select('opened_at')
+      .eq('estado', 'abierto')
+      .single();
+
+    if (arqueo) {
+      return {
+        startOfDay: arqueo.opened_at,
+        endOfDay: new Date().toISOString()
+      };
+    }
+  }
+
+  // Fallback a día calendario
+  return {
+    startOfDay: new Date(`${actualDateStr}T00:00:00-05:00`).toISOString(),
+    endOfDay: new Date(`${actualDateStr}T23:59:59.999-05:00`).toISOString()
+  };
+}
+
+/**
  * Retorna el resumen de un día específico o el día actual.
  * @param dateStr Formato 'YYYY-MM-DD' opcional.
  */
 export async function getResumenDelDia(dateStr?: string) {
   const supabase = await createClient();
 
-  const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const actualDateStr = dateStr || bogotaDateStr;
-
-  const startOfDay = new Date(`${actualDateStr}T00:00:00-05:00`).toISOString();
-  const endOfDay = new Date(`${actualDateStr}T23:59:59.999-05:00`).toISOString();
+  const { startOfDay, endOfDay } = await getTimeWindow(supabase, dateStr);
 
   // Consultar todos los pedidos del día para calcular todas las métricas
   const { data, error } = await supabase
@@ -105,11 +134,7 @@ export async function getResumenDelDia(dateStr?: string) {
 export async function getPedidosRecientes(limit: number = 20, dateStr?: string) {
   const supabase = await createClient();
 
-  const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const actualDateStr = dateStr || bogotaDateStr;
-
-  const startOfDay = new Date(`${actualDateStr}T00:00:00-05:00`).toISOString();
-  const endOfDay = new Date(`${actualDateStr}T23:59:59.999-05:00`).toISOString();
+  const { startOfDay, endOfDay } = await getTimeWindow(supabase, dateStr);
 
   const { data, error } = await supabase
     .from('pedidos')
@@ -134,11 +159,7 @@ export async function getPedidosRecientes(limit: number = 20, dateStr?: string) 
 export async function getProductosVendidosDelDia(dateStr?: string) {
   const supabase = await createClient();
 
-  const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const actualDateStr = dateStr || bogotaDateStr;
-
-  const startOfDay = new Date(`${actualDateStr}T00:00:00-05:00`).toISOString();
-  const endOfDay = new Date(`${actualDateStr}T23:59:59.999-05:00`).toISOString();
+  const { startOfDay, endOfDay } = await getTimeWindow(supabase, dateStr);
 
   // Traer todos los detalle_pedidos de pedidos pagados en el día
   const { data, error } = await supabase
