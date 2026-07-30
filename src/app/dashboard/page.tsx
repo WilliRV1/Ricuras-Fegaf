@@ -65,13 +65,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div className={styles.errorState}>⚠️ Error al cargar métricas. Recarga la página.</div>
       ) : (
         <>
-          {/* Arqueo de Caja (Solo visible si es hoy, porque el turno es en tiempo real) */}
+          {/* Arqueo de Caja (Deshabilitado temporalmente a petición del usuario) */}
+          {/* 
           {esHoy && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>💰 Turno de Caja</h2>
               <ArqueoCaja initialState={estadoCaja} />
             </section>
-          )}
+          )} 
+          */}
 
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Resumen del Día</h2>
@@ -81,7 +83,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           {/* Control de Stock */}
           {productos && productos.length > 0 && (
             <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>📦 Control de Stock Rápido</h2>
               <StockManager productos={productos} />
             </section>
           )}
