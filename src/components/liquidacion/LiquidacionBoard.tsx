@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRealtimeLiquidacion, ConnectionStatus } from '@/hooks/useRealtimeLiquidacion';
 import { LiquidacionTicket } from './LiquidacionTicket';
 import styles from './LiquidacionBoard.module.css';
@@ -13,6 +13,7 @@ const ConnectionIndicator = ({ status }: { status: ConnectionStatus }) => {
 
 export const LiquidacionBoard: React.FC = () => {
   const { orders, deudas, loading, error, connectionStatus } = useRealtimeLiquidacion();
+  const [deudasOpen, setDeudasOpen] = useState(false);
 
   if (loading) {
     return <div className={styles.loader}>Cargando pedidos por cobrar... ⏳</div>;
@@ -38,20 +39,46 @@ export const LiquidacionBoard: React.FC = () => {
           ============================================================ */}
       {deudas.length > 0 && (
         <section className={styles.deudasSection}>
-          <div className={styles.deudasHeader}>
-            <h2 className={styles.deudasTitle}>
-              💸 Deudas Pendientes
+          {/* Header clicable para desplegar/colapsar */}
+          <button
+            className={styles.deudasToggle}
+            onClick={() => setDeudasOpen((prev) => !prev)}
+            aria-expanded={deudasOpen}
+          >
+            <div className={styles.deudasTitleRow}>
+              <span className={styles.deudasTitleText}>
+                💸 Deudas Pendientes
+              </span>
               <span className={styles.deudasCount}>{deudas.length}</span>
-            </h2>
-            <p className={styles.deudasSubtitle}>
-              Estos clientes se fueron sin pagar. Selecciona el método de pago y presiona "Cobrar" cuando vengan a pagar.
-            </p>
-          </div>
-          <div className={styles.grid}>
-            {deudas.map((order) => (
-              <LiquidacionTicket key={order.id} order={order} isDebe />
-            ))}
-          </div>
+            </div>
+            <div className={styles.deudasToggleRight}>
+              {!deudasOpen && (
+                <span className={styles.deudasPreview}>
+                  {deudas.slice(0, 2).map(d =>
+                    `#${d.id}${d.cliente_nombre ? ` · ${d.cliente_nombre}` : d.numero_mesa ? ` · Mesa ${d.numero_mesa}` : ''}`
+                  ).join('  •  ')}
+                  {deudas.length > 2 && `  +${deudas.length - 2} más`}
+                </span>
+              )}
+              <span className={`${styles.chevron} ${deudasOpen ? styles.chevronOpen : ''}`}>
+                ▾
+              </span>
+            </div>
+          </button>
+
+          {/* Contenido desplegable */}
+          {deudasOpen && (
+            <>
+              <p className={styles.deudasSubtitle}>
+                Selecciona el método de pago y presiona "Cobrar" cuando el cliente venga a pagar.
+              </p>
+              <div className={styles.grid}>
+                {deudas.map((order) => (
+                  <LiquidacionTicket key={order.id} order={order} isDebe />
+                ))}
+              </div>
+            </>
+          )}
         </section>
       )}
 

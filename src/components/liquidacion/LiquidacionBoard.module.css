@@ -12,6 +12,11 @@
   align-items: flex-start;
 }
 
+/* Cuando el grid está dentro de deudasSection, darle padding */
+.deudasSection .grid {
+  padding: 0 20px 20px 20px;
+}
+
 .loader {
   display: flex;
   justify-content: center;
@@ -65,7 +70,7 @@
 }
 
 /* ============================================================
-   Sección DEUDAS PENDIENTES
+   Sección DEUDAS PENDIENTES — Desplegable
    ============================================================ */
 .deudasSection {
   background: linear-gradient(
@@ -75,8 +80,9 @@
   );
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: var(--radius-xl);
-  padding: 20px 24px;
+  padding: 0;
   margin-bottom: 32px;
+  overflow: hidden;
   animation: deudasPulse 3s ease-in-out infinite;
 }
 
@@ -85,37 +91,90 @@
   50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08); }
 }
 
-.deudasHeader {
-  margin-bottom: 16px;
+/* Botón clicable que hace de header */
+.deudasToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
 }
 
-.deudasTitle {
+.deudasToggle:hover {
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.deudasTitleRow {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.deudasTitleText {
+  font-size: 1rem;
   font-weight: 800;
   color: var(--color-text);
-  margin: 0 0 6px 0;
 }
 
 .deudasCount {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
   border-radius: var(--radius-full);
   background: rgba(239, 68, 68, 0.25);
   color: #FCA5A5;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
+.deudasToggleRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* Vista previa de las deudas cuando está cerrado */
+.deudasPreview {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+}
+
+/* Chevron animado */
+.chevron {
+  font-size: 1.1rem;
+  color: #FCA5A5;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Contenido desplegado */
 .deudasSubtitle {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
-  margin: 0;
+  margin: 0 20px 12px 20px;
   line-height: 1.4;
 }
+
 
