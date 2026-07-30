@@ -1,0 +1,145 @@
+/* Contenedor Caja Cerrada */
+.containerClosed {
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.iconClosed {
+  font-size: 2.5rem;
+  opacity: 0.7;
+}
+
+.infoClosed {
+  flex: 1;
+}
+
+.infoClosed h3 {
+  margin: 0 0 4px 0;
+  color: var(--color-text);
+}
+
+.infoClosed p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.formAbrir {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.inputBase {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: 1rem;
+  width: 150px;
+  outline: none;
+}
+
+.inputBase:focus {
+  border-color: var(--color-primary);
+}
+
+/* Contenedor Caja Abierta */
+.containerOpen {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(30, 41, 59, 0.6) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconOpen {
+  font-size: 1.5rem;
+}
+
+.titleRow h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.25rem;
+}
+
+.timeOpen {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .metricsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.metricCard {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metricLabel {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.metricValue {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.metricHighlight {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.metricValueHighlight {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--color-success);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}

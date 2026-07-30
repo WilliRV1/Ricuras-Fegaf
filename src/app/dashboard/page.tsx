@@ -1,8 +1,11 @@
 import { getResumenDelDia, getPedidosRecientes, getProductosVendidosDelDia } from '@/app/actions/dashboard';
+import { obtenerEstadoCaja } from '@/app/actions/caja';
 import { ResumenCards } from '@/components/dashboard/ResumenCards';
 import { PedidosTable } from '@/components/dashboard/PedidosTable';
 import { CancelacionesTable } from '@/components/dashboard/CancelacionesTable';
 import { ProductosVendidosTable } from '@/components/dashboard/ProductosVendidosTable';
+import { StockManager } from '@/components/dashboard/StockManager';
+import { ArqueoCaja } from '@/components/dashboard/ArqueoCaja';
 import { DatePicker } from '@/components/dashboard/DatePicker';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import styles from './page.module.css';
@@ -20,10 +23,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const todayISO = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   const targetDate = date || todayISO;
 
-  const [stats, pedidosRecientes, productosVendidos] = await Promise.all([
+  const [stats, pedidosRecientes, productosVendidos, { data: productos }, estadoCaja] = await Promise.all([
     getResumenDelDia(targetDate),
     getPedidosRecientes(50, targetDate),
     getProductosVendidosDelDia(targetDate),
+    (await import('@/lib/supabase/server')).createClient().then(sb => sb.from('productos').select('*').order('nombre', { ascending: true })),
+    obtenerEstadoCaja(),
   ]);
 
   const fechaLabel = new Date(`${targetDate}T12:00:00`).toLocaleDateString('es-CO', {
@@ -60,10 +65,26 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div className={styles.errorState}>⚠️ Error al cargar métricas. Recarga la página.</div>
       ) : (
         <>
+          {/* Arqueo de Caja (Solo visible si es hoy, porque el turno es en tiempo real) */}
+          {esHoy && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>💰 Turno de Caja</h2>
+              <ArqueoCaja initialState={estadoCaja} />
+            </section>
+          )}
+
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Resumen del Día</h2>
             <ResumenCards {...stats} />
           </section>
+
+          {/* Control de Stock */}
+          {productos && productos.length > 0 && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>📦 Control de Stock Rápido</h2>
+              <StockManager productos={productos} />
+            </section>
+          )}
 
           {/* Productos más vendidos del día */}
           <section className={styles.section}>

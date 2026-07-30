@@ -29,11 +29,10 @@ export default async function PedidosPage() {
     console.error('Error obteniendo categorias:', catError);
   }
 
-  // Traer productos activos
+  // Traer productos (todos, para mostrar los agotados deshabilitados)
   const { data: productos, error: prodError } = await (await supabase)
     .from('productos')
-    .select('*')
-    .eq('activo', true);
+    .select('*');
 
   if (prodError) {
     console.error('Error obteniendo productos:', prodError);

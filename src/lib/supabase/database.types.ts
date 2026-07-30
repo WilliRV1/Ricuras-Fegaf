@@ -164,6 +164,36 @@ export interface Database {
           }
         ]
       }
+      arqueos_caja: {
+        Row: {
+          id: number
+          base_inicial: number
+          estado: string
+          opened_at: string
+          closed_at: string | null
+          total_efectivo: number
+          total_transferencias: number
+        }
+        Insert: {
+          id?: number
+          base_inicial: number
+          estado?: string
+          opened_at?: string
+          closed_at?: string | null
+          total_efectivo?: number
+          total_transferencias?: number
+        }
+        Update: {
+          id?: number
+          base_inicial?: number
+          estado?: string
+          opened_at?: string
+          closed_at?: string | null
+          total_efectivo?: number
+          total_transferencias?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

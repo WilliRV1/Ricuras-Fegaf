@@ -68,10 +68,13 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
   };
 
   let timerClass = styles.timerNormal;
-  if (elapsedMinutes >= 15) {
+  let ticketClass = '';
+  if (elapsedMinutes >= 25) {
     timerClass = styles.timerDanger;
-  } else if (elapsedMinutes >= 10) {
+    ticketClass = styles.ticketDanger;
+  } else if (elapsedMinutes >= 15) {
     timerClass = styles.timerWarning;
+    ticketClass = styles.ticketWarning;
   }
 
   const isMesa = order.tipo === 'mesa';
@@ -81,7 +84,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
     : `Domicilio`;
 
   return (
-    <div className={styles.ticket}>
+    <div className={`${styles.ticket} ${ticketClass}`}>
       <div className={styles.header}>
         <div className={styles.idAndType}>
           <h4 className={styles.orderId}>Orden #{order.id}</h4>
