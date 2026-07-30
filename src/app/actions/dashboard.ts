@@ -40,6 +40,7 @@ export async function getResumenDelDia(dateStr?: string) {
     efectivo: pagados.filter(p => p.metodo_pago === METODOS_PAGO.EFECTIVO).reduce((s, p) => s + (p.total ?? 0), 0),
     nequi:    pagados.filter(p => p.metodo_pago === METODOS_PAGO.NEQUI).reduce((s, p) => s + (p.total ?? 0), 0),
     datafono: pagados.filter(p => p.metodo_pago === METODOS_PAGO.DATAFONO).reduce((s, p) => s + (p.total ?? 0), 0),
+    bancolombia: pagados.filter(p => p.metodo_pago === METODOS_PAGO.BANCOLOMBIA).reduce((s, p) => s + (p.total ?? 0), 0),
   };
 
   const porTipo = {

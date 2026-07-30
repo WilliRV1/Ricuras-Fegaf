@@ -12,6 +12,7 @@ interface ResumenCardsProps {
     efectivo: number;
     nequi: number;
     datafono: number;
+    bancolombia: number;
   };
   porTipo: {
     mesa: number;
@@ -83,6 +84,13 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
         <div className={styles.cardIcon}>💳</div>
         <p className={styles.cardLabel}>Datáfono</p>
         <p className={styles.cardValue}>{formatCurrency(porMetodoPago.datafono)}</p>
+      </div>
+
+      {/* Bancolombia */}
+      <div className={`${styles.card} ${styles.accentPrimary}`}>
+        <div className={styles.cardIcon}>🏦</div>
+        <p className={styles.cardLabel}>Bancolombia</p>
+        <p className={styles.cardValue}>{formatCurrency(porMetodoPago.bancolombia)}</p>
       </div>
     </div>
   );
