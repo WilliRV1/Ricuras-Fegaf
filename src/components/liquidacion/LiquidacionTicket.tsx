@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { PedidoWithDetalles } from '@/types';
 import { TIPOS_ATENCION, METODOS_PAGO, RECARGO_DATAFONO } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
-import { closeOrder } from '@/app/actions/liquidacion';
+import { closeOrder, markOrderAsDebe } from '@/app/actions/liquidacion';
 import { toast } from '@/components/ui/Toast';
 import { formatCurrency } from '@/lib/utils';
 import styles from './LiquidacionTicket.module.css';
@@ -13,16 +13,24 @@ interface LiquidacionTicketProps {
   order: PedidoWithDetalles;
 }
 
+const METODO_OPTIONS = [
+  { key: METODOS_PAGO.EFECTIVO,    label: 'Efectivo',    icon: '💵' },
+  { key: METODOS_PAGO.NEQUI,       label: 'Nequi',       icon: '📱' },
+  { key: METODOS_PAGO.DATAFONO,    label: 'Datáfono',    icon: '💳' },
+  { key: METODOS_PAGO.BANCOLOMBIA, label: 'Bancolombia', icon: '🏦' },
+];
+
 export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order }) => {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMarkingDebe, setIsMarkingDebe] = useState(false);
 
   const isMesa = order.tipo === TIPOS_ATENCION.MESA;
-  
+
   // Calcular valores en cliente para previsualizar
   const subtotal = order.subtotal;
   let recargo = 0;
-  
+
   if (selectedMethod === METODOS_PAGO.DATAFONO) {
     // Si ya tenía recargo desde el pedido (ej. domicilio con datáfono)
     if (order.recargo > 0) {
@@ -59,6 +67,25 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order }) =
     }
   };
 
+  const handleDebe = async () => {
+    if (!window.confirm(`¿Marcar el pedido #${order.id} como "Debe"?\n\nEl cliente se fue sin pagar. El pedido no contará como ingreso hasta que se cobre.`)) {
+      return;
+    }
+    setIsMarkingDebe(true);
+    try {
+      const res = await markOrderAsDebe(order.id);
+      if (res.success) {
+        toast.success(`Pedido #${order.id} marcado como deuda pendiente`);
+      } else {
+        toast.error(res.error || 'Error al marcar como debe');
+        setIsMarkingDebe(false);
+      }
+    } catch {
+      toast.error('Error al procesar');
+      setIsMarkingDebe(false);
+    }
+  };
+
   return (
     <div className={styles.ticket}>
       <div className={styles.header}>
@@ -79,6 +106,9 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order }) =
             <div>
               <span className={styles.itemQty}>{detalle.cantidad}x</span>
               <span>{detalle.productos?.nombre || 'Producto eliminado'}</span>
+              {detalle.notas && (
+                <div className={styles.itemNotes}>⚠️ {detalle.notas}</div>
+              )}
             </div>
             <span className={styles.itemPrice}>
               {formatCurrency(detalle.precio_unitario * detalle.cantidad)}
@@ -107,35 +137,36 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order }) =
       <div className={styles.paymentSection}>
         <span className={styles.paymentLabel}>Método de Pago:</span>
         <div className={styles.methods}>
-          <button
-            className={`${styles.methodBtn} ${selectedMethod === METODOS_PAGO.EFECTIVO ? styles.methodBtnActive : ''}`}
-            onClick={() => setSelectedMethod(METODOS_PAGO.EFECTIVO)}
-          >
-            💵 Efectivo
-          </button>
-          <button
-            className={`${styles.methodBtn} ${selectedMethod === METODOS_PAGO.NEQUI ? styles.methodBtnActive : ''}`}
-            onClick={() => setSelectedMethod(METODOS_PAGO.NEQUI)}
-          >
-            📱 Nequi
-          </button>
-          <button
-            className={`${styles.methodBtn} ${selectedMethod === METODOS_PAGO.DATAFONO ? styles.methodBtnActive : ''}`}
-            onClick={() => setSelectedMethod(METODOS_PAGO.DATAFONO)}
-            data-method="datafono"
-          >
-            💳 Datáfono
-          </button>
+          {METODO_OPTIONS.map(({ key, label, icon }) => (
+            <button
+              key={key}
+              className={`${styles.methodBtn} ${selectedMethod === key ? styles.methodBtnActive : ''}`}
+              onClick={() => setSelectedMethod(key)}
+            >
+              {icon} {label}
+            </button>
+          ))}
         </div>
 
-        <Button
-          variant="primary"
-          className={styles.confirmBtn}
-          onClick={handleConfirm}
-          disabled={!selectedMethod || isSubmitting}
-        >
-          {isSubmitting ? 'Procesando...' : 'Cobrar'}
-        </Button>
+        <div className={styles.confirmActions}>
+          <Button
+            variant="primary"
+            className={styles.confirmBtn}
+            onClick={handleConfirm}
+            disabled={!selectedMethod || isSubmitting || isMarkingDebe}
+          >
+            {isSubmitting ? 'Procesando...' : 'Cobrar'}
+          </Button>
+
+          <button
+            className={styles.debeBtn}
+            onClick={handleDebe}
+            disabled={isSubmitting || isMarkingDebe}
+            title="El cliente se fue sin pagar — registrar como deuda"
+          >
+            {isMarkingDebe ? '...' : '💸 Debe'}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { ESTADOS_PEDIDO, METODOS_PAGO, RECARGO_DATAFONO } from '@/lib/constants'
 /**
  * Cierra un pedido, registrando el método de pago y aplicando recargos si es necesario.
  * @param pedidoId ID numérico del pedido a cerrar
- * @param metodoPago Método de pago seleccionado (efectivo, nequi, datafono)
+ * @param metodoPago Método de pago seleccionado (efectivo, nequi, datafono, bancolombia)
  */
 export async function closeOrder(pedidoId: number, metodoPago: string) {
   try {
@@ -32,7 +32,7 @@ export async function closeOrder(pedidoId: number, metodoPago: string) {
     if (metodoPago === METODOS_PAGO.DATAFONO && recargo === 0) {
       recargo = Math.round(subtotal * RECARGO_DATAFONO);
       total = subtotal + recargo;
-    } 
+    }
     // Si cambiaron el método de Datáfono a otro en caja, quitar el recargo
     else if (metodoPago !== METODOS_PAGO.DATAFONO && recargo > 0) {
       recargo = 0;
@@ -60,5 +60,34 @@ export async function closeOrder(pedidoId: number, metodoPago: string) {
   } catch (error) {
     console.error('Excepción al cerrar pedido:', error);
     return { success: false, error: 'Ocurrió un error inesperado al procesar la liquidación.' };
+  }
+}
+
+/**
+ * Marca un pedido como "debe" — el cliente se fue sin pagar.
+ * No cuenta como ingreso hasta que se cobre más tarde.
+ * @param pedidoId ID numérico del pedido
+ */
+export async function markOrderAsDebe(pedidoId: number) {
+  try {
+    const supabase = await createClient();
+
+    const { error: updateError } = await supabase
+      .from('pedidos')
+      .update({
+        estado: ESTADOS_PEDIDO.DEBE,
+        closed_at: new Date().toISOString()
+      })
+      .eq('id', pedidoId);
+
+    if (updateError) {
+      console.error('Error al marcar pedido como debe:', updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Excepción al marcar debe:', error);
+    return { success: false, error: 'Ocurrió un error inesperado.' };
   }
 }

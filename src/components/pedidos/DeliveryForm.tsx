@@ -3,6 +3,7 @@ import styles from './DeliveryForm.module.css';
 import { OrderType, OrderDetails } from '@/types';
 import { TIPOS_ATENCION } from '@/lib/constants';
 import { Input } from '../ui/Input';
+import deliveryStyles from './DeliveryForm.module.css';
 
 interface DeliveryFormProps {
   orderType: OrderType;
@@ -51,7 +52,7 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
               error={errors.cliente_nombre}
             />
             <Input
-              label="Teléfono *"
+              label="Teléfono"
               placeholder="Ej: 300 123 4567"
               type="tel"
               value={details.cliente_telefono || ''}
@@ -67,6 +68,25 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
             />
           </>
         )}
+
+        {/* ── Hora de entrega programada (opcional para ambos tipos) ── */}
+        <div className={deliveryStyles.horaEntregaGroup}>
+          <label className={deliveryStyles.horaEntregaLabel}>
+            ⏰ Hora de entrega programada
+            <span className={deliveryStyles.horaEntregaOptional}>(opcional)</span>
+          </label>
+          <input
+            type="time"
+            className={deliveryStyles.horaEntregaInput}
+            value={details.hora_entrega || ''}
+            onChange={(e) => handleChange('hora_entrega', e.target.value || '')}
+          />
+          {details.hora_entrega && (
+            <p className={deliveryStyles.horaEntregaHint}>
+              📅 Este pedido quedará como <strong>programado</strong> y se mostrará en la parte superior de cocina con un countdown.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

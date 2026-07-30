@@ -34,8 +34,40 @@ function playOrderChime() {
   }
 }
 
+/**
+ * Reproduce un chime especial (triple) para pedidos programados — más llamativo.
+ */
+function playScheduledChime() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const playTone = (freq: number, startAt: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startAt);
+      gain.gain.setValueAtTime(0, ctx.currentTime + startAt);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + startAt + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + duration);
+      osc.start(ctx.currentTime + startAt);
+      osc.stop(ctx.currentTime + startAt + duration);
+    };
+    playTone(659.25, 0,    0.25); // E5
+    playTone(783.99, 0.20, 0.25); // G5
+    playTone(1046.5, 0.40, 0.40); // C6
+    setTimeout(() => ctx.close(), 1000);
+  } catch {
+    // Silencioso si el navegador no soporta Web Audio API
+  }
+}
+
 export function useRealtimeOrders() {
+  // orders = pedidos regulares (sin hora_entrega)
   const [orders, setOrders] = useState<PedidoWithDetalles[]>([]);
+  // scheduledOrders = pedidos con hora_entrega — siempre fijados arriba
+  const [scheduledOrders, setScheduledOrders] = useState<PedidoWithDetalles[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
@@ -52,12 +84,22 @@ export function useRealtimeOrders() {
         .select('*, detalle_pedidos(*, productos(nombre))')
         .eq('id', orderId)
         .single();
-      
+
       if (error || !data) {
         console.error('Error fetching order details:', error);
         return null;
       }
       return data as PedidoWithDetalles;
+    };
+
+    /** Separa pedidos entre regulares y programados y actualiza el estado */
+    const splitAndSetOrders = (allOrders: PedidoWithDetalles[]) => {
+      const regular = allOrders.filter(o => !o.hora_entrega);
+      const scheduled = allOrders.filter(o => !!o.hora_entrega)
+        // Ordenar los programados por hora de entrega ascendente
+        .sort((a, b) => new Date(a.hora_entrega!).getTime() - new Date(b.hora_entrega!).getTime());
+      setOrders(regular);
+      setScheduledOrders(scheduled);
     };
 
     const fetchInitialOrders = async () => {
@@ -72,7 +114,7 @@ export function useRealtimeOrders() {
         if (error) throw error;
 
         if (mounted) {
-          setOrders((data || []) as unknown as PedidoWithDetalles[]);
+          splitAndSetOrders((data || []) as unknown as PedidoWithDetalles[]);
           setLoading(false);
           setConnectionStatus('online');
         }
@@ -99,8 +141,18 @@ export function useRealtimeOrders() {
           if (newOrder.estado === ESTADOS_PEDIDO.PENDIENTE) {
             const orderWithDetails = await fetchOrderDetails(newOrder.id);
             if (orderWithDetails && mounted) {
-              playOrderChime();
-              setOrders((prev) => [...prev, orderWithDetails]);
+              // Chime distinto para pedidos programados
+              if (orderWithDetails.hora_entrega) {
+                playScheduledChime();
+                setScheduledOrders((prev) =>
+                  [...prev, orderWithDetails].sort(
+                    (a, b) => new Date(a.hora_entrega!).getTime() - new Date(b.hora_entrega!).getTime()
+                  )
+                );
+              } else {
+                playOrderChime();
+                setOrders((prev) => [...prev, orderWithDetails]);
+              }
             }
           }
         }
@@ -114,6 +166,7 @@ export function useRealtimeOrders() {
           if (updatedOrder.estado !== ESTADOS_PEDIDO.PENDIENTE) {
             if (mounted) {
               setOrders((prev) => prev.filter((order) => order.id !== updatedOrder.id));
+              setScheduledOrders((prev) => prev.filter((order) => order.id !== updatedOrder.id));
             }
           }
         }
@@ -144,5 +197,5 @@ export function useRealtimeOrders() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { orders, loading, error, connectionStatus };
+  return { orders, scheduledOrders, loading, error, connectionStatus };
 }

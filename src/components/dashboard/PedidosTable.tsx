@@ -43,6 +43,7 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
       case ESTADOS_PEDIDO.PENDIENTE: return styles.estadoPendiente;
       case ESTADOS_PEDIDO.LISTO: return styles.estadoListo;
       case ESTADOS_PEDIDO.CANCELADO: return styles.estadoCancelado;
+      case ESTADOS_PEDIDO.DEBE: return styles.estadoDebe;
       default: return '';
     }
   };
@@ -53,6 +54,7 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
       case METODOS_PAGO.EFECTIVO: return <span className={styles.methodEfectivo}>💵 Efectivo</span>;
       case METODOS_PAGO.NEQUI: return <span className={styles.methodNequi}>📱 Nequi</span>;
       case METODOS_PAGO.DATAFONO: return <span className={styles.methodDatafono}>💳 Datáfono</span>;
+      case METODOS_PAGO.BANCOLOMBIA: return <span className={styles.methodBancolombia}>🏦 Bancolombia</span>;
       default: return metodo;
     }
   };

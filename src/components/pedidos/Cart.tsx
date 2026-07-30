@@ -26,9 +26,10 @@ interface CartProps {
 }
 
 const METODO_LABELS: Record<string, { label: string; icon: string }> = {
-  efectivo:  { label: 'Efectivo',  icon: '💵' },
-  nequi:     { label: 'Nequi',     icon: '📱' },
-  datafono:  { label: 'Datáfono',  icon: '💳' },
+  efectivo:    { label: 'Efectivo',    icon: '💵' },
+  nequi:       { label: 'Nequi',       icon: '📱' },
+  datafono:    { label: 'Datáfono',    icon: '💳' },
+  bancolombia: { label: 'Bancolombia', icon: '🏦' },
 };
 
 const formatCOP = (value: number) =>

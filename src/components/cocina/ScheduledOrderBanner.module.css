@@ -1,0 +1,250 @@
+/* ============================================================
+   ScheduledOrderBanner — Banner para pedidos programados en cocina
+   ============================================================ */
+
+.banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  border: 2px solid;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  margin-bottom: 4px;
+}
+
+/* Normal: faltan más de 45 min */
+.banner_normal {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+/* Warning: faltan entre 15 y 45 min */
+.banner_warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.5);
+  animation: warningPulse 2.5s ease-in-out infinite;
+}
+
+/* Danger: faltan ≤ 15 min o ya venció */
+.banner_danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.6);
+  animation: dangerShake 0.6s ease-in-out;
+}
+
+@keyframes warningPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.15); }
+}
+
+@keyframes dangerShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+/* Punto pulsante de atención */
+.pulse {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+
+.banner_warning .pulse {
+  background: var(--color-warning);
+}
+
+.banner_danger .pulse {
+  background: var(--color-danger);
+}
+
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.6); opacity: 0.4; }
+}
+
+/* Layout */
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+/* Badge countdown */
+.countdownBadge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid;
+  flex-shrink: 0;
+  min-width: 130px;
+}
+
+.badge_normal {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.badge_warning {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.badge_danger {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.clockIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.countdownText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.countdownValue {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.badge_warning .countdownValue { color: var(--color-warning); }
+.badge_danger .countdownValue { color: var(--color-danger); }
+
+.countdownSub {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  line-height: 1.2;
+}
+
+/* Order Info */
+.orderInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.orderHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.orderId {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.scheduledTag {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.2);
+  color: #A5B4FC;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.orderType {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.itemsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.item {
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.itemNote {
+  color: var(--color-warning);
+  font-style: italic;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.readyBtn {
+  padding: 10px 20px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cancelBtn {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: var(--color-danger);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-danger);
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .readyBtn {
+    flex: 1;
+  }
+
+  .cancelBtn {
+    flex: 1;
+  }
+}

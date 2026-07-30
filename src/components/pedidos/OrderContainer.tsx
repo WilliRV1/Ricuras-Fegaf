@@ -9,6 +9,7 @@
  * 3. Muestra feedback visual (toast) al agregar un producto.
  * 4. Filtra productos por categoría seleccionada.
  * 5. Valida el formulario según el tipo de atención elegido.
+ * 6. Detecta productos duplicados y muestra modal de selección.
  *
  * Se comunica con componentes hijos vía props y expone el estado del pedido
  * para que en el Día 3 se conecte con el hook `useCart`.
@@ -20,6 +21,7 @@ import { CategoryTabs } from './CategoryTabs';
 import { MenuGrid } from './MenuGrid';
 import { OrderTypeSelector } from './OrderTypeSelector';
 import { DeliveryForm } from './DeliveryForm';
+import { DuplicateProductModal } from './DuplicateProductModal';
 import { TIPOS_ATENCION } from '@/lib/constants';
 import { toast } from '@/components/ui/Toast';
 import styles from './OrderContainer.module.css';
@@ -55,22 +57,27 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof OrderDetails, string>>>({});
 
   /* ----------------------------------------------------------------
+     Estado del modal de producto duplicado
+     ---------------------------------------------------------------- */
+  const [pendingProduct, setPendingProduct] = useState<Producto | null>(null);
+
+  /* ----------------------------------------------------------------
      Productos filtrados por categoría
      ---------------------------------------------------------------- */
   const filteredProducts = useMemo(() => {
     let result = initialProductos;
-    
+
     // Filtrar por categoría
     if (selectedCategory !== null) {
       result = result.filter((p) => Number(p.categoria_id) === Number(selectedCategory));
     }
-    
+
     // Filtrar por búsqueda de texto
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
       result = result.filter(p => p.nombre.toLowerCase().includes(q));
     }
-    
+
     return result;
   }, [initialProductos, selectedCategory, searchQuery]);
 
@@ -79,14 +86,24 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
      ---------------------------------------------------------------- */
 
   /**
-   * Agrega un producto al carrito
-   * Muestra un toast de éxito con el nombre del producto.
+   * Agrega un producto al carrito.
+   * Si el producto ya existe en el carrito (sin importar notas), muestra un
+   * modal para preguntar si se suma al existente o se agrega como nuevo ítem.
    */
   const handleAddProduct = useCallback((producto: Producto) => {
     if (!orderType) return;
 
-    addItem(producto, 1);
+    // Verificar si ya existe en el carrito (por ID, sin importar notas)
+    const yaExiste = items.some((item) => item.producto.id === producto.id);
 
+    if (yaExiste) {
+      // Mostrar modal de elección
+      setPendingProduct(producto);
+      return;
+    }
+
+    // No existe — agregar directo
+    addItem(producto, 1);
     toast.success(
       <>
         <span style={{ fontWeight: 700, color: 'var(--color-primary-light)' }}>
@@ -95,7 +112,40 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
         agregado al pedido
       </>
     );
-  }, [orderType, addItem]);
+  }, [orderType, addItem, items]);
+
+  /** Resolver modal: sumar uno al item existente (mismas notas = undefined) */
+  const handleModalAddToExisting = useCallback(() => {
+    if (!pendingProduct) return;
+    // Sumar al primer item que coincida con el id (el que ya tiene las notas que tenía)
+    const existing = items.find((i) => i.producto.id === pendingProduct.id);
+    addItem(pendingProduct, 1, existing?.notas);
+    toast.success(
+      <>
+        <span style={{ fontWeight: 700, color: 'var(--color-primary-light)' }}>
+          {pendingProduct.nombre}
+        </span>{' '}
+        (+1 al existente)
+      </>
+    );
+    setPendingProduct(null);
+  }, [pendingProduct, items, addItem]);
+
+  /** Resolver modal: agregar como ítem independiente con notas vacías */
+  const handleModalAddNew = useCallback(() => {
+    if (!pendingProduct) return;
+    // Usar un placeholder de notas único para diferenciarlo — el usuario puede editarlo
+    addItem(pendingProduct, 1, '');
+    toast.success(
+      <>
+        <span style={{ fontWeight: 700, color: 'var(--color-primary-light)' }}>
+          {pendingProduct.nombre}
+        </span>{' '}
+        agregado como ítem separado
+      </>
+    );
+    setPendingProduct(null);
+  }, [pendingProduct, addItem]);
 
   /**
    * Cambia el tipo de atención y resetea el formulario de datos.
@@ -106,18 +156,16 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
     setFormErrors({});
   }, []);
 
-
-
   /**
    * isFormValid: true si se seleccionó un tipo de atención y,
    * dependiendo del tipo, se completaron los datos requeridos.
+   * Teléfono es OPCIONAL para domicilio.
    */
   const isFormValid = (() => {
     if (!orderType) return false;
     if (orderType === TIPOS_ATENCION.MESA) return !!orderDetails.numero_mesa;
     return !!(
       orderDetails.cliente_nombre &&
-      orderDetails.cliente_telefono &&
       orderDetails.cliente_direccion
     );
   })();
@@ -138,11 +186,11 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
     }
 
     const res = await submitOrder(orderType, orderDetails, items, metodoPago);
-    
+
     if (!res.success) {
       throw new Error(res.error || 'Error desconocido al enviar pedido');
     }
-    
+
     // Limpiar el formulario para un nuevo pedido
     setOrderType(null);
     setOrderDetails({});
@@ -157,7 +205,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
 
   return (
     <div className={styles.container}>
-      
+
       <div className={styles.mainColumn}>
         {/* ============================================================
             PASO 1 — Tipo de Atención + Datos del Cliente
@@ -224,9 +272,9 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
           {/* Barra de Búsqueda */}
           <div className={styles.searchContainer}>
             <span className={styles.searchIcon}>🔍</span>
-            <input 
-              type="text" 
-              className={styles.searchInput} 
+            <input
+              type="text"
+              className={styles.searchInput}
               placeholder="Buscar plato, bebida..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -242,8 +290,8 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
 
           {/* Grid de productos — con overlay de bloqueo si no hay tipo seleccionado */}
           {!orderType ? (
-            <div 
-              className={styles.menuLocked} 
+            <div
+              className={styles.menuLocked}
               onClick={() => toast.error('Debes elegir un tipo de atención (Mesa o Domicilio) para poder escoger productos.')}
             >
               <MenuGrid
@@ -279,7 +327,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
 
       {/* Mobile FAB to open Cart */}
       {cartItemCount > 0 && (
-        <button 
+        <button
           className={`${styles.cartFab} ${isMobileCartOpen ? styles.hidden : ''}`}
           onClick={() => setIsMobileCartOpen(true)}
         >
@@ -292,6 +340,16 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
       {/* Overlay background when cart is open */}
       {isMobileCartOpen && (
         <div className={styles.cartOverlay} onClick={() => setIsMobileCartOpen(false)} />
+      )}
+
+      {/* Modal para producto duplicado */}
+      {pendingProduct && (
+        <DuplicateProductModal
+          producto={pendingProduct}
+          onAddToExisting={handleModalAddToExisting}
+          onAddNew={handleModalAddNew}
+          onCancel={() => setPendingProduct(null)}
+        />
       )}
     </div>
   );

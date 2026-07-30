@@ -67,11 +67,13 @@
 .estadoPendiente { color: var(--color-warning); }
 .estadoListo { color: #60A5FA; }
 .estadoCancelado { color: var(--color-danger); }
+.estadoDebe { color: #F87171; font-style: italic; }
 
 /* Métodos */
 .methodEfectivo { color: var(--color-success); }
 .methodNequi { color: #A78BFA; }
 .methodDatafono { color: var(--color-warning); }
+.methodBancolombia { color: #FCD34D; }
 
 .total {
   font-weight: 800;

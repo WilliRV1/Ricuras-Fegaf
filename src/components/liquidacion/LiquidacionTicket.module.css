@@ -95,6 +95,14 @@
   font-weight: 600;
 }
 
+.itemNotes {
+  font-size: 0.75rem;
+  color: var(--color-warning);
+  margin-top: 4px;
+  padding-left: 4px;
+  font-style: italic;
+}
+
 .summary {
   display: flex;
   flex-direction: column;
@@ -134,7 +142,7 @@
 
 .methods {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 
@@ -181,7 +189,51 @@
   font-weight: 700;
   text-transform: uppercase;
   border-radius: var(--radius-sm);
-  margin-top: 6px;
   letter-spacing: 0.05em;
   transition: all var(--transition-normal);
+}
+
+/* Acciones de confirmación: Cobrar + Debe */
+.confirmActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* Botón 'Debe' — el cliente no pagó */
+.debeBtn {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  background: transparent;
+  border: 1px dashed rgba(239, 68, 68, 0.5);
+  color: var(--color-danger);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.03em;
+}
+
+.debeBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: var(--color-danger);
+  border-style: solid;
+}
+
+.debeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }

@@ -1,0 +1,122 @@
+/* ============================================================
+   ProductosVendidosTable — Tabla de productos vendidos en el día
+   ============================================================ */
+
+.container {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rankBadge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  min-width: 28px;
+  text-align: center;
+}
+
+.row:nth-child(1) .rankBadge { color: #FCD34D; }
+.row:nth-child(2) .rankBadge { color: #D1D5DB; }
+.row:nth-child(3) .rankBadge { color: #B45309; }
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nameAndBar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nombre {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barTrack {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+  border-radius: var(--radius-full);
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cantidad {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-primary-light);
+}
+
+.total {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.empty span {
+  font-size: 2rem;
+}
+
+.empty p {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  margin: 0;
+}

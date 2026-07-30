@@ -116,3 +116,71 @@
   background: rgba(255, 255, 255, 0.2);
   color: white;
 }
+
+/* ============================================================
+   Sección PROGRAMADOS — sticky en la parte superior
+   ============================================================ */
+
+.scheduledSection {
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.07) 0%,
+    rgba(30, 41, 59, 0.6) 100%
+  );
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: var(--radius-xl);
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  position: sticky;
+  top: 10px;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.scheduledHeader {
+  margin-bottom: 16px;
+}
+
+.scheduledTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0 0 6px 0;
+}
+
+.scheduledCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: rgba(99, 102, 241, 0.3);
+  color: #A5B4FC;
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.scheduledSubtitle {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.scheduledList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Indicadores de estado */
+.statusConnecting { color: var(--color-warning); }
+.statusOffline { color: var(--color-danger); }
+.statusOnline { color: var(--color-success); }
+

@@ -1,7 +1,8 @@
-import { getResumenDelDia, getPedidosRecientes } from '@/app/actions/dashboard';
+import { getResumenDelDia, getPedidosRecientes, getProductosVendidosDelDia } from '@/app/actions/dashboard';
 import { ResumenCards } from '@/components/dashboard/ResumenCards';
 import { PedidosTable } from '@/components/dashboard/PedidosTable';
 import { CancelacionesTable } from '@/components/dashboard/CancelacionesTable';
+import { ProductosVendidosTable } from '@/components/dashboard/ProductosVendidosTable';
 import { DatePicker } from '@/components/dashboard/DatePicker';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import styles from './page.module.css';
@@ -19,9 +20,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const todayISO = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   const targetDate = date || todayISO;
 
-  const [stats, pedidosRecientes] = await Promise.all([
+  const [stats, pedidosRecientes, productosVendidos] = await Promise.all([
     getResumenDelDia(targetDate),
     getPedidosRecientes(50, targetDate),
+    getProductosVendidosDelDia(targetDate),
   ]);
 
   const fechaLabel = new Date(`${targetDate}T12:00:00`).toLocaleDateString('es-CO', {
@@ -61,6 +63,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Resumen del Día</h2>
             <ResumenCards {...stats} />
+          </section>
+
+          {/* Productos más vendidos del día */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              🍽️ Productos Vendidos{productosVendidos.length > 0 ? ` (${productosVendidos.length} distintos)` : ''}
+            </h2>
+            <ProductosVendidosTable productos={productosVendidos} />
           </section>
 
           {stats.cancelados.length > 0 && (

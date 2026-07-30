@@ -10,15 +10,18 @@ export type DetallePedido = Database['public']['Tables']['detalle_pedidos']['Row
 export type OrderType = 'mesa' | 'domicilio' | null;
 
 /** Métodos de pago — coincide con los valores de la DB */
-export type MetodoPago = 'efectivo' | 'nequi' | 'datafono' | null;
+export type MetodoPago = 'efectivo' | 'nequi' | 'datafono' | 'bancolombia' | null;
 
 export interface OrderDetails {
   numero_mesa?: string;
   cliente_nombre?: string;
+  /** Teléfono opcional para domicilio */
   cliente_telefono?: string;
   cliente_direccion?: string;
   /** Solo para domicilio: método de pago elegido al momento del pedido */
   metodo_pago?: MetodoPago;
+  /** Hora de entrega programada (ISO string o HH:MM). Null = pedido inmediato */
+  hora_entrega?: string | null;
 }
 
 export interface CartItem {
@@ -28,10 +31,11 @@ export interface CartItem {
 }
 
 export interface PedidoWithDetalles extends Pedido {
+  /** Hora de entrega programada. Puede no estar en el tipo generado automáticamente. */
+  hora_entrega?: string | null;
   detalle_pedidos: (DetallePedido & {
     productos: {
       nombre: string;
     } | null;
   })[];
 }
-

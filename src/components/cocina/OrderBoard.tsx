@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRealtimeOrders, ConnectionStatus } from '@/hooks/useRealtimeOrders';
 import { OrderTicket } from './OrderTicket';
+import { ScheduledOrderBanner } from './ScheduledOrderBanner';
 import styles from './OrderBoard.module.css';
 
 const ConnectionIndicator = ({ status }: { status: ConnectionStatus }) => {
@@ -14,7 +15,7 @@ const ConnectionIndicator = ({ status }: { status: ConnectionStatus }) => {
 type FilterType = 'all' | 'mesa' | 'domicilio';
 
 export const OrderBoard: React.FC = () => {
-  const { orders, loading, error, connectionStatus } = useRealtimeOrders();
+  const { orders, scheduledOrders, loading, error, connectionStatus } = useRealtimeOrders();
   const [filterType, setFilterType] = useState<FilterType>('all');
 
   if (loading) {
@@ -30,27 +31,53 @@ export const OrderBoard: React.FC = () => {
     );
   }
 
-  const countMesas = orders.filter(o => o.tipo === 'mesa').length;
-  const countDomicilios = orders.filter(o => o.tipo === 'domicilio').length;
-  const filteredOrders = orders.filter(o => filterType === 'all' || o.tipo === filterType);
+  const regularOrders = orders;
+  const countMesas = regularOrders.filter(o => o.tipo === 'mesa').length;
+  const countDomicilios = regularOrders.filter(o => o.tipo === 'domicilio').length;
+  const filteredOrders = regularOrders.filter(o => filterType === 'all' || o.tipo === filterType);
 
   return (
     <div>
+      {/* ============================================================
+          SECCIÓN PROGRAMADOS — Siempre visible en la parte superior
+          ============================================================ */}
+      {scheduledOrders.length > 0 && (
+        <section className={styles.scheduledSection}>
+          <div className={styles.scheduledHeader}>
+            <h2 className={styles.scheduledTitle}>
+              📅 Pedidos Programados
+              <span className={styles.scheduledCount}>{scheduledOrders.length}</span>
+            </h2>
+            <p className={styles.scheduledSubtitle}>
+              Estos pedidos están aquí hasta que los marques como listos — no se perderán entre las comandas.
+            </p>
+          </div>
+          <div className={styles.scheduledList}>
+            {scheduledOrders.map((order) => (
+              <ScheduledOrderBanner key={order.id} order={order} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ============================================================
+          SECCIÓN REGULAR — Comandas en tiempo real
+          ============================================================ */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '16px' }}>
         <div className={styles.filtersContainer}>
-          <button 
+          <button
             className={`${styles.filterBtn} ${filterType === 'all' ? styles.filterBtnActive : ''}`}
             onClick={() => setFilterType('all')}
           >
-            📋 Todos <span className={styles.filterCount}>{orders.length}</span>
+            📋 Todos <span className={styles.filterCount}>{regularOrders.length}</span>
           </button>
-          <button 
+          <button
             className={`${styles.filterBtn} ${filterType === 'mesa' ? styles.filterBtnActive : ''}`}
             onClick={() => setFilterType('mesa')}
           >
             🍽️ Mesas <span className={styles.filterCount}>{countMesas}</span>
           </button>
-          <button 
+          <button
             className={`${styles.filterBtn} ${filterType === 'domicilio' ? styles.filterBtnActive : ''}`}
             onClick={() => setFilterType('domicilio')}
           >
@@ -69,7 +96,7 @@ export const OrderBoard: React.FC = () => {
             {filterType === 'all' ? '¡Todo al día!' : 'Sin resultados'}
           </h3>
           <p className={styles.emptyText}>
-            {filterType === 'all' 
+            {filterType === 'all'
               ? 'No hay pedidos pendientes en cocina. Buen trabajo 👨‍🍳'
               : `No hay pedidos pendientes para la categoría "${filterType}".`}
           </p>
@@ -84,4 +111,3 @@ export const OrderBoard: React.FC = () => {
     </div>
   );
 };
-

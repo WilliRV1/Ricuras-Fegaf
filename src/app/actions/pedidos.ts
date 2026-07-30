@@ -18,11 +18,11 @@ export async function submitOrder(
 
   // Calcular subtotal (suma de items)
   const subtotal = items.reduce((sum, item) => sum + (item.producto.precio * item.cantidad), 0);
-  
+
   // Calcular recargo: 5% solo si es domicilio y el pago es con datáfono
   const aplicaRecargo = orderType === TIPOS_ATENCION.DOMICILIO && metodoPago === METODOS_PAGO.DATAFONO;
   const recargo = aplicaRecargo ? Math.round(subtotal * RECARGO_DATAFONO) : 0;
-  
+
   // Total final
   const total = subtotal + recargo;
 
@@ -30,6 +30,18 @@ export async function submitOrder(
   const numero_mesa = orderType === TIPOS_ATENCION.MESA && orderDetails.numero_mesa
     ? parseInt(orderDetails.numero_mesa, 10)
     : null;
+
+  // Construir hora_entrega como TIMESTAMPTZ si se proporcionó
+  // El campo viene como 'HH:MM' y debemos combinarlo con la fecha actual (Colombia)
+  let horaEntregaISO: string | null = null;
+  if (orderDetails.hora_entrega) {
+    const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date());
+    // Crear la fecha en Colombia con esa hora
+    horaEntregaISO = new Date(`${bogotaDateStr}T${orderDetails.hora_entrega}:00-05:00`).toISOString();
+  }
 
   // Mapear items a formato JSONB para el RPC
   const detallesJson = items.map(item => ({
@@ -52,7 +64,8 @@ export async function submitOrder(
     p_subtotal: subtotal,
     p_recargo: recargo,
     p_total: total,
-    p_detalles: detallesJson
+    p_detalles: detallesJson,
+    p_hora_entrega: horaEntregaISO
   });
 
   if (rpcError || !pedidoId) {

@@ -125,3 +125,45 @@ export async function getPedidosRecientes(limit: number = 20, dateStr?: string) 
 
   return data ?? [];
 }
+
+/**
+ * Retorna un resumen de los productos vendidos en el día, agrupados por nombre.
+ * Solo incluye pedidos con estado 'pagado'.
+ */
+export async function getProductosVendidosDelDia(dateStr?: string) {
+  const supabase = await createClient();
+
+  const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const actualDateStr = dateStr || bogotaDateStr;
+
+  const startOfDay = new Date(`${actualDateStr}T00:00:00-05:00`).toISOString();
+  const endOfDay = new Date(`${actualDateStr}T23:59:59.999-05:00`).toISOString();
+
+  // Traer todos los detalle_pedidos de pedidos pagados en el día
+  const { data, error } = await supabase
+    .from('detalle_pedidos')
+    .select('cantidad, precio_unitario, productos(nombre), pedidos!inner(estado, created_at)')
+    .eq('pedidos.estado', 'pagado')
+    .gte('pedidos.created_at', startOfDay)
+    .lt('pedidos.created_at', endOfDay);
+
+  if (error) {
+    console.error('Error al obtener productos vendidos:', error);
+    return [];
+  }
+
+  // Agrupar por nombre de producto
+  const agrupado: Record<string, { nombre: string; cantidad: number; total: number }> = {};
+
+  for (const row of data ?? []) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nombre = (row.productos as any)?.nombre ?? 'Producto eliminado';
+    if (!agrupado[nombre]) {
+      agrupado[nombre] = { nombre, cantidad: 0, total: 0 };
+    }
+    agrupado[nombre].cantidad += row.cantidad;
+    agrupado[nombre].total += row.precio_unitario * row.cantidad;
+  }
+
+  return Object.values(agrupado).sort((a, b) => b.cantidad - a.cantidad);
+}
