@@ -11,6 +11,8 @@ import styles from './LiquidacionTicket.module.css';
 
 interface LiquidacionTicketProps {
   order: PedidoWithDetalles;
+  /** Si true, el pedido ya está en estado 'debe' — solo permite cobrarlo */
+  isDebe?: boolean;
 }
 
 const METODO_OPTIONS = [
@@ -20,7 +22,7 @@ const METODO_OPTIONS = [
   { key: METODOS_PAGO.BANCOLOMBIA, label: 'Bancolombia', icon: '🏦' },
 ];
 
-export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order }) => {
+export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isDebe = false }) => {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMarkingDebe, setIsMarkingDebe] = useState(false);
@@ -91,6 +93,9 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order }) =
       <div className={styles.header}>
         <div className={styles.idAndType}>
           <h3 className={styles.orderId}>Pedido #{order.id}</h3>
+          {isDebe && (
+            <span className={styles.debeBadge}>💸 DEBE</span>
+          )}
           <span className={styles.orderType}>
             {isMesa ? `🍽️ Mesa ${order.numero_mesa}` : '🛵 Domicilio'}
           </span>
@@ -158,14 +163,17 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order }) =
             {isSubmitting ? 'Procesando...' : 'Cobrar'}
           </Button>
 
-          <button
-            className={styles.debeBtn}
-            onClick={handleDebe}
-            disabled={isSubmitting || isMarkingDebe}
-            title="El cliente se fue sin pagar — registrar como deuda"
-          >
-            {isMarkingDebe ? '...' : '💸 Debe'}
-          </button>
+          {/* Botón 'Debe' solo si el pedido AÚN NO está en ese estado */}
+          {!isDebe && (
+            <button
+              className={styles.debeBtn}
+              onClick={handleDebe}
+              disabled={isSubmitting || isMarkingDebe}
+              title="El cliente se fue sin pagar — registrar como deuda"
+            >
+              {isMarkingDebe ? '...' : '💸 Debe'}
+            </button>
+          )}
         </div>
       </div>
     </div>

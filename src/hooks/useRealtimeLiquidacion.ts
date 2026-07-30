@@ -6,7 +6,8 @@ import { ESTADOS_PEDIDO } from '@/lib/constants';
 export type ConnectionStatus = 'connecting' | 'online' | 'offline';
 
 export function useRealtimeLiquidacion() {
-  const [orders, setOrders] = useState<PedidoWithDetalles[]>([]);
+  const [orders, setOrders] = useState<PedidoWithDetalles[]>([]); // estado: listo
+  const [deudas, setDeudas] = useState<PedidoWithDetalles[]>([]);  // estado: debe
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
@@ -33,16 +34,27 @@ export function useRealtimeLiquidacion() {
     const fetchInitialOrders = async () => {
       try {
         if (mounted) setConnectionStatus('connecting');
-        const { data, error } = await supabase
-          .from('pedidos')
-          .select('*, detalle_pedidos(*, productos(nombre))')
-          .eq('estado', ESTADOS_PEDIDO.LISTO)
-          .order('created_at', { ascending: true });
 
-        if (error) throw error;
+        // Traer pedidos 'listo' Y 'debe' en paralelo
+        const [listos, debes] = await Promise.all([
+          supabase
+            .from('pedidos')
+            .select('*, detalle_pedidos(*, productos(nombre))')
+            .eq('estado', ESTADOS_PEDIDO.LISTO)
+            .order('created_at', { ascending: true }),
+          supabase
+            .from('pedidos')
+            .select('*, detalle_pedidos(*, productos(nombre))')
+            .eq('estado', ESTADOS_PEDIDO.DEBE)
+            .order('created_at', { ascending: true }),
+        ]);
+
+        if (listos.error) throw listos.error;
+        if (debes.error) throw debes.error;
 
         if (mounted) {
-          setOrders((data || []) as unknown as PedidoWithDetalles[]);
+          setOrders((listos.data || []) as unknown as PedidoWithDetalles[]);
+          setDeudas((debes.data || []) as unknown as PedidoWithDetalles[]);
           setLoading(false);
           setConnectionStatus('online');
         }
@@ -75,12 +87,30 @@ export function useRealtimeLiquidacion() {
                 if (prev.some(o => o.id === orderWithDetails.id)) return prev;
                 return [...prev, orderWithDetails];
               });
+              // Si estaba en deudas y volvió a listo, quitarlo de deudas
+              setDeudas((prev) => prev.filter((o) => o.id !== updatedOrder.id));
             }
           }
-          
-          if (updatedOrder.estado !== ESTADOS_PEDIDO.LISTO) {
+
+          if (updatedOrder.estado === ESTADOS_PEDIDO.DEBE) {
+            const orderWithDetails = await fetchOrderDetails(updatedOrder.id);
+            if (orderWithDetails && mounted) {
+              // Mover de 'orders' a 'deudas'
+              setOrders((prev) => prev.filter((o) => o.id !== updatedOrder.id));
+              setDeudas((prev) => {
+                if (prev.some(o => o.id === orderWithDetails.id)) return prev;
+                return [...prev, orderWithDetails];
+              });
+            }
+          }
+
+          if (
+            updatedOrder.estado !== ESTADOS_PEDIDO.LISTO &&
+            updatedOrder.estado !== ESTADOS_PEDIDO.DEBE
+          ) {
             if (mounted) {
               setOrders((prev) => prev.filter((order) => order.id !== updatedOrder.id));
+              setDeudas((prev) => prev.filter((order) => order.id !== updatedOrder.id));
             }
           }
         }
@@ -110,5 +140,5 @@ export function useRealtimeLiquidacion() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { orders, loading, error, connectionStatus };
+  return { orders, deudas, loading, error, connectionStatus };
 }
