@@ -109,7 +109,7 @@ export const ArqueoCaja: React.FC<ArqueoCajaProps> = ({ initialState }) => {
           <h3>Caja Abierta</h3>
         </div>
         <span className={styles.timeOpen}>
-          Desde: {new Date(data.opened_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+          Desde: {new Date(data.opened_at).toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>
 

@@ -61,7 +61,11 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
 
   const formatHora = (isoDate: string | null) => {
     if (!isoDate) return '-';
-    return new Date(isoDate).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    return new Date(isoDate).toLocaleTimeString('es-CO', { 
+      timeZone: 'America/Bogota',
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   };
 
   const getTiempoBadge = (created: string | null, closed: string | null) => {
