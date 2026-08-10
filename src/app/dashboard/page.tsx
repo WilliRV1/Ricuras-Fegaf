@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { getResumenDelDia, getPedidosRecientes, getProductosVendidosDelDia } from '@/app/actions/dashboard';
 import { obtenerEstadoCaja } from '@/app/actions/caja';
 import { ResumenCards } from '@/components/dashboard/ResumenCards';
@@ -17,6 +19,11 @@ interface DashboardPageProps {
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const cookieStore = await cookies();
+  if (cookieStore.get('dashboard_auth')?.value !== 'true') {
+    redirect('/dashboard/login');
+  }
+
   const { date } = await searchParams;
 
   // Calcular la fecha en la zona horaria de Colombia (America/Bogota)
