@@ -165,7 +165,6 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
     if (!orderType) return false;
     if (orderType === TIPOS_ATENCION.MESA) return !!orderDetails.numero_mesa;
     return !!(
-      orderDetails.cliente_nombre &&
       orderDetails.cliente_direccion
     );
   })();

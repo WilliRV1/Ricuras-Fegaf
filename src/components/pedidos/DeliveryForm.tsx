@@ -45,7 +45,7 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
         {orderType === TIPOS_ATENCION.DOMICILIO && (
           <>
             <Input
-              label="Nombre del Cliente *"
+              label="Nombre del Cliente (opcional)"
               placeholder="Ej: Juan Pérez"
               value={details.cliente_nombre || ''}
               onChange={(e) => handleChange('cliente_nombre', e.target.value)}
