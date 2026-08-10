@@ -64,6 +64,32 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
     return new Date(isoDate).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const getTiempoBadge = (created: string | null, closed: string | null) => {
+    if (!created || !closed) return '-';
+    
+    const start = new Date(created).getTime();
+    const end = new Date(closed).getTime();
+    const diffMin = Math.round((end - start) / 60000);
+
+    if (diffMin < 0) return '-'; // En caso de inconsistencias
+
+    let colorStyle: React.CSSProperties = { color: 'var(--color-text)', background: 'transparent' };
+    
+    if (diffMin >= 40) {
+      colorStyle = { color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }; // Rojo
+    } else if (diffMin >= 25) {
+      colorStyle = { color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }; // Naranja
+    } else {
+      colorStyle = { color: 'var(--color-text-muted)', background: 'transparent' };
+    }
+
+    return (
+      <span style={colorStyle}>
+        {diffMin} min
+      </span>
+    );
+  };
+
   return (
     <div className={styles.container}>
       <table className={styles.table}>
@@ -74,6 +100,7 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
             <th className={styles.th}>Tipo</th>
             <th className={styles.th}>Estado</th>
             <th className={styles.th}>Método</th>
+            <th className={styles.th}>Tiempo</th>
             <th className={styles.th} style={{ textAlign: 'right' }}>Total</th>
           </tr>
         </thead>
@@ -95,6 +122,9 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
               </td>
               <td className={styles.td}>
                 {getMetodoPago(pedido.metodo_pago)}
+              </td>
+              <td className={styles.td}>
+                {getTiempoBadge(pedido.created_at, pedido.closed_at)}
               </td>
               <td className={`${styles.td} ${styles.total}`} style={{ textAlign: 'right' }}>
                 {formatCurrency(pedido.total)}
