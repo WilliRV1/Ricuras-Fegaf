@@ -79,6 +79,18 @@ export async function getResumenDelDia(dateStr?: string) {
 
   const totalRecargos = pagados.reduce((sum, p) => sum + (p.recargo ?? 0), 0);
 
+  // 1.5 Tiempo Promedio de Atención (en minutos)
+  let tiempoPromedioMinutos = 0;
+  const pagadosConTiempos = pagados.filter(p => p.created_at && p.closed_at);
+  if (pagadosConTiempos.length > 0) {
+    const totalMinutos = pagadosConTiempos.reduce((sum, p) => {
+      const start = new Date(p.created_at).getTime();
+      const end = new Date(p.closed_at as string).getTime();
+      return sum + ((end - start) / 60000);
+    }, 0);
+    tiempoPromedioMinutos = Math.round(totalMinutos / pagadosConTiempos.length);
+  }
+
   // 2. Hora Pico (calculada con hora de Colombia)
   const horas = todosPedidos.reduce((acc: Record<string, number>, p) => {
     const bogotaHourStr = new Intl.DateTimeFormat('es-CO', {
@@ -124,7 +136,8 @@ export async function getResumenDelDia(dateStr?: string) {
     porMetodoPago,
     porTipo,
     horaPico,
-    cancelados
+    cancelados,
+    tiempoPromedioMinutos
   };
 }
 

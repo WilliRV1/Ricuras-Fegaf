@@ -7,6 +7,7 @@ interface ResumenCardsProps {
   totalFacturado: number;
   totalRecargos: number;
   horaPico: string;
+  tiempoPromedioMinutos?: number;
   cancelados: { id: number; motivo: string; hora: string }[];
   porMetodoPago: {
     efectivo: number;
@@ -25,6 +26,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
   totalFacturado,
   totalRecargos,
   horaPico,
+  tiempoPromedioMinutos,
   cancelados,
   porMetodoPago,
   porTipo,
@@ -55,6 +57,16 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
         <p className={styles.cardLabel}>Hora Pico</p>
         <p className={styles.cardValue} style={{ fontSize: '1.2rem' }}>{horaPico}</p>
         <p className={styles.cardSub}>Horario con más pedidos</p>
+      </div>
+
+      {/* Tiempo Medio */}
+      <div className={`${styles.card} ${styles.accentTeal}`}>
+        <div className={styles.cardIcon}>⏱️</div>
+        <p className={styles.cardLabel}>Tiempo Medio</p>
+        <p className={styles.cardValue} style={{ fontSize: '1.2rem' }}>
+          {tiempoPromedioMinutos ? `${tiempoPromedioMinutos} min` : 'N/A'}
+        </p>
+        <p className={styles.cardSub}>Desde inicio hasta cobro</p>
       </div>
 
       {/* Cancelados */}
