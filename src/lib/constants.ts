@@ -19,6 +19,13 @@ export const METODOS_PAGO = {
   BANCOLOMBIA: 'bancolombia',
 } as const;
 
+/**
+ * Valor que se registra cuando el cliente no entrega un dato
+ * (no da el nombre, no contesta el teléfono, no confirma la dirección).
+ * Permite seguir con el pedido sin dejar el campo vacío.
+ */
+export const SIN_DATO = 'No responde';
+
 /** Tipos de atención */
 export const TIPOS_ATENCION = {
   MESA: 'mesa',

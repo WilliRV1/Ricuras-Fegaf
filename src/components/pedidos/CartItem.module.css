@@ -43,11 +43,28 @@
 }
 
 .productName {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   font-size: 1rem;
   font-weight: 600;
   color: var(--color-text);
   line-height: 1.2;
   margin: 0;
+}
+
+/* Indicador de línea independiente cuando el mismo producto está varias veces */
+.lineBadge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-primary);
+  background: rgba(255, 107, 53, 0.15);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
 }
 
 .price {
@@ -87,6 +104,14 @@
   gap: 10px;
 }
 
+.quantityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .quantityControls {
   display: flex;
   align-items: center;
@@ -96,6 +121,40 @@
   border-radius: var(--radius-full);
   border: 1px solid var(--color-border);
   align-self: flex-start;
+}
+
+/* Separar un "x2" en unidades individuales */
+.splitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #A5B4FC;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 7px 11px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.splitBtn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: rgba(99, 102, 241, 0.6);
+}
+
+.splitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sharedNoteHint {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+  margin: 0;
 }
 
 .qtyBtn {

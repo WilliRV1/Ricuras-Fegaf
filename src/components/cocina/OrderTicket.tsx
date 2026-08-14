@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { PedidoWithDetalles } from '@/types';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { markOrderAsReady, cancelOrder } from '@/app/actions/cocina';
 import { toast } from '@/components/ui/Toast';
+import { formatCurrency } from '@/lib/utils';
 import styles from './OrderTicket.module.css';
 
 interface OrderTicketProps {
@@ -13,6 +15,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showReadyConfirm, setShowReadyConfirm] = useState(false);
 
   useEffect(() => {
     const calculateTime = () => {
@@ -28,7 +31,8 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
     return () => clearInterval(interval);
   }, [order.created_at]);
 
-  const handleReady = async () => {
+  /** Confirmado en el diálogo — recién aquí se marca como listo */
+  const handleReadyConfirmed = async () => {
     setIsSubmitting(true);
     try {
       const res = await markOrderAsReady(order.id);
@@ -37,10 +41,12 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
       } else {
         toast.error(res.error || 'Error al actualizar pedido');
         setIsSubmitting(false); // Only re-enable if there's an error, otherwise it unmounts
+        setShowReadyConfirm(false);
       }
     } catch {
       toast.error('Error de red');
       setIsSubmitting(false);
+      setShowReadyConfirm(false);
     }
   };
 
@@ -79,9 +85,18 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
 
   const isMesa = order.tipo === 'mesa';
   const headerIcon = isMesa ? '🍽️' : '🛵';
-  const headerText = isMesa 
-    ? `Mesa #${order.numero_mesa}` 
+  const headerText = isMesa
+    ? `Mesa #${order.numero_mesa}`
     : `Domicilio`;
+
+  // Efectivo: el domiciliario necesita salir con la vuelta ya alistada
+  const tienePagaCon = !isMesa && order.paga_con != null;
+  const vuelto = order.vuelto ?? 0;
+
+  const totalUnidades = (order.detalle_pedidos ?? []).reduce(
+    (acc, detalle) => acc + detalle.cantidad,
+    0
+  );
 
   return (
     <div className={`${styles.ticket} ${ticketClass}`}>
@@ -99,6 +114,19 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
           ⏱️ {elapsedMinutes} min
         </div>
       </div>
+
+      {/* Efectivo — con cuánto paga y vuelta que hay que alistar */}
+      {tienePagaCon && (
+        <div className={styles.efectivoBanner}>
+          <span className={styles.efectivoIcon}>💵</span>
+          <div className={styles.efectivoText}>
+            <span>Paga con <strong>{formatCurrency(order.paga_con!)}</strong></span>
+            <span className={styles.vueltoValue}>
+              {vuelto > 0 ? <>Alistar vuelta: <strong>{formatCurrency(vuelto)}</strong></> : 'Paga completo — sin vuelta'}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className={styles.itemsList}>
         {order.detalle_pedidos?.map((detalle, idx) => {
@@ -133,15 +161,34 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
         >
           {isCancelling ? '...' : 'Cancelar'}
         </Button>
-        <Button 
-          variant="primary" 
-          className={styles.readyBtn} 
-          onClick={handleReady}
+        <Button
+          variant="primary"
+          className={styles.readyBtn}
+          onClick={() => setShowReadyConfirm(true)}
           disabled={isSubmitting || isCancelling}
         >
           {isSubmitting ? '...' : 'Pedido Listo'}
         </Button>
       </div>
+
+      {/* Confirmación antes de sacar la comanda del tablero */}
+      <ConfirmDialog
+        isOpen={showReadyConfirm}
+        title={`¿Marcar el pedido #${order.id} como listo?`}
+        message={
+          <>
+            {isMesa ? `🍽️ Mesa #${order.numero_mesa}` : '🛵 Domicilio'} · {totalUnidades} producto
+            {totalUnidades !== 1 ? 's' : ''}.
+            <br />
+            La comanda desaparecerá del tablero de cocina y pasará a liquidación.
+          </>
+        }
+        confirmLabel="Sí, está listo"
+        cancelLabel="Todavía no"
+        isLoading={isSubmitting}
+        onConfirm={handleReadyConfirmed}
+        onCancel={() => setShowReadyConfirm(false)}
+      />
     </div>
   );
 };

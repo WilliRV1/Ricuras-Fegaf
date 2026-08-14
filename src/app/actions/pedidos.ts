@@ -8,7 +8,9 @@ export async function submitOrder(
   orderType: OrderType,
   orderDetails: OrderDetails,
   items: CartItem[],
-  metodoPago: MetodoPago = null
+  metodoPago: MetodoPago = null,
+  /** Monto en efectivo con el que paga el cliente — para alistar la vuelta */
+  pagaCon: number | null = null
 ) {
   if (!orderType || items.length === 0) {
     return { success: false, error: 'Faltan datos obligatorios o el carrito está vacío.' };
@@ -43,7 +45,14 @@ export async function submitOrder(
     horaEntregaISO = new Date(`${bogotaDateStr}T${orderDetails.hora_entrega}:00-05:00`).toISOString();
   }
 
+  // El monto en efectivo solo se guarda si el pago es en efectivo y cubre el total
+  const esEfectivo = metodoPago === METODOS_PAGO.EFECTIVO;
+  const pagaConFinal =
+    esEfectivo && pagaCon !== null && pagaCon >= total ? Math.round(pagaCon) : null;
+
   // Mapear items a formato JSONB para el RPC
+  // Cada línea del carrito viaja por separado: dos veces el mismo producto con
+  // observaciones distintas genera dos filas en detalle_pedidos.
   const detallesJson = items.map(item => ({
     producto_id: item.producto.id,
     cantidad: item.cantidad,
@@ -65,7 +74,8 @@ export async function submitOrder(
     p_recargo: recargo,
     p_total: total,
     p_detalles: detallesJson,
-    p_hora_entrega: horaEntregaISO
+    p_hora_entrega: horaEntregaISO,
+    p_paga_con: pagaConFinal
   });
 
   if (rpcError || !pedidoId) {

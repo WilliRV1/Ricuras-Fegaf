@@ -11,6 +11,17 @@ interface CartState {
   items: CartItem[];
 }
 
+/**
+ * Genera un id único para una línea del carrito.
+ * Cada línea es independiente aunque repita el mismo producto, de forma que
+ * las observaciones se pueden escribir por unidad y no quedan atadas a un "x2".
+ */
+let lineCounter = 0;
+function nextLineId(): string {
+  lineCounter += 1;
+  return `${Date.now().toString(36)}-${lineCounter}`;
+}
+
 // ----------------------------------------------------------------
 // Helpers de persistencia (solo en cliente)
 // ----------------------------------------------------------------
@@ -21,7 +32,15 @@ function loadFromStorage(): CartState | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as CartState;
+    const parsed = JSON.parse(raw) as CartState;
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    // Migración: los carritos guardados antes de esta versión no tienen lineId
+    return {
+      items: parsed.items.map((item) => ({
+        ...item,
+        lineId: item.lineId ?? nextLineId(),
+      })),
+    };
   } catch {
     return null;
   }
@@ -53,68 +72,86 @@ const emitChange = () => {
 // Store público
 // ----------------------------------------------------------------
 export const cartStore = {
+  /**
+   * Agrega el producto como una **línea nueva e independiente** del carrito.
+   * Nunca fusiona con líneas existentes: eso lo decide quien llama
+   * (ver `addToLine` para sumar una unidad a una línea concreta).
+   */
   addItem: (producto: Producto, cantidad: number = 1, notas?: string) => {
-    const existingItemIndex = cartState.items.findIndex(
-      (item) => item.producto.id === producto.id && item.notas === notas
-    );
-
-    if (existingItemIndex >= 0) {
-      const newItems = [...cartState.items];
-      newItems[existingItemIndex] = {
-        ...newItems[existingItemIndex],
-        cantidad: newItems[existingItemIndex].cantidad + cantidad,
-      };
-      cartState = { items: newItems };
-    } else {
-      cartState = {
-        items: [...cartState.items, { producto, cantidad, notas }],
-      };
-    }
+    cartState = {
+      items: [...cartState.items, { lineId: nextLineId(), producto, cantidad, notas }],
+    };
     emitChange();
   },
 
-  removeItem: (productoId: number, notas?: string) => {
+  /** Suma unidades a una línea existente identificada por su lineId. */
+  addToLine: (lineId: string, cantidad: number = 1) => {
     cartState = {
-      items: cartState.items.filter(
-        (item) => !(item.producto.id === productoId && item.notas === notas)
+      items: cartState.items.map((item) =>
+        item.lineId === lineId ? { ...item, cantidad: item.cantidad + cantidad } : item
       ),
     };
     emitChange();
   },
 
-  updateQuantity: (productoId: number, notas: string | undefined, delta: number) => {
-    const newItems = cartState.items.map((item) => {
-      if (item.producto.id === productoId && item.notas === notas) {
-        return { ...item, cantidad: Math.max(1, item.cantidad + delta) };
-      }
-      return item;
-    });
-    cartState = { items: newItems };
+  removeItem: (lineId: string) => {
+    cartState = {
+      items: cartState.items.filter((item) => item.lineId !== lineId),
+    };
     emitChange();
   },
 
-  updateNotes: (productoId: number, oldNotas: string | undefined, newNotas: string) => {
-    const newItems = cartState.items.map((item) => {
-      if (item.producto.id === productoId && item.notas === oldNotas) {
-        return { ...item, notas: newNotas };
-      }
-      return item;
-    });
+  updateQuantity: (lineId: string, delta: number) => {
+    cartState = {
+      items: cartState.items.map((item) =>
+        item.lineId === lineId
+          ? { ...item, cantidad: Math.max(1, item.cantidad + delta) }
+          : item
+      ),
+    };
+    emitChange();
+  },
 
-    // Si al cambiar notas coincide con otro ítem existente, los fusionamos.
-    const mergedItems = newItems.reduce((acc, current) => {
-      const existing = acc.find(
-        (i) => i.producto.id === current.producto.id && i.notas === current.notas
-      );
-      if (existing) {
-        existing.cantidad += current.cantidad;
-      } else {
-        acc.push({ ...current });
-      }
-      return acc;
-    }, [] as CartItem[]);
+  /**
+   * Actualiza las observaciones de UNA línea.
+   * No fusiona líneas: dos líneas del mismo producto siguen separadas aunque
+   * terminen con la misma nota, porque en cocina se preparan por separado.
+   */
+  updateNotes: (lineId: string, newNotas: string) => {
+    cartState = {
+      items: cartState.items.map((item) =>
+        item.lineId === lineId ? { ...item, notas: newNotas } : item
+      ),
+    };
+    emitChange();
+  },
 
-    cartState = { items: mergedItems };
+  /**
+   * Separa una línea con cantidad > 1 en líneas individuales de 1 unidad,
+   * para poder escribir observaciones distintas en cada una.
+   * Ej.: "2x Hamburguesa" → "1x Hamburguesa" + "1x Hamburguesa".
+   */
+  splitLine: (lineId: string) => {
+    const index = cartState.items.findIndex((item) => item.lineId === lineId);
+    if (index < 0) return;
+
+    const target = cartState.items[index];
+    if (target.cantidad <= 1) return;
+
+    const individuales: CartItem[] = Array.from({ length: target.cantidad }, () => ({
+      lineId: nextLineId(),
+      producto: target.producto,
+      cantidad: 1,
+      notas: target.notas,
+    }));
+
+    cartState = {
+      items: [
+        ...cartState.items.slice(0, index),
+        ...individuales,
+        ...cartState.items.slice(index + 1),
+      ],
+    };
     emitChange();
   },
 
@@ -154,9 +191,11 @@ export const useCart = () => {
     subtotal,
     totalItems,
     addItem: cartStore.addItem,
+    addToLine: cartStore.addToLine,
     removeItem: cartStore.removeItem,
     updateQuantity: cartStore.updateQuantity,
     updateNotes: cartStore.updateNotes,
+    splitLine: cartStore.splitLine,
     clearCart: cartStore.clearCart,
   };
 };

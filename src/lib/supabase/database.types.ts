@@ -82,6 +82,10 @@ export interface Database {
           recargo: number
           total: number
           motivo_cancelacion: string | null
+          /** Monto en efectivo con el que el cliente va a pagar (para alistar la vuelta) */
+          paga_con: number | null
+          /** Vuelta a alistar = paga_con - total */
+          vuelto: number | null
           created_at: string
           closed_at: string | null
         }
@@ -98,6 +102,8 @@ export interface Database {
           recargo?: number
           total?: number
           motivo_cancelacion?: string | null
+          paga_con?: number | null
+          vuelto?: number | null
           created_at?: string
           closed_at?: string | null
         }
@@ -114,6 +120,8 @@ export interface Database {
           recargo?: number
           total?: number
           motivo_cancelacion?: string | null
+          paga_con?: number | null
+          vuelto?: number | null
           created_at?: string
           closed_at?: string | null
         }

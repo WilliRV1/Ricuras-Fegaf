@@ -25,6 +25,12 @@ export interface OrderDetails {
 }
 
 export interface CartItem {
+  /**
+   * Identificador único de la línea del carrito.
+   * Dos líneas del mismo producto son SIEMPRE independientes: cada una tiene
+   * su propia cantidad y sus propias observaciones.
+   */
+  lineId: string;
   producto: Producto;
   cantidad: number;
   notas?: string;

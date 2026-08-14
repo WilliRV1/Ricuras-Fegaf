@@ -39,7 +39,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
   initialCategorias,
   initialProductos,
 }) => {
-  const { items, addItem } = useCart();
+  const { items, addItem, addToLine } = useCart();
   const cartItemCount = items.reduce((acc, item) => acc + item.cantidad, 0);
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
@@ -114,12 +114,13 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
     );
   }, [orderType, addItem, items]);
 
-  /** Resolver modal: sumar uno al item existente (mismas notas = undefined) */
+  /** Resolver modal: sumar uno a la última línea existente de ese producto */
   const handleModalAddToExisting = useCallback(() => {
     if (!pendingProduct) return;
-    // Sumar al primer item que coincida con el id (el que ya tiene las notas que tenía)
-    const existing = items.find((i) => i.producto.id === pendingProduct.id);
-    addItem(pendingProduct, 1, existing?.notas);
+    // Se suma a la última línea agregada de ese producto (la que se está armando)
+    const existing = [...items].reverse().find((i) => i.producto.id === pendingProduct.id);
+    if (!existing) return;
+    addToLine(existing.lineId, 1);
     toast.success(
       <>
         <span style={{ fontWeight: 700, color: 'var(--color-primary-light)' }}>
@@ -129,13 +130,12 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
       </>
     );
     setPendingProduct(null);
-  }, [pendingProduct, items, addItem]);
+  }, [pendingProduct, items, addToLine]);
 
-  /** Resolver modal: agregar como ítem independiente con notas vacías */
+  /** Resolver modal: agregar como línea independiente, con sus propias observaciones */
   const handleModalAddNew = useCallback(() => {
     if (!pendingProduct) return;
-    // Usar un placeholder de notas único para diferenciarlo — el usuario puede editarlo
-    addItem(pendingProduct, 1, '');
+    addItem(pendingProduct, 1);
     toast.success(
       <>
         <span style={{ fontWeight: 700, color: 'var(--color-primary-light)' }}>
@@ -172,7 +172,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
   /**
    * Envía el pedido completo a Supabase.
    */
-  const handleEnviarCocina = async (metodoPago: MetodoPago) => {
+  const handleEnviarCocina = async (metodoPago: MetodoPago, pagaCon: number | null) => {
     if (!orderType || !isFormValid) {
       toast.error('Completa los datos obligatorios del pedido.');
       return;
@@ -184,7 +184,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
       return;
     }
 
-    const res = await submitOrder(orderType, orderDetails, items, metodoPago);
+    const res = await submitOrder(orderType, orderDetails, items, metodoPago, pagaCon);
 
     if (!res.success) {
       throw new Error(res.error || 'Error desconocido al enviar pedido');
@@ -318,8 +318,8 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
           <h2>Tu Carrito</h2>
           <button className={styles.closeCartBtn} onClick={() => setIsMobileCartOpen(false)}>×</button>
         </div>
-        <Cart orderType={orderType} isValidOrder={isFormValid} onEnviarCocina={async (pago) => {
-          await handleEnviarCocina(pago);
+        <Cart orderType={orderType} isValidOrder={isFormValid} onEnviarCocina={async (pago, pagaCon) => {
+          await handleEnviarCocina(pago, pagaCon);
           setIsMobileCartOpen(false);
         }} />
       </div>

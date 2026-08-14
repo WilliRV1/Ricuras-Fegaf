@@ -228,6 +228,135 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* ============================================================
+   Efectivo — con cuánto paga y vuelta a alistar
+   ============================================================ */
+
+.efectivoBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  margin-top: 4px;
+  background: rgba(16, 185, 129, 0.07);
+  border: 1px dashed rgba(16, 185, 129, 0.4);
+  border-radius: var(--radius-md);
+}
+
+.efectivoLabel {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.efectivoOptional {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.billetes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.billeteBtn {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.billeteBtn:hover:not(:disabled) {
+  border-color: var(--color-success);
+}
+
+.billeteActive {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.billeteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.efectivoInputRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.efectivoInput {
+  width: 100%;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 34px 10px 12px;
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 600;
+  transition: border-color 0.2s ease;
+}
+
+.efectivoInput:focus {
+  outline: none;
+  border-color: var(--color-success);
+}
+
+.efectivoInput::placeholder {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.efectivoClear {
+  position: absolute;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.vueltaOk {
+  font-size: 0.9375rem;
+  color: var(--color-success);
+  margin: 0;
+}
+
+.vueltaOk strong {
+  font-size: 1.0625rem;
+  font-weight: 800;
+}
+
+.vueltaError {
+  font-size: 0.875rem;
+  color: var(--color-danger);
+  font-weight: 600;
+  margin: 0;
+}
+
+.vueltaHint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
 .totals {
   display: flex;
   flex-direction: column;

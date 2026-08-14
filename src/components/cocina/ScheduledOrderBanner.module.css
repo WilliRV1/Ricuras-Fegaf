@@ -131,9 +131,15 @@
 .badge_danger .countdownValue { color: var(--color-danger); }
 
 .countdownSub {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
-  line-height: 1.2;
+  line-height: 1.25;
+}
+
+.horaFuerte {
+  color: var(--color-text);
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 /* Order Info */
@@ -190,6 +196,18 @@
   font-style: italic;
 }
 
+/* Efectivo — vuelta a alistar */
+.efectivoRow {
+  font-size: 0.8125rem;
+  color: var(--color-success);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 5px 9px;
+  align-self: flex-start;
+  line-height: 1.35;
+}
+
 /* Actions */
 .actions {
   display: flex;
@@ -228,23 +246,92 @@
   cursor: not-allowed;
 }
 
-/* Responsive */
+/* ----------------------------------------------------------
+   Responsive — Celular
+   El pedido programado debe leerse de un vistazo: la hora de
+   entrega y el countdown van arriba, a todo el ancho.
+   ---------------------------------------------------------- */
 @media (max-width: 768px) {
   .banner {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
   }
 
-  .actions {
-    flex-direction: row;
+  .leftSection {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
     width: 100%;
   }
 
-  .readyBtn {
-    flex: 1;
+  /* Countdown a todo el ancho y más grande */
+  .countdownBadge {
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-start;
+    padding: 12px 14px;
   }
 
+  .clockIcon {
+    font-size: 1.75rem;
+  }
+
+  .countdownValue {
+    font-size: 1.375rem;
+  }
+
+  .countdownSub {
+    font-size: 0.8125rem;
+    white-space: normal;
+  }
+
+  /* La hora programada también como etiqueta destacada */
+  .scheduledTag {
+    font-size: 0.8125rem;
+    padding: 3px 9px;
+  }
+
+  .orderId {
+    font-size: 1rem;
+  }
+
+  .item {
+    font-size: 0.9375rem;
+  }
+
+  .efectivoRow {
+    align-self: stretch;
+  }
+
+  /* Botones grandes: se usan con las manos ocupadas */
+  .actions {
+    flex-direction: row;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .readyBtn,
   .cancelBtn {
     flex: 1;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+
+  /* El pulso no debe quedar encima del texto en pantallas angostas */
+  .pulse {
+    top: 8px;
+    right: 8px;
+  }
+}
+
+@media (max-width: 400px) {
+  .countdownValue {
+    font-size: 1.25rem;
+  }
+
+  .orderHeader {
+    gap: 6px;
   }
 }

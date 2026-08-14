@@ -137,6 +137,18 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
           <span>Total a Cobrar</span>
           <span>{formatCurrency(totalCalculado)}</span>
         </div>
+
+        {/* Efectivo informado al tomar el pedido — vuelta que se alistó */}
+        {order.paga_con != null && (
+          <div className={styles.summaryRow} style={{ color: 'var(--color-success)' }}>
+            <span>💵 Paga con {formatCurrency(order.paga_con)}</span>
+            <span>
+              {(order.vuelto ?? 0) > 0
+                ? `Vuelta ${formatCurrency(order.vuelto ?? 0)}`
+                : 'Sin vuelta'}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className={styles.paymentSection}>

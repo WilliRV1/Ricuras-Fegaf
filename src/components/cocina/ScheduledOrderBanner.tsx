@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { PedidoWithDetalles } from '@/types';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { markOrderAsReady, cancelOrder } from '@/app/actions/cocina';
 import { toast } from '@/components/ui/Toast';
+import { formatCurrency } from '@/lib/utils';
 import styles from './ScheduledOrderBanner.module.css';
 
 interface ScheduledOrderBannerProps {
@@ -40,6 +42,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showReadyConfirm, setShowReadyConfirm] = useState(false);
 
   useEffect(() => {
     if (!order.hora_entrega) return;
@@ -60,7 +63,8 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
   const isMesa = order.tipo === 'mesa';
   const urgency = countdown?.urgency ?? 'normal';
 
-  const handleReady = async () => {
+  /** Confirmado en el diálogo — recién aquí se marca como listo */
+  const handleReadyConfirmed = async () => {
     setIsSubmitting(true);
     try {
       const res = await markOrderAsReady(order.id);
@@ -69,10 +73,12 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
       } else {
         toast.error(res.error || 'Error al actualizar pedido');
         setIsSubmitting(false);
+        setShowReadyConfirm(false);
       }
     } catch {
       toast.error('Error de red');
       setIsSubmitting(false);
+      setShowReadyConfirm(false);
     }
   };
 
@@ -99,6 +105,15 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
     }
   };
 
+  // Efectivo: vuelta que hay que alistar antes de salir
+  const tienePagaCon = !isMesa && order.paga_con != null;
+  const vuelto = order.vuelto ?? 0;
+
+  const totalUnidades = (order.detalle_pedidos ?? []).reduce(
+    (acc, detalle) => acc + detalle.cantidad,
+    0
+  );
+
   return (
     <div className={`${styles.banner} ${styles[`banner_${urgency}`]}`}>
       {/* Pulso de atención (solo en warning/danger) */}
@@ -110,7 +125,10 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
           <span className={styles.clockIcon}>⏰</span>
           <div className={styles.countdownText}>
             <span className={styles.countdownValue}>{countdown?.label ?? '—'}</span>
-            <span className={styles.countdownSub}>para entrega a las {horaEntregaLabel}</span>
+            <span className={styles.countdownSub}>
+              {countdown && countdown.minutes < 0 ? 'debía entregarse a las' : 'para entregar a las'}{' '}
+              <strong className={styles.horaFuerte}>{horaEntregaLabel}</strong>
+            </span>
           </div>
         </div>
 
@@ -118,7 +136,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
         <div className={styles.orderInfo}>
           <div className={styles.orderHeader}>
             <span className={styles.orderId}>#{order.id}</span>
-            <span className={styles.scheduledTag}>📅 PROGRAMADO</span>
+            <span className={styles.scheduledTag}>📅 {horaEntregaLabel}</span>
             <span className={styles.orderType}>
               {isMesa ? `🍽️ Mesa ${order.numero_mesa}` : `🛵 ${order.cliente_nombre || 'Domicilio'}`}
             </span>
@@ -131,6 +149,16 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
               </span>
             ))}
           </div>
+          {tienePagaCon && (
+            <div className={styles.efectivoRow}>
+              💵 Paga con <strong>{formatCurrency(order.paga_con!)}</strong>
+              {vuelto > 0 ? (
+                <> · alistar vuelta <strong>{formatCurrency(vuelto)}</strong></>
+              ) : (
+                <> · paga completo</>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -139,7 +167,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
         <Button
           variant="primary"
           className={styles.readyBtn}
-          onClick={handleReady}
+          onClick={() => setShowReadyConfirm(true)}
           disabled={isSubmitting || isCancelling}
         >
           {isSubmitting ? '...' : '✅ Listo'}
@@ -152,6 +180,25 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
           {isCancelling ? '...' : 'Cancelar'}
         </button>
       </div>
+
+      {/* Confirmación antes de sacarlo del tablero */}
+      <ConfirmDialog
+        isOpen={showReadyConfirm}
+        title={`¿Marcar el pedido #${order.id} como listo?`}
+        message={
+          <>
+            📅 Programado para las <strong>{horaEntregaLabel}</strong> · {totalUnidades} producto
+            {totalUnidades !== 1 ? 's' : ''}.
+            <br />
+            Saldrá del tablero de cocina y pasará a liquidación.
+          </>
+        }
+        confirmLabel="Sí, está listo"
+        cancelLabel="Todavía no"
+        isLoading={isSubmitting}
+        onConfirm={handleReadyConfirmed}
+        onCancel={() => setShowReadyConfirm(false)}
+      />
     </div>
   );
 };
