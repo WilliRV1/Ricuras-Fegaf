@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './PedidosTable.module.css';
 import { formatCurrency } from '@/lib/utils';
-import { TIPOS_ATENCION, ESTADOS_PEDIDO, METODOS_PAGO } from '@/lib/constants';
+import { TIPOS_ATENCION, ESTADOS_PEDIDO, METODOS_PAGO, METODO_PAGO_MIXTO } from '@/lib/constants';
 
 interface PedidoHistorial {
   id: number;
@@ -15,6 +15,8 @@ interface PedidoHistorial {
   total: number;
   created_at: string;
   closed_at: string | null;
+  /** Desglose cuando el pago se dividió entre varios métodos */
+  pagos_pedido?: { metodo: string; monto: number }[];
 }
 
 interface PedidosTableProps {
@@ -48,8 +50,33 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
     }
   };
 
-  const getMetodoPago = (metodo: string | null) => {
+  const METODO_ICONOS: Record<string, string> = {
+    [METODOS_PAGO.EFECTIVO]: '💵',
+    [METODOS_PAGO.NEQUI]: '📱',
+    [METODOS_PAGO.DATAFONO]: '💳',
+    [METODOS_PAGO.BANCOLOMBIA]: '🏦',
+  };
+
+  const getMetodoPago = (pedido: PedidoHistorial) => {
+    const { metodo_pago: metodo, pagos_pedido: pagos } = pedido;
     if (!metodo) return '-';
+
+    // Pago dividido: se muestra el desglose de cuánto entró por cada método
+    if (metodo === METODO_PAGO_MIXTO && pagos && pagos.length > 0) {
+      return (
+        <div>
+          <span className={styles.methodMixto}>🔀 Mixto</span>
+          <div style={{ fontSize: '0.6875rem', marginTop: '4px', color: 'var(--color-text-muted)' }}>
+            {pagos.map((p, i) => (
+              <div key={i}>
+                {METODO_ICONOS[p.metodo] ?? ''} {formatCurrency(Number(p.monto))}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     switch (metodo) {
       case METODOS_PAGO.EFECTIVO: return <span className={styles.methodEfectivo}>💵 Efectivo</span>;
       case METODOS_PAGO.NEQUI: return <span className={styles.methodNequi}>📱 Nequi</span>;
@@ -125,7 +152,7 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
                 {pedido.estado}
               </td>
               <td className={styles.td}>
-                {getMetodoPago(pedido.metodo_pago)}
+                {getMetodoPago(pedido)}
               </td>
               <td className={styles.td}>
                 {getTiempoBadge(pedido.created_at, pedido.closed_at)}

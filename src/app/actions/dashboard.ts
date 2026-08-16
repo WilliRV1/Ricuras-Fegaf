@@ -48,7 +48,7 @@ export async function getResumenDelDia(dateStr?: string) {
   // Consultar todos los pedidos del día para calcular todas las métricas
   const { data, error } = await supabase
     .from('pedidos')
-    .select('id, total, subtotal, recargo, costo_domicilio, metodo_pago, tipo, estado, closed_at, created_at, motivo_cancelacion')
+    .select('id, total, subtotal, recargo, costo_domicilio, metodo_pago, tipo, estado, closed_at, created_at, motivo_cancelacion, pagos_pedido(metodo, monto)')
     .gte('created_at', startOfDay)
     .lt('created_at', endOfDay);
 
@@ -65,12 +65,28 @@ export async function getResumenDelDia(dateStr?: string) {
   const totalFacturado = pagados.reduce((sum, p) => sum + (p.total ?? 0), 0);
   const totalPedidosPagados = pagados.length;
 
+  // Totales por método: si el pedido tiene pagos registrados (uno o varios) se
+  // usan esos; los pedidos anteriores a los pagos divididos caen a metodo_pago.
   const porMetodoPago = {
-    efectivo: pagados.filter(p => p.metodo_pago === METODOS_PAGO.EFECTIVO).reduce((s, p) => s + (p.total ?? 0), 0),
-    nequi:    pagados.filter(p => p.metodo_pago === METODOS_PAGO.NEQUI).reduce((s, p) => s + (p.total ?? 0), 0),
-    datafono: pagados.filter(p => p.metodo_pago === METODOS_PAGO.DATAFONO).reduce((s, p) => s + (p.total ?? 0), 0),
-    bancolombia: pagados.filter(p => p.metodo_pago === METODOS_PAGO.BANCOLOMBIA).reduce((s, p) => s + (p.total ?? 0), 0),
+    [METODOS_PAGO.EFECTIVO]: 0,
+    [METODOS_PAGO.NEQUI]: 0,
+    [METODOS_PAGO.DATAFONO]: 0,
+    [METODOS_PAGO.BANCOLOMBIA]: 0,
   };
+
+  for (const pedido of pagados) {
+    const pagos = pedido.pagos_pedido ?? [];
+
+    if (pagos.length > 0) {
+      for (const pago of pagos) {
+        if (pago.metodo in porMetodoPago) {
+          porMetodoPago[pago.metodo as keyof typeof porMetodoPago] += Number(pago.monto) || 0;
+        }
+      }
+    } else if (pedido.metodo_pago && pedido.metodo_pago in porMetodoPago) {
+      porMetodoPago[pedido.metodo_pago as keyof typeof porMetodoPago] += pedido.total ?? 0;
+    }
+  }
 
   const porTipo = {
     mesa:      pagados.filter(p => p.tipo === TIPOS_ATENCION.MESA).length,
@@ -158,7 +174,7 @@ export async function getPedidosRecientes(limit: number = 20, dateStr?: string) 
 
   const { data, error } = await supabase
     .from('pedidos')
-    .select('id, tipo, numero_mesa, cliente_nombre, estado, metodo_pago, subtotal, recargo, total, created_at, closed_at')
+    .select('id, tipo, numero_mesa, cliente_nombre, estado, metodo_pago, subtotal, recargo, total, created_at, closed_at, pagos_pedido(metodo, monto)')
     .gte('created_at', startOfDay)
     .lt('created_at', endOfDay)
     .order('created_at', { ascending: false })

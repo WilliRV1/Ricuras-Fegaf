@@ -74,6 +74,7 @@
 .methodNequi { color: #A78BFA; }
 .methodDatafono { color: var(--color-warning); }
 .methodBancolombia { color: #FCD34D; }
+.methodMixto { color: #C4B5FD; font-weight: 600; }
 
 .total {
   font-weight: 800;

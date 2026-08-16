@@ -1,68 +1,58 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { ESTADOS_PEDIDO, METODOS_PAGO } from '@/lib/constants';
-import { calcularRecargoDatafono } from '@/lib/utils';
+import { ESTADOS_PEDIDO } from '@/lib/constants';
+
+export interface PagoParcial {
+  metodo: string;
+  /** Parte del pedido que cubre este método (sin el recargo del datáfono) */
+  monto: number;
+}
 
 /**
- * Cierra un pedido, registrando el método de pago y aplicando recargos si es necesario.
- * @param pedidoId ID numérico del pedido a cerrar
- * @param metodoPago Método de pago seleccionado (efectivo, nequi, datafono, bancolombia)
+ * Cierra un pedido cobrando con uno o varios métodos de pago.
+ * El recargo del 5% se calcula solo sobre la parte pagada con datáfono.
+ * Los montos deben sumar exactamente el valor del pedido (productos + domicilio);
+ * el servidor lo valida y rechaza el cobro si no cuadra.
  */
-export async function closeOrder(pedidoId: number, metodoPago: string) {
+export async function closeOrderWithPayments(pedidoId: number, pagos: PagoParcial[]) {
   try {
     const supabase = await createClient();
 
-    // 1. Obtener los detalles del pedido actual para saber su subtotal y recargo actual
-    const { data: pedidoData, error: fetchError } = await supabase
-      .from('pedidos')
-      .select('subtotal, recargo, total, costo_domicilio')
-      .eq('id', pedidoId)
-      .single();
+    const pagosLimpios = pagos
+      .map((p) => ({ metodo: p.metodo, monto: Math.round(p.monto) }))
+      .filter((p) => p.monto > 0);
 
-    if (fetchError || !pedidoData) {
-      console.error('Error al consultar pedido:', fetchError);
-      return { success: false, error: 'No se pudo consultar el pedido.' };
+    if (pagosLimpios.length === 0) {
+      return { success: false, error: 'Registra al menos un pago.' };
     }
 
-    const subtotal = pedidoData.subtotal;
-    // El cobro de domicilio no depende del método de pago: siempre suma al total
-    const costoDomicilio = pedidoData.costo_domicilio ?? 0;
-    let { recargo, total } = pedidoData;
+    // @ts-expect-error - Tipos no actualizados con el nuevo RPC
+    const { data: total, error } = await supabase.rpc('close_order_with_payments', {
+      p_pedido_id: pedidoId,
+      p_pagos: pagosLimpios,
+    });
 
-    // 2. Si el método de pago es Datáfono y no se había cobrado recargo aún, calcularlo
-    // (En domicilios el recargo se puede calcular desde el carrito, por eso validamos si ya existe)
-    if (metodoPago === METODOS_PAGO.DATAFONO && recargo === 0) {
-      recargo = calcularRecargoDatafono(subtotal, costoDomicilio);
-      total = subtotal + costoDomicilio + recargo;
-    }
-    // Si cambiaron el método de Datáfono a otro en caja, quitar el recargo
-    else if (metodoPago !== METODOS_PAGO.DATAFONO && recargo > 0) {
-      recargo = 0;
-      total = subtotal + costoDomicilio;
-    }
+    if (error) {
+      console.error('Error al cobrar con pagos divididos:', error);
 
-    // 3. Actualizar la base de datos
-    const { error: updateError } = await supabase
-      .from('pedidos')
-      .update({
-        estado: ESTADOS_PEDIDO.PAGADO,
-        metodo_pago: metodoPago,
-        recargo,
-        total,
-        closed_at: new Date().toISOString()
-      })
-      .eq('id', pedidoId);
+      if (error.message?.includes('MONTOS_NO_CUADRAN')) {
+        return { success: false, error: 'Los montos no suman el valor del pedido.' };
+      }
+      if (error.message?.includes('PEDIDO_YA_PAGADO')) {
+        return { success: false, error: 'Este pedido ya fue cobrado.' };
+      }
+      if (error.message?.includes('PEDIDO_NO_ENCONTRADO')) {
+        return { success: false, error: 'El pedido ya no existe.' };
+      }
 
-    if (updateError) {
-      console.error('Error al cerrar pedido:', updateError);
-      return { success: false, error: updateError.message };
+      return { success: false, error: 'No se pudo registrar el cobro.' };
     }
 
-    return { success: true };
+    return { success: true, total: total as number };
   } catch (error) {
-    console.error('Excepción al cerrar pedido:', error);
-    return { success: false, error: 'Ocurrió un error inesperado al procesar la liquidación.' };
+    console.error('Excepción al cobrar con pagos divididos:', error);
+    return { success: false, error: 'Ocurrió un error inesperado al registrar el cobro.' };
   }
 }
 

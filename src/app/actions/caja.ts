@@ -74,7 +74,7 @@ export async function obtenerEstadoCaja() {
     // Calcular ventas desde opened_at
     const { data: ventas, error: ventasError } = await supabase
       .from('pedidos')
-      .select('total, metodo_pago')
+      .select('total, metodo_pago, pagos_pedido(metodo, monto)')
       .eq('estado', ESTADOS_PEDIDO.PAGADO)
       .gte('created_at', arqueo.opened_at);
 
@@ -84,11 +84,25 @@ export async function obtenerEstadoCaja() {
     let ventasTransferencias = 0; // Nequi, Bancolombia, Datáfono (todo lo no efectivo)
 
     ventas?.forEach(pedido => {
+      const pagos = pedido.pagos_pedido ?? [];
+
+      // Con pagos divididos, cada parte va a su bolsillo: lo que entró en
+      // efectivo debe estar en la caja, el resto no.
+      if (pagos.length > 0) {
+        for (const pago of pagos) {
+          const monto = Number(pago.monto) || 0;
+          if (pago.metodo === 'efectivo') {
+            ventasEfectivo += monto;
+          } else {
+            ventasTransferencias += monto;
+          }
+        }
+        return;
+      }
+
+      // Pedidos anteriores a los pagos divididos: un solo método.
+      // Si no tiene método registrado se asume efectivo de caja.
       const total = Number(pedido.total);
-      // Asumimos que si no tiene metodo_pago (null) en un pedido pagado, 
-      // probablemente fue efectivo de caja, pero en el modelo actual:
-      // Mesa = efectivo al liquidar si no se marcó otra cosa. 
-      // Para simplificar, revisemos metodo_pago:
       if (pedido.metodo_pago === 'efectivo' || !pedido.metodo_pago) {
         ventasEfectivo += total;
       } else {

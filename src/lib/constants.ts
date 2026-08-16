@@ -35,6 +35,12 @@ export const METODOS_PAGO = {
 } as const;
 
 /**
+ * Valor que queda en `pedidos.metodo_pago` cuando el pago se dividió entre
+ * varios métodos. El detalle real está en la tabla `pagos_pedido`.
+ */
+export const METODO_PAGO_MIXTO = 'mixto';
+
+/**
  * Valor que se registra cuando el cliente no entrega un dato
  * (no da el nombre, no contesta el teléfono, no confirma la dirección).
  * Permite seguir con el pedido sin dejar el campo vacío.

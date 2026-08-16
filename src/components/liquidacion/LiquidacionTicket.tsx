@@ -5,7 +5,8 @@ import { PedidoWithDetalles } from '@/types';
 import { TIPOS_ATENCION, METODOS_PAGO, SIN_DATO } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
 import { CancelOrderDialog } from '@/components/ui/CancelOrderDialog';
-import { closeOrder, markOrderAsDebe } from '@/app/actions/liquidacion';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { closeOrderWithPayments, markOrderAsDebe } from '@/app/actions/liquidacion';
 import { cancelOrder } from '@/app/actions/cocina';
 import { toast } from '@/components/ui/Toast';
 import { formatCurrency, calcularRecargoDatafono } from '@/lib/utils';
@@ -30,51 +31,93 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
   const [isMarkingDebe, setIsMarkingDebe] = useState(false);
   const [isAnulando, setIsAnulando] = useState(false);
   const [showAnularDialog, setShowAnularDialog] = useState(false);
+  const [showCobrarConfirm, setShowCobrarConfirm] = useState(false);
+  /** Modo pago dividido: monto (texto) por cada método */
+  const [dividido, setDividido] = useState(false);
+  const [montos, setMontos] = useState<Record<string, string>>({});
 
   const isMesa = order.tipo === TIPOS_ATENCION.MESA;
 
-  // Calcular valores en cliente para previsualizar
+  // Lo que vale el pedido antes del recargo del datáfono
   const subtotal = order.subtotal;
   const costoDomicilio = order.costo_domicilio ?? 0;
-  let recargo = 0;
+  const base = subtotal + costoDomicilio;
 
-  if (selectedMethod === METODOS_PAGO.DATAFONO) {
-    // Si ya tenía recargo desde el pedido (ej. domicilio con datáfono)
-    if (order.recargo > 0) {
-      recargo = order.recargo;
-    } else {
-      recargo = calcularRecargoDatafono(subtotal, costoDomicilio);
-    }
-  }
+  /** Monto asignado a un método en modo dividido */
+  const montoDe = (metodo: string) => {
+    const digits = (montos[metodo] ?? '').replace(/\D/g, '');
+    return digits === '' ? 0 : parseInt(digits, 10);
+  };
 
-  const totalCalculado = subtotal + costoDomicilio + recargo;
+  // ── Cálculo del cobro, según el modo ──
+  const pagos = dividido
+    ? METODO_OPTIONS.map(({ key }) => ({ metodo: key as string, monto: montoDe(key) })).filter(
+        (p) => p.monto > 0
+      )
+    : selectedMethod
+      ? [{ metodo: selectedMethod, monto: base }]
+      : [];
+
+  const asignado = pagos.reduce((sum, p) => sum + p.monto, 0);
+  const restante = base - asignado;
+
+  // El 5% se cobra solo sobre lo que pasa por el datáfono
+  const recargo = pagos
+    .filter((p) => p.metodo === METODOS_PAGO.DATAFONO)
+    .reduce((sum, p) => sum + calcularRecargoDatafono(p.monto), 0);
+
+  const totalCalculado = base + recargo;
+
+  const puedeCobrar = dividido ? pagos.length > 0 && restante === 0 : !!selectedMethod;
 
   const direccionUtil =
     !!order.cliente_direccion && order.cliente_direccion.trim() !== SIN_DATO;
 
-  const handleConfirm = async () => {
-    if (!selectedMethod) {
-      toast.error('Selecciona un método de pago');
-      return;
-    }
+  /** Cambia entre cobro simple y dividido, limpiando lo anterior */
+  const toggleDividido = () => {
+    setDividido((prev) => {
+      const siguiente = !prev;
+      setMontos({});
+      setSelectedMethod(null);
+      return siguiente;
+    });
+  };
 
-    if (!window.confirm(`¿Confirmar cobro por ${formatCurrency(totalCalculado)}?`)) {
-      return;
-    }
+  /** Asigna a un método todo lo que falta por cubrir */
+  const asignarResto = (metodo: string) => {
+    const otros = pagos.filter((p) => p.metodo !== metodo).reduce((s, p) => s + p.monto, 0);
+    const resto = Math.max(base - otros, 0);
+    setMontos((prev) => ({ ...prev, [metodo]: resto > 0 ? String(resto) : '' }));
+  };
 
+  const handleCobrarConfirmed = async () => {
     setIsSubmitting(true);
     try {
-      const res = await closeOrder(order.id, selectedMethod);
+      const res = await closeOrderWithPayments(order.id, pagos);
       if (res.success) {
         toast.success(`Pedido #${order.id} liquidado correctamente`);
       } else {
         toast.error(res.error || 'Error al liquidar pedido');
         setIsSubmitting(false);
+        setShowCobrarConfirm(false);
       }
     } catch {
       toast.error('Error al cerrar el pedido');
       setIsSubmitting(false);
+      setShowCobrarConfirm(false);
     }
+  };
+
+  const handleConfirm = () => {
+    if (!puedeCobrar) {
+      toast.error(
+        dividido
+          ? 'Los montos deben sumar el valor del pedido.'
+          : 'Selecciona un método de pago'
+      );
+      return;
+    }
+    setShowCobrarConfirm(true);
   };
 
   const handleDebe = async () => {
@@ -210,25 +253,92 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
       </div>
 
       <div className={styles.paymentSection}>
-        <span className={styles.paymentLabel}>Método de Pago:</span>
-        <div className={styles.methods}>
-          {METODO_OPTIONS.map(({ key, label, icon }) => (
-            <button
-              key={key}
-              className={`${styles.methodBtn} ${selectedMethod === key ? styles.methodBtnActive : ''}`}
-              onClick={() => setSelectedMethod(key)}
-            >
-              {icon} {label}
-            </button>
-          ))}
+        <div className={styles.paymentHeader}>
+          <span className={styles.paymentLabel}>Método de Pago:</span>
+          <button
+            type="button"
+            className={`${styles.dividirBtn} ${dividido ? styles.dividirActivo : ''}`}
+            onClick={toggleDividido}
+            disabled={accionesBloqueadas}
+          >
+            {dividido ? '↩️ Un solo método' : '➗ Dividir pago'}
+          </button>
         </div>
+
+        {!dividido ? (
+          <div className={styles.methods}>
+            {METODO_OPTIONS.map(({ key, label, icon }) => (
+              <button
+                key={key}
+                className={`${styles.methodBtn} ${selectedMethod === key ? styles.methodBtnActive : ''}`}
+                onClick={() => setSelectedMethod(key)}
+              >
+                {icon} {label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.splitBox}>
+            {METODO_OPTIONS.map(({ key, label, icon }) => {
+              const monto = montoDe(key);
+              const recargoFila =
+                key === METODOS_PAGO.DATAFONO && monto > 0 ? calcularRecargoDatafono(monto) : 0;
+
+              return (
+                <div key={key} className={styles.splitRow}>
+                  <span className={styles.splitLabel}>
+                    {icon} {label}
+                  </span>
+                  <div className={styles.splitInputWrap}>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      className={styles.splitInput}
+                      placeholder="0"
+                      value={montos[key] ?? ''}
+                      onChange={(e) =>
+                        setMontos((prev) => ({ ...prev, [key]: e.target.value.replace(/\D/g, '') }))
+                      }
+                      disabled={accionesBloqueadas}
+                    />
+                    <button
+                      type="button"
+                      className={styles.restoBtn}
+                      onClick={() => asignarResto(key)}
+                      disabled={accionesBloqueadas}
+                      title="Poner aquí todo lo que falta"
+                    >
+                      resto
+                    </button>
+                  </div>
+                  {recargoFila > 0 && (
+                    <span className={styles.splitRecargo}>
+                      +{formatCurrency(recargoFila)} de recargo → se cobran{' '}
+                      {formatCurrency(monto + recargoFila)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+
+            <div
+              className={`${styles.splitStatus} ${restante === 0 ? styles.splitOk : styles.splitPendiente}`}
+            >
+              {restante === 0
+                ? '✅ Los montos cuadran con el pedido'
+                : restante > 0
+                  ? `Falta asignar ${formatCurrency(restante)}`
+                  : `Sobran ${formatCurrency(Math.abs(restante))}`}
+            </div>
+          </div>
+        )}
 
         <div className={styles.confirmActions}>
           <Button
             variant="primary"
             className={styles.confirmBtn}
             onClick={handleConfirm}
-            disabled={!selectedMethod || accionesBloqueadas}
+            disabled={!puedeCobrar || accionesBloqueadas}
           >
             {isSubmitting ? 'Procesando...' : 'Cobrar'}
           </Button>
@@ -256,6 +366,34 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
           </button>
         </div>
       </div>
+
+      {/* Confirmación del cobro, con el desglose de cómo paga */}
+      <ConfirmDialog
+        isOpen={showCobrarConfirm}
+        title={`Cobrar ${formatCurrency(totalCalculado)}`}
+        message={
+          <>
+            Pedido #{order.id}
+            <br />
+            {pagos.map((p) => {
+              const rec = p.metodo === METODOS_PAGO.DATAFONO ? calcularRecargoDatafono(p.monto) : 0;
+              const label = METODO_OPTIONS.find((m) => m.key === p.metodo);
+              return (
+                <span key={p.metodo}>
+                  {label?.icon} {label?.label}: <strong>{formatCurrency(p.monto + rec)}</strong>
+                  {rec > 0 && ` (incl. ${formatCurrency(rec)} de recargo)`}
+                  <br />
+                </span>
+              );
+            })}
+          </>
+        }
+        confirmLabel="Confirmar cobro"
+        cancelLabel="Volver"
+        isLoading={isSubmitting}
+        onConfirm={handleCobrarConfirmed}
+        onCancel={() => setShowCobrarConfirm(false)}
+      />
 
       <CancelOrderDialog
         isOpen={showAnularDialog}

@@ -180,6 +180,39 @@ export interface Database {
           }
         ]
       }
+      pagos_pedido: {
+        Row: {
+          id: number
+          pedido_id: number
+          metodo: string
+          /** Monto cobrado por ese método (en datáfono ya incluye su 5%) */
+          monto: number
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          pedido_id: number
+          metodo: string
+          monto: number
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          pedido_id?: number
+          metodo?: string
+          monto?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagos_pedido_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       arqueos_caja: {
         Row: {
           id: number
