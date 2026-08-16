@@ -2,7 +2,13 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { CartItem, OrderType, OrderDetails, MetodoPago } from '@/types';
-import { ESTADOS_PEDIDO, TIPOS_ATENCION, METODOS_PAGO, RECARGO_DATAFONO } from '@/lib/constants';
+import {
+  ESTADOS_PEDIDO,
+  TIPOS_ATENCION,
+  METODOS_PAGO,
+  COSTO_DOMICILIO_FUERA_SECTOR,
+} from '@/lib/constants';
+import { calcularRecargoDatafono } from '@/lib/utils';
 
 export async function submitOrder(
   orderType: OrderType,
@@ -21,12 +27,18 @@ export async function submitOrder(
   // Calcular subtotal (suma de items)
   const subtotal = items.reduce((sum, item) => sum + (item.producto.precio * item.cantidad), 0);
 
+  // Cobro por salir del sector — solo en domicilios
+  const costoDomicilio =
+    orderType === TIPOS_ATENCION.DOMICILIO && orderDetails.fuera_sector
+      ? COSTO_DOMICILIO_FUERA_SECTOR
+      : 0;
+
   // Calcular recargo: 5% solo si es domicilio y el pago es con datáfono
   const aplicaRecargo = orderType === TIPOS_ATENCION.DOMICILIO && metodoPago === METODOS_PAGO.DATAFONO;
-  const recargo = aplicaRecargo ? Math.round(subtotal * RECARGO_DATAFONO) : 0;
+  const recargo = aplicaRecargo ? calcularRecargoDatafono(subtotal, costoDomicilio) : 0;
 
   // Total final
-  const total = subtotal + recargo;
+  const total = subtotal + costoDomicilio + recargo;
 
   // Formatear numero de mesa si aplica
   const numero_mesa = orderType === TIPOS_ATENCION.MESA && orderDetails.numero_mesa
@@ -75,7 +87,8 @@ export async function submitOrder(
     p_total: total,
     p_detalles: detallesJson,
     p_hora_entrega: horaEntregaISO,
-    p_paga_con: pagaConFinal
+    p_paga_con: pagaConFinal,
+    p_costo_domicilio: costoDomicilio
   });
 
   if (rpcError || !pedidoId) {

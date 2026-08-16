@@ -241,6 +241,47 @@
   cursor: not-allowed;
 }
 
+/* Botón 'Anular' — el pedido no se va a cobrar */
+.anularBtn {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.03em;
+}
+
+.anularBtn:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: var(--color-text-muted);
+  color: var(--color-text);
+  border-style: solid;
+}
+
+.anularBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dirección del domicilio */
+.direccion {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  margin: -4px 0 0;
+}
+
+.direccionLink {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 @keyframes popIn {
   from {
     opacity: 0;

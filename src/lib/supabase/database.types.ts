@@ -86,6 +86,8 @@ export interface Database {
           paga_con: number | null
           /** Vuelta a alistar = paga_con - total */
           vuelto: number | null
+          /** Cobro adicional por domicilio fuera del sector (0 = sin cobro) */
+          costo_domicilio: number
           created_at: string
           closed_at: string | null
         }
@@ -104,6 +106,7 @@ export interface Database {
           motivo_cancelacion?: string | null
           paga_con?: number | null
           vuelto?: number | null
+          costo_domicilio?: number
           created_at?: string
           closed_at?: string | null
         }
@@ -122,6 +125,7 @@ export interface Database {
           motivo_cancelacion?: string | null
           paga_con?: number | null
           vuelto?: number | null
+          costo_domicilio?: number
           created_at?: string
           closed_at?: string | null
         }

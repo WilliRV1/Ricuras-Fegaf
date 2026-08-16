@@ -22,7 +22,7 @@ import { MenuGrid } from './MenuGrid';
 import { OrderTypeSelector } from './OrderTypeSelector';
 import { DeliveryForm } from './DeliveryForm';
 import { DuplicateProductModal } from './DuplicateProductModal';
-import { TIPOS_ATENCION } from '@/lib/constants';
+import { TIPOS_ATENCION, COSTO_DOMICILIO_FUERA_SECTOR } from '@/lib/constants';
 import { toast } from '@/components/ui/Toast';
 import styles from './OrderContainer.module.css';
 
@@ -161,6 +161,12 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
    * dependiendo del tipo, se completaron los datos requeridos.
    * Teléfono es OPCIONAL para domicilio.
    */
+  /** Cobro extra si el domicilio queda fuera del sector */
+  const costoDomicilio =
+    orderType === TIPOS_ATENCION.DOMICILIO && orderDetails.fuera_sector
+      ? COSTO_DOMICILIO_FUERA_SECTOR
+      : 0;
+
   const isFormValid = (() => {
     if (!orderType) return false;
     if (orderType === TIPOS_ATENCION.MESA) return !!orderDetails.numero_mesa;
@@ -318,7 +324,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
           <h2>Tu Carrito</h2>
           <button className={styles.closeCartBtn} onClick={() => setIsMobileCartOpen(false)}>×</button>
         </div>
-        <Cart orderType={orderType} isValidOrder={isFormValid} onEnviarCocina={async (pago, pagaCon) => {
+        <Cart orderType={orderType} isValidOrder={isFormValid} costoDomicilio={costoDomicilio} onEnviarCocina={async (pago, pagaCon) => {
           await handleEnviarCocina(pago, pagaCon);
           setIsMobileCartOpen(false);
         }} />

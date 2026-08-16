@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { PedidoWithDetalles } from '@/types';
-import { TIPOS_ATENCION, METODOS_PAGO, RECARGO_DATAFONO } from '@/lib/constants';
+import { TIPOS_ATENCION, METODOS_PAGO, SIN_DATO } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
+import { CancelOrderDialog } from '@/components/ui/CancelOrderDialog';
 import { closeOrder, markOrderAsDebe } from '@/app/actions/liquidacion';
+import { cancelOrder } from '@/app/actions/cocina';
 import { toast } from '@/components/ui/Toast';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, calcularRecargoDatafono } from '@/lib/utils';
 import styles from './LiquidacionTicket.module.css';
 
 interface LiquidacionTicketProps {
@@ -26,11 +28,14 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMarkingDebe, setIsMarkingDebe] = useState(false);
+  const [isAnulando, setIsAnulando] = useState(false);
+  const [showAnularDialog, setShowAnularDialog] = useState(false);
 
   const isMesa = order.tipo === TIPOS_ATENCION.MESA;
 
   // Calcular valores en cliente para previsualizar
   const subtotal = order.subtotal;
+  const costoDomicilio = order.costo_domicilio ?? 0;
   let recargo = 0;
 
   if (selectedMethod === METODOS_PAGO.DATAFONO) {
@@ -38,11 +43,14 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
     if (order.recargo > 0) {
       recargo = order.recargo;
     } else {
-      recargo = Math.round(subtotal * RECARGO_DATAFONO);
+      recargo = calcularRecargoDatafono(subtotal, costoDomicilio);
     }
   }
 
-  const totalCalculado = subtotal + recargo;
+  const totalCalculado = subtotal + costoDomicilio + recargo;
+
+  const direccionUtil =
+    !!order.cliente_direccion && order.cliente_direccion.trim() !== SIN_DATO;
 
   const handleConfirm = async () => {
     if (!selectedMethod) {
@@ -88,6 +96,30 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
     }
   };
 
+  /**
+   * Anula un pedido que ya salió de cocina y no se va a cobrar
+   * (el cliente cambió el pedido, se digitó mal, etc.).
+   */
+  const handleAnularConfirmed = async (motivo: string) => {
+    setIsAnulando(true);
+    try {
+      const res = await cancelOrder(order.id, motivo);
+      if (res.success) {
+        toast.success(`Pedido #${order.id} anulado`);
+      } else {
+        toast.error(res.error || 'Error al anular el pedido');
+        setIsAnulando(false);
+        setShowAnularDialog(false);
+      }
+    } catch {
+      toast.error('Error al procesar');
+      setIsAnulando(false);
+      setShowAnularDialog(false);
+    }
+  };
+
+  const accionesBloqueadas = isSubmitting || isMarkingDebe || isAnulando;
+
   return (
     <div className={styles.ticket}>
       <div className={styles.header}>
@@ -104,6 +136,26 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
           )}
         </div>
       </div>
+
+      {/* Dirección del domicilio — para confirmar a quién se le está cobrando */}
+      {!isMesa && order.cliente_direccion && (
+        <p className={styles.direccion}>
+          📍{' '}
+          {direccionUtil ? (
+            <a
+              className={styles.direccionLink}
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.cliente_direccion)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {order.cliente_direccion}
+            </a>
+          ) : (
+            order.cliente_direccion
+          )}
+          {order.cliente_telefono && ` · ${order.cliente_telefono}`}
+        </p>
+      )}
 
       <div className={styles.itemsList}>
         {order.detalle_pedidos?.map((detalle) => (
@@ -127,6 +179,12 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
           <span>Subtotal</span>
           <span>{formatCurrency(subtotal)}</span>
         </div>
+        {costoDomicilio > 0 && (
+          <div className={styles.summaryRow} style={{ color: 'var(--color-primary)' }}>
+            <span>Domicilio fuera del sector</span>
+            <span>+ {formatCurrency(costoDomicilio)}</span>
+          </div>
+        )}
         {recargo > 0 && (
           <div className={styles.summaryRow} style={{ color: 'var(--color-warning)' }}>
             <span>Recargo Datáfono (5%)</span>
@@ -170,7 +228,7 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
             variant="primary"
             className={styles.confirmBtn}
             onClick={handleConfirm}
-            disabled={!selectedMethod || isSubmitting || isMarkingDebe}
+            disabled={!selectedMethod || accionesBloqueadas}
           >
             {isSubmitting ? 'Procesando...' : 'Cobrar'}
           </Button>
@@ -180,14 +238,39 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
             <button
               className={styles.debeBtn}
               onClick={handleDebe}
-              disabled={isSubmitting || isMarkingDebe}
+              disabled={accionesBloqueadas}
               title="El cliente se fue sin pagar — registrar como deuda"
             >
               {isMarkingDebe ? '...' : '💸 Debe'}
             </button>
           )}
+
+          {/* Anular: el pedido no se va a cobrar (cambio de pedido, error, etc.) */}
+          <button
+            className={styles.anularBtn}
+            onClick={() => setShowAnularDialog(true)}
+            disabled={accionesBloqueadas}
+            title="El pedido no se va a cobrar — sacarlo de liquidación"
+          >
+            {isAnulando ? '...' : '🚫 Anular'}
+          </button>
         </div>
       </div>
+
+      <CancelOrderDialog
+        isOpen={showAnularDialog}
+        orderId={order.id}
+        confirmLabel="Anular pedido"
+        aviso={
+          <>
+            El pedido saldrá de liquidación y <strong>no contará como venta</strong>.
+            Quedará registrado como cancelado en el dashboard con el motivo que elijas.
+          </>
+        }
+        isLoading={isAnulando}
+        onConfirm={handleAnularConfirmed}
+        onCancel={() => setShowAnularDialog(false)}
+      />
     </div>
   );
 };

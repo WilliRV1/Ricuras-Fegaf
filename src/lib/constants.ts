@@ -1,6 +1,21 @@
 /** Recargo porcentual aplicado al pagar con datáfono */
 export const RECARGO_DATAFONO = 0.05;
 
+/** Cobro adicional cuando el domiciliario sale del sector */
+export const COSTO_DOMICILIO_FUERA_SECTOR = 5000;
+
+/**
+ * Motivos de cancelación predefinidos.
+ * Tenerlos tipificados permite ver en el dashboard por qué se pierden pedidos.
+ */
+export const MOTIVOS_CANCELACION = [
+  'El cliente cambió el pedido',
+  'El cliente ya no lo quiere',
+  'Error al digitar el pedido',
+  'Producto agotado',
+  'El cliente no responde',
+] as const;
+
 /** Estados posibles de un pedido */
 export const ESTADOS_PEDIDO = {
   PENDIENTE: 'pendiente',

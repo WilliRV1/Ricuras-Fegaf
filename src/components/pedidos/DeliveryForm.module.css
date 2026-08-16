@@ -79,6 +79,73 @@
   margin: 0;
 }
 
+/* ----------------------------------------------------------
+   Domicilio fuera del sector (+$5.000)
+   ---------------------------------------------------------- */
+.sectorToggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sectorToggle:hover {
+  border-color: var(--color-primary-light);
+}
+
+.sectorActive {
+  background: rgba(255, 107, 53, 0.1);
+  border-color: var(--color-primary);
+}
+
+.sectorCheck {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.sectorActive .sectorCheck {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.sectorText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+}
+
+.sectorSub {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.sectorPrice {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
 /* Animación de entrada cuando se monta el formulario */
 @keyframes formSlideIn {
   from {

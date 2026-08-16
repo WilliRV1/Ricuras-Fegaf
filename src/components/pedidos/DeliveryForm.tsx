@@ -1,7 +1,8 @@
 import React from 'react';
 import styles from './DeliveryForm.module.css';
 import { OrderType, OrderDetails } from '@/types';
-import { TIPOS_ATENCION, SIN_DATO } from '@/lib/constants';
+import { TIPOS_ATENCION, SIN_DATO, COSTO_DOMICILIO_FUERA_SECTOR } from '@/lib/constants';
+import { formatCurrency } from '@/lib/utils';
 import { Input } from '../ui/Input';
 import deliveryStyles from './DeliveryForm.module.css';
 
@@ -103,6 +104,25 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
               💡 Si el cliente no da un dato (no dice su nombre, no confirma la dirección),
               márcalo con <strong>No responde</strong> y el pedido sigue su curso normal.
             </p>
+
+            {/* ── Domicilio fuera del sector ── */}
+            <button
+              type="button"
+              className={`${styles.sectorToggle} ${details.fuera_sector ? styles.sectorActive : ''}`}
+              onClick={() => onChange({ ...details, fuera_sector: !details.fuera_sector })}
+              aria-pressed={!!details.fuera_sector}
+            >
+              <span className={styles.sectorCheck}>{details.fuera_sector ? '✓' : ''}</span>
+              <span className={styles.sectorText}>
+                <strong>🛵 Fuera del sector</strong>
+                <span className={styles.sectorSub}>
+                  Suma {formatCurrency(COSTO_DOMICILIO_FUERA_SECTOR)} al total del pedido
+                </span>
+              </span>
+              <span className={styles.sectorPrice}>
+                +{formatCurrency(COSTO_DOMICILIO_FUERA_SECTOR)}
+              </span>
+            </button>
           </>
         )}
 

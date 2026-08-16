@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { PedidoWithDetalles } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { CancelOrderDialog } from '@/components/ui/CancelOrderDialog';
 import { markOrderAsReady, cancelOrder } from '@/app/actions/cocina';
 import { toast } from '@/components/ui/Toast';
 import { formatCurrency } from '@/lib/utils';
+import { SIN_DATO } from '@/lib/constants';
 import styles from './OrderTicket.module.css';
 
 interface OrderTicketProps {
@@ -16,6 +18,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showReadyConfirm, setShowReadyConfirm] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   useEffect(() => {
     const calculateTime = () => {
@@ -50,26 +53,21 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
     }
   };
 
-  const handleCancel = async () => {
-    const reason = window.prompt(`¿Por qué deseas cancelar el pedido #${order.id}? (Obligatorio)`);
-    if (reason === null) return; // Usuario clickeó cancelar en el prompt
-    if (reason.trim() === '') {
-      toast.error('Debes ingresar un motivo para cancelar el pedido');
-      return;
-    }
-    
+  const handleCancelConfirmed = async (motivo: string) => {
     setIsCancelling(true);
     try {
-      const res = await cancelOrder(order.id, reason.trim());
+      const res = await cancelOrder(order.id, motivo);
       if (res.success) {
         toast.success(`Pedido #${order.id} cancelado`);
       } else {
         toast.error(res.error || 'Error al cancelar pedido');
         setIsCancelling(false);
+        setShowCancelDialog(false);
       }
     } catch {
       toast.error('Error de red');
       setIsCancelling(false);
+      setShowCancelDialog(false);
     }
   };
 
@@ -88,6 +86,14 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
   const headerText = isMesa
     ? `Mesa #${order.numero_mesa}`
     : `Domicilio`;
+
+  // Datos de entrega: la dirección solo es "útil" si el cliente la dio de verdad
+  const direccionUtil =
+    !!order.cliente_direccion && order.cliente_direccion.trim() !== SIN_DATO;
+  const telefonoDigitos =
+    order.cliente_telefono && order.cliente_telefono.trim() !== SIN_DATO
+      ? order.cliente_telefono.replace(/\D/g, '')
+      : '';
 
   // Efectivo: el domiciliario necesita salir con la vuelta ya alistada
   const tienePagaCon = !isMesa && order.paga_con != null;
@@ -114,6 +120,49 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
           ⏱️ {elapsedMinutes} min
         </div>
       </div>
+
+      {/* Datos de entrega — lo que el domiciliario necesita para salir */}
+      {!isMesa && (
+        <div className={styles.domicilioBox}>
+          <div className={styles.domicilioDireccion}>
+            <span className={styles.domicilioIcon}>📍</span>
+            {direccionUtil ? (
+              <a
+                className={styles.direccionLink}
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.cliente_direccion!)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Abrir en Google Maps"
+              >
+                {order.cliente_direccion}
+              </a>
+            ) : (
+              <span className={styles.direccionFaltante}>
+                {order.cliente_direccion || 'Sin dirección registrada'}
+              </span>
+            )}
+          </div>
+
+          <div className={styles.domicilioMeta}>
+            {telefonoDigitos ? (
+              <a className={styles.telLink} href={`tel:${telefonoDigitos}`}>
+                📞 {order.cliente_telefono}
+              </a>
+            ) : (
+              <span className={styles.domicilioSinDato}>📞 Sin teléfono</span>
+            )}
+
+            <span className={styles.cobrarTag}>
+              💰 Cobrar {formatCurrency(order.total)}
+              {order.costo_domicilio > 0 && (
+                <span className={styles.cobrarExtra}>
+                  (incl. {formatCurrency(order.costo_domicilio)} de domicilio)
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Efectivo — con cuánto paga y vuelta que hay que alistar */}
       {tienePagaCon && (
@@ -155,7 +204,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
         <Button 
           variant="secondary" 
           className={styles.cancelBtn} 
-          onClick={handleCancel}
+          onClick={() => setShowCancelDialog(true)}
           disabled={isSubmitting || isCancelling}
           style={{ backgroundColor: 'var(--color-danger)', color: 'white', borderColor: 'var(--color-danger)' }}
         >
@@ -188,6 +237,15 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
         isLoading={isSubmitting}
         onConfirm={handleReadyConfirmed}
         onCancel={() => setShowReadyConfirm(false)}
+      />
+
+      {/* Cancelar con motivo tipificado */}
+      <CancelOrderDialog
+        isOpen={showCancelDialog}
+        orderId={order.id}
+        isLoading={isCancelling}
+        onConfirm={handleCancelConfirmed}
+        onCancel={() => setShowCancelDialog(false)}
       />
     </div>
   );

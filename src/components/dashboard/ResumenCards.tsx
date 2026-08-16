@@ -6,6 +6,9 @@ interface ResumenCardsProps {
   totalPedidos: number;
   totalFacturado: number;
   totalRecargos: number;
+  /** Cobros por domicilio fuera del sector (lo que gana el domiciliario) */
+  totalDomicilios?: number;
+  cantidadDomiciliosCobrados?: number;
   horaPico: string;
   tiempoPromedioMinutos?: number;
   cancelados: { id: number; motivo: string; hora: string }[];
@@ -25,6 +28,8 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
   totalPedidos,
   totalFacturado,
   totalRecargos,
+  totalDomicilios = 0,
+  cantidadDomiciliosCobrados = 0,
   horaPico,
   tiempoPromedioMinutos,
   cancelados,
@@ -67,6 +72,16 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
           {tiempoPromedioMinutos ? `${tiempoPromedioMinutos} min` : 'N/A'}
         </p>
         <p className={styles.cardSub}>Desde inicio hasta cobro</p>
+      </div>
+
+      {/* Domicilios fuera del sector */}
+      <div className={`${styles.card} ${styles.accentOrange}`}>
+        <div className={styles.cardIcon}>🛵</div>
+        <p className={styles.cardLabel}>Domicilios Fuera del Sector</p>
+        <p className={styles.cardValue}>{formatCurrency(totalDomicilios)}</p>
+        <p className={styles.cardSub}>
+          {cantidadDomiciliosCobrados} domicilio{cantidadDomiciliosCobrados !== 1 ? 's' : ''} · va para el domiciliario
+        </p>
       </div>
 
       {/* Cancelados */}

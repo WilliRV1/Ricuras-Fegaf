@@ -16,7 +16,8 @@ import { useCart } from '@/hooks/useCart';
 import { CartItem as CartItemComponent } from './CartItem';
 import { Button } from '../ui/Button';
 import { toast } from '../ui/Toast';
-import { METODOS_PAGO, RECARGO_DATAFONO } from '@/lib/constants';
+import { METODOS_PAGO } from '@/lib/constants';
+import { calcularRecargoDatafono } from '@/lib/utils';
 import { MetodoPago, OrderType } from '@/types';
 import styles from './Cart.module.css';
 
@@ -24,6 +25,8 @@ interface CartProps {
   orderType: OrderType;
   onEnviarCocina?: (metodoPago: MetodoPago, pagaCon: number | null) => Promise<void>;
   isValidOrder?: boolean;
+  /** Cobro por domicilio fuera del sector (0 si no aplica) */
+  costoDomicilio?: number;
 }
 
 const METODO_LABELS: Record<string, { label: string; icon: string }> = {
@@ -47,6 +50,7 @@ export const Cart: React.FC<CartProps> = ({
   orderType,
   onEnviarCocina,
   isValidOrder = true,
+  costoDomicilio = 0,
 }) => {
   const { items, subtotal, totalItems, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,11 +58,14 @@ export const Cart: React.FC<CartProps> = ({
   /** Monto con el que el cliente va a pagar en efectivo (string para el input) */
   const [pagaConInput, setPagaConInput] = useState('');
 
+  // El cobro de domicilio solo aplica en domicilios
+  const domicilio = orderType === 'domicilio' ? costoDomicilio : 0;
+
   // El recargo solo aplica para domicilio + datáfono
   const aplicaRecargo =
     orderType === 'domicilio' && metodoPago === METODOS_PAGO.DATAFONO;
-  const recargo = aplicaRecargo ? subtotal * RECARGO_DATAFONO : 0;
-  const total = subtotal + recargo;
+  const recargo = aplicaRecargo ? calcularRecargoDatafono(subtotal, domicilio) : 0;
+  const total = subtotal + domicilio + recargo;
 
   // ── Efectivo: con cuánto paga y cuánta vuelta hay que alistar ──
   const esEfectivoDomicilio =
@@ -284,6 +291,17 @@ export const Cart: React.FC<CartProps> = ({
             <span className={styles.summaryValue}>{formatCOP(subtotal)}</span>
           </div>
 
+          {domicilio > 0 && (
+            <div className={`${styles.summaryRow} ${styles.recargoRow}`}>
+              <span className={styles.summaryLabel}>
+                Domicilio fuera del sector:
+              </span>
+              <span className={`${styles.summaryValue} ${styles.domicilioValue}`}>
+                + {formatCOP(domicilio)}
+              </span>
+            </div>
+          )}
+
           {aplicaRecargo && (
             <div className={`${styles.summaryRow} ${styles.recargoRow}`}>
               <span className={styles.summaryLabel}>
@@ -295,7 +313,7 @@ export const Cart: React.FC<CartProps> = ({
             </div>
           )}
 
-          {(aplicaRecargo) && (
+          {(aplicaRecargo || domicilio > 0) && (
             <div className={`${styles.summaryRow} ${styles.totalRow}`}>
               <span className={styles.totalLabel}>Total:</span>
               <span className={styles.totalValue}>{formatCOP(total)}</span>

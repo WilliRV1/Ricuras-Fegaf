@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { PedidoWithDetalles } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { CancelOrderDialog } from '@/components/ui/CancelOrderDialog';
+import { SIN_DATO } from '@/lib/constants';
 import { markOrderAsReady, cancelOrder } from '@/app/actions/cocina';
 import { toast } from '@/components/ui/Toast';
 import { formatCurrency } from '@/lib/utils';
@@ -43,6 +45,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showReadyConfirm, setShowReadyConfirm] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   useEffect(() => {
     if (!order.hora_entrega) return;
@@ -82,28 +85,31 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
     }
   };
 
-  const handleCancel = async () => {
-    const reason = window.prompt(`¿Por qué deseas cancelar el pedido #${order.id}? (Obligatorio)`);
-    if (reason === null) return;
-    if (reason.trim() === '') {
-      toast.error('Debes ingresar un motivo para cancelar el pedido');
-      return;
-    }
-
+  const handleCancelConfirmed = async (motivo: string) => {
     setIsCancelling(true);
     try {
-      const res = await cancelOrder(order.id, reason.trim());
+      const res = await cancelOrder(order.id, motivo);
       if (res.success) {
         toast.success(`Pedido #${order.id} cancelado`);
       } else {
         toast.error(res.error || 'Error al cancelar pedido');
         setIsCancelling(false);
+        setShowCancelDialog(false);
       }
     } catch {
       toast.error('Error de red');
       setIsCancelling(false);
+      setShowCancelDialog(false);
     }
   };
+
+  // Datos de entrega
+  const direccionUtil =
+    !!order.cliente_direccion && order.cliente_direccion.trim() !== SIN_DATO;
+  const telefonoDigitos =
+    order.cliente_telefono && order.cliente_telefono.trim() !== SIN_DATO
+      ? order.cliente_telefono.replace(/\D/g, '')
+      : '';
 
   // Efectivo: vuelta que hay que alistar antes de salir
   const tienePagaCon = !isMesa && order.paga_con != null;
@@ -149,6 +155,32 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
               </span>
             ))}
           </div>
+          {/* Dirección y teléfono — el domiciliario los necesita */}
+          {!isMesa && (
+            <div className={styles.entregaRow}>
+              <span className={styles.entregaDireccion}>
+                📍{' '}
+                {direccionUtil ? (
+                  <a
+                    className={styles.entregaLink}
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.cliente_direccion!)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {order.cliente_direccion}
+                  </a>
+                ) : (
+                  order.cliente_direccion || 'Sin dirección'
+                )}
+              </span>
+              {telefonoDigitos && (
+                <a className={styles.entregaLink} href={`tel:${telefonoDigitos}`}>
+                  📞 {order.cliente_telefono}
+                </a>
+              )}
+            </div>
+          )}
+
           {tienePagaCon && (
             <div className={styles.efectivoRow}>
               💵 Paga con <strong>{formatCurrency(order.paga_con!)}</strong>
@@ -174,12 +206,21 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
         </Button>
         <button
           className={styles.cancelBtn}
-          onClick={handleCancel}
+          onClick={() => setShowCancelDialog(true)}
           disabled={isSubmitting || isCancelling}
         >
           {isCancelling ? '...' : 'Cancelar'}
         </button>
       </div>
+
+      {/* Cancelar con motivo tipificado */}
+      <CancelOrderDialog
+        isOpen={showCancelDialog}
+        orderId={order.id}
+        isLoading={isCancelling}
+        onConfirm={handleCancelConfirmed}
+        onCancel={() => setShowCancelDialog(false)}
+      />
 
       {/* Confirmación antes de sacarlo del tablero */}
       <ConfirmDialog

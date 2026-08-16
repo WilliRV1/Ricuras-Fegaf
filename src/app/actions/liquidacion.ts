@@ -1,7 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { ESTADOS_PEDIDO, METODOS_PAGO, RECARGO_DATAFONO } from '@/lib/constants';
+import { ESTADOS_PEDIDO, METODOS_PAGO } from '@/lib/constants';
+import { calcularRecargoDatafono } from '@/lib/utils';
 
 /**
  * Cierra un pedido, registrando el método de pago y aplicando recargos si es necesario.
@@ -15,7 +16,7 @@ export async function closeOrder(pedidoId: number, metodoPago: string) {
     // 1. Obtener los detalles del pedido actual para saber su subtotal y recargo actual
     const { data: pedidoData, error: fetchError } = await supabase
       .from('pedidos')
-      .select('subtotal, recargo, total')
+      .select('subtotal, recargo, total, costo_domicilio')
       .eq('id', pedidoId)
       .single();
 
@@ -25,18 +26,20 @@ export async function closeOrder(pedidoId: number, metodoPago: string) {
     }
 
     const subtotal = pedidoData.subtotal;
+    // El cobro de domicilio no depende del método de pago: siempre suma al total
+    const costoDomicilio = pedidoData.costo_domicilio ?? 0;
     let { recargo, total } = pedidoData;
 
     // 2. Si el método de pago es Datáfono y no se había cobrado recargo aún, calcularlo
     // (En domicilios el recargo se puede calcular desde el carrito, por eso validamos si ya existe)
     if (metodoPago === METODOS_PAGO.DATAFONO && recargo === 0) {
-      recargo = Math.round(subtotal * RECARGO_DATAFONO);
-      total = subtotal + recargo;
+      recargo = calcularRecargoDatafono(subtotal, costoDomicilio);
+      total = subtotal + costoDomicilio + recargo;
     }
     // Si cambiaron el método de Datáfono a otro en caja, quitar el recargo
     else if (metodoPago !== METODOS_PAGO.DATAFONO && recargo > 0) {
       recargo = 0;
-      total = subtotal;
+      total = subtotal + costoDomicilio;
     }
 
     // 3. Actualizar la base de datos

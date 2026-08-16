@@ -104,6 +104,91 @@
   100% { transform: scale(1); }
 }
 
+/* Datos de entrega del domicilio */
+.domicilioBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.domicilioDireccion {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--color-text);
+}
+
+.domicilioIcon {
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.direccionLink {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-color: rgba(99, 102, 241, 0.6);
+  text-underline-offset: 3px;
+}
+
+.direccionLink:hover {
+  color: #A5B4FC;
+}
+
+.direccionFaltante {
+  color: var(--color-warning);
+  font-style: italic;
+}
+
+.domicilioMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.telLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #A5B4FC;
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-full);
+  padding: 5px 11px;
+  min-height: 34px;
+}
+
+.domicilioSinDato {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.cobrarTag {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.cobrarExtra {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
 /* Efectivo — vuelta que debe alistar el domiciliario */
 .efectivoBanner {
   display: flex;

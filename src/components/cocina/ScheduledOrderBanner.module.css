@@ -196,6 +196,27 @@
   font-style: italic;
 }
 
+/* Datos de entrega (dirección y teléfono) */
+.entregaRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.entregaDireccion {
+  font-weight: 600;
+}
+
+.entregaLink {
+  color: #A5B4FC;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* Efectivo — vuelta a alistar */
 .efectivoRow {
   font-size: 0.8125rem;

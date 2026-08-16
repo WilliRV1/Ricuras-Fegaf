@@ -48,7 +48,7 @@ export async function getResumenDelDia(dateStr?: string) {
   // Consultar todos los pedidos del día para calcular todas las métricas
   const { data, error } = await supabase
     .from('pedidos')
-    .select('id, total, subtotal, recargo, metodo_pago, tipo, estado, closed_at, created_at, motivo_cancelacion')
+    .select('id, total, subtotal, recargo, costo_domicilio, metodo_pago, tipo, estado, closed_at, created_at, motivo_cancelacion')
     .gte('created_at', startOfDay)
     .lt('created_at', endOfDay);
 
@@ -78,6 +78,11 @@ export async function getResumenDelDia(dateStr?: string) {
   };
 
   const totalRecargos = pagados.reduce((sum, p) => sum + (p.recargo ?? 0), 0);
+
+  // Cobros por domicilio fuera del sector — lo que se le paga al domiciliario
+  const domiciliosCobrados = pagados.filter(p => (p.costo_domicilio ?? 0) > 0);
+  const totalDomicilios = domiciliosCobrados.reduce((sum, p) => sum + (p.costo_domicilio ?? 0), 0);
+  const cantidadDomiciliosCobrados = domiciliosCobrados.length;
 
   // 1.5 Tiempo Promedio de Atención (en minutos)
   let tiempoPromedioMinutos = 0;
@@ -133,6 +138,8 @@ export async function getResumenDelDia(dateStr?: string) {
     totalPedidos: totalPedidosPagados,
     totalFacturado,
     totalRecargos,
+    totalDomicilios,
+    cantidadDomiciliosCobrados,
     porMetodoPago,
     porTipo,
     horaPico,

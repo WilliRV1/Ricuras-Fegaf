@@ -29,7 +29,8 @@ export async function markOrderAsReady(pedidoId: number) {
 }
 
 /**
- * Cancela un pedido directamente desde cocina.
+ * Cancela un pedido. Se usa desde cocina (pedidos pendientes) y desde
+ * liquidación (pedidos ya marcados como listos que no se van a cobrar).
  * @param pedidoId ID numérico del pedido
  * @param motivo Opcional, razón de la cancelación
  */
@@ -39,9 +40,12 @@ export async function cancelOrder(pedidoId: number, motivo?: string) {
 
     const { error } = await supabase
       .from('pedidos')
-      .update({ 
+      .update({
         estado: ESTADOS_PEDIDO.CANCELADO,
-        motivo_cancelacion: motivo || null
+        motivo_cancelacion: motivo || null,
+        // Se registra la hora de cierre para que el pedido no quede "abierto"
+        // en las métricas del dashboard
+        closed_at: new Date().toISOString(),
       } as any)
       .eq('id', pedidoId);
 
