@@ -42,6 +42,56 @@
 }
 
 /* ----------------------------------------------------------
+   Modo edición de un pedido que sigue en cocina
+   ---------------------------------------------------------- */
+.editingBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  background: rgba(255, 107, 53, 0.12);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+}
+
+.editingText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  flex: 1;
+  min-width: 220px;
+}
+
+.editingText strong {
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.editingCancelBtn {
+  min-height: 44px;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.editingCancelBtn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+/* ----------------------------------------------------------
    Sección superior: Tipo de atención + Formulario
    ---------------------------------------------------------- */
 .orderSetupSection {

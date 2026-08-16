@@ -87,6 +87,16 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
     ? `Mesa #${order.numero_mesa}`
     : `Domicilio`;
 
+  // El pedido se modificó después de enviarlo: cocina debe releerlo
+  const fueModificado = !!order.modificado_at;
+  const horaModificacion = order.modificado_at
+    ? new Date(order.modificado_at).toLocaleTimeString('es-CO', {
+        timeZone: 'America/Bogota',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '';
+
   // Datos de entrega: la dirección solo es "útil" si el cliente la dio de verdad
   const direccionUtil =
     !!order.cliente_direccion && order.cliente_direccion.trim() !== SIN_DATO;
@@ -105,7 +115,14 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
   );
 
   return (
-    <div className={`${styles.ticket} ${ticketClass}`}>
+    <div className={`${styles.ticket} ${ticketClass} ${fueModificado ? styles.ticketModificado : ''}`}>
+      {fueModificado && (
+        <div className={styles.modificadoBanner}>
+          🔄 PEDIDO MODIFICADO — vuelve a leer la comanda
+          <span className={styles.modificadoHora}>{horaModificacion}</span>
+        </div>
+      )}
+
       <div className={styles.header}>
         <div className={styles.idAndType}>
           <h4 className={styles.orderId}>Orden #{order.id}</h4>

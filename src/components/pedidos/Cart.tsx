@@ -27,6 +27,12 @@ interface CartProps {
   isValidOrder?: boolean;
   /** Cobro por domicilio fuera del sector (0 si no aplica) */
   costoDomicilio?: number;
+  /** Si está definido, se está modificando ese pedido en vez de crear uno nuevo */
+  editingOrderId?: number | null;
+  /** Método de pago con el que quedó el pedido que se está editando */
+  initialMetodoPago?: MetodoPago;
+  /** Monto en efectivo registrado en el pedido que se está editando */
+  initialPagaCon?: number | null;
 }
 
 const METODO_LABELS: Record<string, { label: string; icon: string }> = {
@@ -51,12 +57,26 @@ export const Cart: React.FC<CartProps> = ({
   onEnviarCocina,
   isValidOrder = true,
   costoDomicilio = 0,
+  editingOrderId = null,
+  initialMetodoPago = null,
+  initialPagaCon = null,
 }) => {
   const { items, subtotal, totalItems, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [metodoPago, setMetodoPago] = useState<MetodoPago>(null);
   /** Monto con el que el cliente va a pagar en efectivo (string para el input) */
   const [pagaConInput, setPagaConInput] = useState('');
+
+  // Al abrir un pedido para modificarlo, precargar cómo iba a pagar.
+  // Se ajusta durante el render (patrón recomendado por React) en vez de un efecto.
+  const [editandoId, setEditandoId] = useState<number | null>(editingOrderId);
+  if (editingOrderId !== editandoId) {
+    setEditandoId(editingOrderId);
+    setMetodoPago(editingOrderId ? initialMetodoPago : null);
+    setPagaConInput(editingOrderId && initialPagaCon ? String(initialPagaCon) : '');
+  }
+
+  const esEdicion = editingOrderId !== null;
 
   // El cobro de domicilio solo aplica en domicilios
   const domicilio = orderType === 'domicilio' ? costoDomicilio : 0;
@@ -119,11 +139,20 @@ export const Cart: React.FC<CartProps> = ({
       } else {
         await new Promise((res) => setTimeout(res, 800));
       }
-      toast.success('Pedido enviado a cocina exitosamente 👨‍🍳');
+      toast.success(
+        esEdicion
+          ? `Pedido #${editingOrderId} actualizado — cocina ya ve los cambios 🔄`
+          : 'Pedido enviado a cocina exitosamente 👨‍🍳'
+      );
       clearCart();
       resetPago();
     } catch (error) {
-      toast.error('Ocurrió un error al enviar el pedido.');
+      // El mensaje del servidor es útil (ej. "cocina ya lo marcó como listo")
+      const mensaje =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Ocurrió un error al enviar el pedido.';
+      toast.error(mensaje);
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -162,7 +191,9 @@ export const Cart: React.FC<CartProps> = ({
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.header}>
-        <h3 className={styles.title}>Resumen del Pedido</h3>
+        <h3 className={styles.title}>
+          {esEdicion ? `Modificando #${editingOrderId}` : 'Resumen del Pedido'}
+        </h3>
         <span className={styles.badge}>
           {totalItems} ítem{totalItems !== 1 ? 's' : ''}
         </span>
@@ -346,7 +377,9 @@ export const Cart: React.FC<CartProps> = ({
             onClick={handleEnviar}
             disabled={isSubmitting || !isValidOrder || !isPagoValido}
           >
-            {isSubmitting ? 'Enviando...' : 'Enviar a Cocina'}
+            {isSubmitting
+              ? esEdicion ? 'Guardando...' : 'Enviando...'
+              : esEdicion ? 'Guardar cambios' : 'Enviar a Cocina'}
           </Button>
         </div>
       </div>

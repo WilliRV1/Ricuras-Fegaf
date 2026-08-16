@@ -196,6 +196,17 @@
   font-style: italic;
 }
 
+/* Pedido modificado después de enviarlo */
+.modificadoTag {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  background: var(--color-warning);
+  color: #1F2937;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.04em;
+}
+
 /* Datos de entrega (dirección y teléfono) */
 .entregaRow {
   display: flex;

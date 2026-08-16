@@ -63,6 +63,36 @@ function playScheduledChime() {
   }
 }
 
+/**
+ * Chime de atención cuando una comanda que ya estaba en el tablero cambia
+ * (el cliente modificó el pedido). Es distinto al de pedido nuevo: dos tonos
+ * descendentes, para que cocina levante la vista y relea la comanda.
+ */
+function playModifiedChime() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const playTone = (freq: number, startAt: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startAt);
+      gain.gain.setValueAtTime(0, ctx.currentTime + startAt);
+      gain.gain.linearRampToValueAtTime(0.32, ctx.currentTime + startAt + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + duration);
+      osc.start(ctx.currentTime + startAt);
+      osc.stop(ctx.currentTime + startAt + duration);
+    };
+    playTone(880, 0, 0.22);    // A5
+    playTone(587.33, 0.18, 0.45); // D5
+    setTimeout(() => ctx.close(), 900);
+  } catch {
+    // Silencioso si el navegador no soporta Web Audio API
+  }
+}
+
 export function useRealtimeOrders() {
   // orders = pedidos regulares (sin hora_entrega)
   const [orders, setOrders] = useState<PedidoWithDetalles[]>([]);
@@ -160,15 +190,40 @@ export function useRealtimeOrders() {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'pedidos' },
-        (payload) => {
+        async (payload) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const updatedOrder = payload.new as any;
+
+          // Ya no está pendiente (listo, cancelado, etc.) → sale del tablero
           if (updatedOrder.estado !== ESTADOS_PEDIDO.PENDIENTE) {
             if (mounted) {
               setOrders((prev) => prev.filter((order) => order.id !== updatedOrder.id));
               setScheduledOrders((prev) => prev.filter((order) => order.id !== updatedOrder.id));
             }
+            return;
           }
+
+          // Sigue pendiente pero cambió: lo modificaron desde la terminal de
+          // pedidos. Hay que recargar la comanda porque los productos pueden
+          // ser otros — cocina puede haber empezado a prepararla.
+          const orderWithDetails = await fetchOrderDetails(updatedOrder.id);
+          if (!orderWithDetails || !mounted) return;
+
+          playModifiedChime();
+
+          // La edición pudo agregar o quitar la hora de entrega, así que el
+          // pedido puede cambiar de sección.
+          setOrders((prev) => {
+            const sinEste = prev.filter((o) => o.id !== orderWithDetails.id);
+            return orderWithDetails.hora_entrega ? sinEste : [...sinEste, orderWithDetails];
+          });
+          setScheduledOrders((prev) => {
+            const sinEste = prev.filter((o) => o.id !== orderWithDetails.id);
+            if (!orderWithDetails.hora_entrega) return sinEste;
+            return [...sinEste, orderWithDetails].sort(
+              (a, b) => new Date(a.hora_entrega!).getTime() - new Date(b.hora_entrega!).getTime()
+            );
+          });
         }
       )
       .subscribe((status) => {

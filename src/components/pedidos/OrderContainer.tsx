@@ -16,12 +16,14 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { Categoria, Producto, OrderType, OrderDetails, MetodoPago } from '@/types';
+import { Categoria, Producto, OrderType, OrderDetails, MetodoPago, PedidoWithDetalles } from '@/types';
 import { CategoryTabs } from './CategoryTabs';
 import { MenuGrid } from './MenuGrid';
 import { OrderTypeSelector } from './OrderTypeSelector';
 import { DeliveryForm } from './DeliveryForm';
 import { DuplicateProductModal } from './DuplicateProductModal';
+import { PedidosEnCurso } from './PedidosEnCurso';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { TIPOS_ATENCION, COSTO_DOMICILIO_FUERA_SECTOR } from '@/lib/constants';
 import { toast } from '@/components/ui/Toast';
 import styles from './OrderContainer.module.css';
@@ -32,7 +34,7 @@ interface OrderContainerProps {
 }
 
 import { useCart, cartStore } from '@/hooks/useCart';
-import { submitOrder } from '@/app/actions/pedidos';
+import { submitOrder, updateOrder } from '@/app/actions/pedidos';
 import { Cart } from './Cart';
 
 export const OrderContainer: React.FC<OrderContainerProps> = ({
@@ -60,6 +62,83 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
      Estado del modal de producto duplicado
      ---------------------------------------------------------------- */
   const [pendingProduct, setPendingProduct] = useState<Producto | null>(null);
+
+  /* ----------------------------------------------------------------
+     Edición de un pedido que sigue pendiente en cocina
+     ---------------------------------------------------------------- */
+  const [editingOrder, setEditingOrder] = useState<PedidoWithDetalles | null>(null);
+  /** Pedido que se quiere editar pero el carrito tiene cosas sin enviar */
+  const [pedidoAConfirmar, setPedidoAConfirmar] = useState<PedidoWithDetalles | null>(null);
+
+  /** Carga un pedido existente en el carrito y el formulario */
+  const cargarPedidoEnCarrito = useCallback((order: PedidoWithDetalles) => {
+    cartStore.clearCart();
+
+    // Cada detalle es una línea independiente, con sus propias observaciones.
+    // Se conserva el precio con el que se tomó el pedido para no alterar el
+    // total si el precio del producto cambió después.
+    (order.detalle_pedidos ?? []).forEach((detalle) => {
+      const producto = initialProductos.find((p) => p.id === detalle.producto_id);
+      const productoLinea: Producto = producto
+        ? { ...producto, precio: detalle.precio_unitario }
+        : ({
+            id: detalle.producto_id,
+            nombre: detalle.productos?.nombre ?? 'Producto',
+            precio: detalle.precio_unitario,
+            categoria_id: null,
+            activo: false,
+            es_adicion: false,
+            created_at: new Date().toISOString(),
+          } as Producto);
+
+      cartStore.addItem(productoLinea, detalle.cantidad, detalle.notas ?? undefined);
+    });
+
+    // Hora de entrega guardada como timestamp → 'HH:MM' en hora de Colombia
+    const horaEntrega = order.hora_entrega
+      ? new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'America/Bogota',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }).format(new Date(order.hora_entrega))
+      : '';
+
+    setOrderType(order.tipo as OrderType);
+    setOrderDetails({
+      numero_mesa: order.numero_mesa != null ? String(order.numero_mesa) : '',
+      cliente_nombre: order.cliente_nombre ?? '',
+      cliente_telefono: order.cliente_telefono ?? '',
+      cliente_direccion: order.cliente_direccion ?? '',
+      hora_entrega: horaEntrega,
+      fuera_sector: (order.costo_domicilio ?? 0) > 0,
+    });
+    setFormErrors({});
+    setEditingOrder(order);
+    setPedidoAConfirmar(null);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast.success(`Editando el pedido #${order.id}`);
+  }, [initialProductos]);
+
+  /** Entra a modo edición, avisando si se va a perder un carrito a medias */
+  const handleEditarPedido = useCallback((order: PedidoWithDetalles) => {
+    const hayCarritoSinEnviar = cartStore.getSnapshot().items.length > 0 && !editingOrder;
+    if (hayCarritoSinEnviar) {
+      setPedidoAConfirmar(order);
+      return;
+    }
+    cargarPedidoEnCarrito(order);
+  }, [editingOrder, cargarPedidoEnCarrito]);
+
+  /** Sale de modo edición sin guardar: el pedido en cocina queda como estaba */
+  const salirDeEdicion = useCallback(() => {
+    cartStore.clearCart();
+    setEditingOrder(null);
+    setOrderType(null);
+    setOrderDetails({});
+    setFormErrors({});
+  }, []);
 
   /* ----------------------------------------------------------------
      Productos filtrados por categoría
@@ -190,13 +269,16 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
       return;
     }
 
-    const res = await submitOrder(orderType, orderDetails, items, metodoPago, pagaCon);
+    const res = editingOrder
+      ? await updateOrder(editingOrder.id, orderType, orderDetails, items, metodoPago, pagaCon)
+      : await submitOrder(orderType, orderDetails, items, metodoPago, pagaCon);
 
     if (!res.success) {
       throw new Error(res.error || 'Error desconocido al enviar pedido');
     }
 
     // Limpiar el formulario para un nuevo pedido
+    setEditingOrder(null);
     setOrderType(null);
     setOrderDetails({});
     setFormErrors({});
@@ -212,6 +294,25 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
     <div className={styles.container}>
 
       <div className={styles.mainColumn}>
+        {/* Pedidos que aún están en cocina — se pueden modificar */}
+        <PedidosEnCurso editingId={editingOrder?.id ?? null} onEditar={handleEditarPedido} />
+
+        {/* Aviso de modo edición */}
+        {editingOrder && (
+          <div className={styles.editingBanner}>
+            <div className={styles.editingText}>
+              <strong>✏️ Estás modificando el pedido #{editingOrder.id}</strong>
+              <span>
+                Los cambios reemplazan el pedido en cocina y la comanda se marcará como
+                modificada. Si cocina ya lo despachó, no se podrá guardar.
+              </span>
+            </div>
+            <button type="button" className={styles.editingCancelBtn} onClick={salirDeEdicion}>
+              Salir sin guardar
+            </button>
+          </div>
+        )}
+
         {/* ============================================================
             PASO 1 — Tipo de Atención + Datos del Cliente
             ============================================================ */}
@@ -324,10 +425,18 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
           <h2>Tu Carrito</h2>
           <button className={styles.closeCartBtn} onClick={() => setIsMobileCartOpen(false)}>×</button>
         </div>
-        <Cart orderType={orderType} isValidOrder={isFormValid} costoDomicilio={costoDomicilio} onEnviarCocina={async (pago, pagaCon) => {
-          await handleEnviarCocina(pago, pagaCon);
-          setIsMobileCartOpen(false);
-        }} />
+        <Cart
+          orderType={orderType}
+          isValidOrder={isFormValid}
+          costoDomicilio={costoDomicilio}
+          editingOrderId={editingOrder?.id ?? null}
+          initialMetodoPago={(editingOrder?.metodo_pago as MetodoPago) ?? null}
+          initialPagaCon={editingOrder?.paga_con ?? null}
+          onEnviarCocina={async (pago, pagaCon) => {
+            await handleEnviarCocina(pago, pagaCon);
+            setIsMobileCartOpen(false);
+          }}
+        />
       </div>
 
       {/* Mobile FAB to open Cart */}
@@ -346,6 +455,24 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
       {isMobileCartOpen && (
         <div className={styles.cartOverlay} onClick={() => setIsMobileCartOpen(false)} />
       )}
+
+      {/* Confirmación: entrar a editar descarta el carrito a medias */}
+      <ConfirmDialog
+        isOpen={pedidoAConfirmar !== null}
+        title="Tienes un pedido sin enviar"
+        message={
+          <>
+            En el carrito hay productos que todavía no se han enviado a cocina. Si abres el
+            pedido <strong>#{pedidoAConfirmar?.id}</strong> para modificarlo, esos productos se
+            descartan.
+          </>
+        }
+        confirmLabel="Descartar y modificar"
+        cancelLabel="Volver"
+        variant="danger"
+        onConfirm={() => pedidoAConfirmar && cargarPedidoEnCarrito(pedidoAConfirmar)}
+        onCancel={() => setPedidoAConfirmar(null)}
+      />
 
       {/* Modal para producto duplicado */}
       {pendingProduct && (

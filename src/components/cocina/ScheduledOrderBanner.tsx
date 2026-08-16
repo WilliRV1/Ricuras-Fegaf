@@ -143,6 +143,9 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
           <div className={styles.orderHeader}>
             <span className={styles.orderId}>#{order.id}</span>
             <span className={styles.scheduledTag}>📅 {horaEntregaLabel}</span>
+            {order.modificado_at && (
+              <span className={styles.modificadoTag}>🔄 MODIFICADO</span>
+            )}
             <span className={styles.orderType}>
               {isMesa ? `🍽️ Mesa ${order.numero_mesa}` : `🛵 ${order.cliente_nombre || 'Domicilio'}`}
             </span>

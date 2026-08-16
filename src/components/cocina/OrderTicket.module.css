@@ -35,6 +35,38 @@
   50% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
 }
 
+/* Pedido modificado después de enviarlo */
+.ticketModificado {
+  border-color: var(--color-warning);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.4);
+}
+
+.modificadoBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -16px -16px 0;
+  padding: 8px 16px;
+  background: var(--color-warning);
+  color: #1F2937;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  animation: modificadoFlash 1.4s ease-in-out 3;
+}
+
+.modificadoHora {
+  font-weight: 700;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+@keyframes modificadoFlash {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.25); }
+}
+
 .header {
   display: flex;
   justify-content: space-between;
