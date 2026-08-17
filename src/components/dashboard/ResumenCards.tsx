@@ -43,7 +43,9 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
         <div className={styles.cardIcon}>💰</div>
         <p className={styles.cardLabel}>Total Facturado</p>
         <p className={styles.cardValue}>{formatCurrency(totalFacturado)}</p>
-        <p className={styles.cardSub}>Incl. {formatCurrency(totalRecargos)} en recargos</p>
+        <p className={styles.cardSub}>
+          Incl. {formatCurrency(totalRecargos)} en recargos · no incluye domicilios
+        </p>
       </div>
 
       {/* Total Pedidos */}

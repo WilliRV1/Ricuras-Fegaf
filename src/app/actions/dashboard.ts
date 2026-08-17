@@ -62,7 +62,9 @@ export async function getResumenDelDia(dateStr?: string) {
   // 1. Filtrar pagados
   const pagados = todosPedidos.filter(p => p.estado === ESTADOS_PEDIDO.PAGADO);
   
-  const totalFacturado = pagados.reduce((sum, p) => sum + (p.total ?? 0), 0);
+  // El cobro de domicilio es plata del domiciliario, no venta del negocio:
+  // se resta de la facturación para no inflar los ingresos del restaurante.
+  const totalCobradoBruto = pagados.reduce((sum, p) => sum + (p.total ?? 0), 0);
   const totalPedidosPagados = pagados.length;
 
   // Totales por método: si el pedido tiene pagos registrados (uno o varios) se
@@ -99,6 +101,9 @@ export async function getResumenDelDia(dateStr?: string) {
   const domiciliosCobrados = pagados.filter(p => (p.costo_domicilio ?? 0) > 0);
   const totalDomicilios = domiciliosCobrados.reduce((sum, p) => sum + (p.costo_domicilio ?? 0), 0);
   const cantidadDomiciliosCobrados = domiciliosCobrados.length;
+
+  // Facturación real del restaurante (sin el dinero del domiciliario)
+  const totalFacturado = totalCobradoBruto - totalDomicilios;
 
   // 1.5 Tiempo Promedio de Atención (en minutos)
   let tiempoPromedioMinutos = 0;

@@ -199,20 +199,24 @@ export const Cart: React.FC<CartProps> = ({
         </span>
       </div>
 
-      {/* Lista de ítems */}
-      <div className={styles.itemsList}>
-        {items.map((item, idx) => (
-          <CartItemComponent
-            key={item.lineId}
-            item={item}
-            lineIndex={lineInfo[idx].index}
-            lineTotal={lineInfo[idx].total}
-          />
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div className={styles.footer}>
+      {/*
+        Zona con scroll: lista de ítems + método de pago.
+        Va junta para que, aunque la sección de efectivo (billetes, vuelta)
+        crezca mucho, el resumen de totales y el botón de enviar de abajo
+        SIEMPRE queden visibles sin scroll — eso es lo único que no puede
+        quedar oculto en una pantalla de celular.
+      */}
+      <div className={styles.scrollArea}>
+        <div className={styles.itemsList}>
+          {items.map((item, idx) => (
+            <CartItemComponent
+              key={item.lineId}
+              item={item}
+              lineIndex={lineInfo[idx].index}
+              lineTotal={lineInfo[idx].total}
+            />
+          ))}
+        </div>
 
         {/* ── Selector de método de pago (solo domicilio) ── */}
         {orderType === 'domicilio' && (
@@ -314,7 +318,10 @@ export const Cart: React.FC<CartProps> = ({
             )}
           </div>
         )}
+      </div>
 
+      {/* Footer fijo: siempre visible, nunca se lo come el scroll */}
+      <div className={styles.footer}>
         {/* ── Resumen de totales ── */}
         <div className={styles.totals}>
           <div className={styles.summaryRow}>
