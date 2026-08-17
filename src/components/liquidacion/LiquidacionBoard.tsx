@@ -70,7 +70,7 @@ export const LiquidacionBoard: React.FC = () => {
           {deudasOpen && (
             <>
               <p className={styles.deudasSubtitle}>
-                Selecciona el método de pago y presiona "Cobrar" cuando el cliente venga a pagar.
+                Selecciona el método de pago y presiona &quot;Cobrar&quot; cuando el cliente venga a pagar.
               </p>
               <div className={styles.grid}>
                 {deudas.map((order) => (

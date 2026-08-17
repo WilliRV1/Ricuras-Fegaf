@@ -46,7 +46,7 @@ export async function cancelOrder(pedidoId: number, motivo?: string) {
         // Se registra la hora de cierre para que el pedido no quede "abierto"
         // en las métricas del dashboard
         closed_at: new Date().toISOString(),
-      } as any)
+      })
       .eq('id', pedidoId);
 
     if (error) {

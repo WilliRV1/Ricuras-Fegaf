@@ -8,7 +8,7 @@ import { ESTADOS_PEDIDO, METODOS_PAGO, TIPOS_ATENCION } from '@/lib/constants';
  * Si es "Hoy" y hay un turno abierto, usa la hora de apertura del turno.
  * De lo contrario, usa el día calendario estricto.
  */
-async function getTimeWindow(supabase: any, dateStr?: string) {
+async function getTimeWindow(supabase: Awaited<ReturnType<typeof createClient>>, dateStr?: string) {
   const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   const esHoy = !dateStr || dateStr === bogotaDateStr;
   const actualDateStr = dateStr || bogotaDateStr;
