@@ -22,8 +22,11 @@ export interface OrderDetails {
   metodo_pago?: MetodoPago;
   /** Hora de entrega programada (ISO string o HH:MM). Null = pedido inmediato */
   hora_entrega?: string | null;
-  /** Domicilio fuera del sector: suma el cobro adicional al total */
-  fuera_sector?: boolean;
+  /**
+   * Cobro adicional por domicilio fuera del sector, escrito por quien toma
+   * el pedido. Undefined/0 = no aplica.
+   */
+  costo_domicilio?: number;
 }
 
 export interface CartItem {

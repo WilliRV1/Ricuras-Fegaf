@@ -2,12 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { CartItem, OrderType, OrderDetails, MetodoPago } from '@/types';
-import {
-  ESTADOS_PEDIDO,
-  TIPOS_ATENCION,
-  METODOS_PAGO,
-  COSTO_DOMICILIO_FUERA_SECTOR,
-} from '@/lib/constants';
+import { ESTADOS_PEDIDO, TIPOS_ATENCION, METODOS_PAGO } from '@/lib/constants';
 import { calcularRecargoDatafono } from '@/lib/utils';
 
 /**
@@ -25,10 +20,11 @@ function construirPayload(
   // Subtotal (suma de líneas)
   const subtotal = items.reduce((sum, item) => sum + (item.producto.precio * item.cantidad), 0);
 
-  // Cobro por salir del sector — solo en domicilios
+  // Costo de domicilio: lo escribe quien toma el pedido, no un valor fijo.
+  // Se redondea y no se permite negativo por si llega algo raro del cliente.
   const costoDomicilio =
-    orderType === TIPOS_ATENCION.DOMICILIO && orderDetails.fuera_sector
-      ? COSTO_DOMICILIO_FUERA_SECTOR
+    orderType === TIPOS_ATENCION.DOMICILIO && orderDetails.costo_domicilio
+      ? Math.max(0, Math.round(orderDetails.costo_domicilio))
       : 0;
 
   // Recargo: 5% solo si es domicilio y el pago es con datáfono

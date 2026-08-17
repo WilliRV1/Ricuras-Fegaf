@@ -1,10 +1,13 @@
 import React from 'react';
 import styles from './DeliveryForm.module.css';
 import { OrderType, OrderDetails } from '@/types';
-import { TIPOS_ATENCION, SIN_DATO, COSTO_DOMICILIO_FUERA_SECTOR } from '@/lib/constants';
+import { TIPOS_ATENCION, SIN_DATO } from '@/lib/constants';
 import { formatCurrency } from '@/lib/utils';
 import { Input } from '../ui/Input';
 import deliveryStyles from './DeliveryForm.module.css';
+
+/** Montos sugeridos de un toque — el valor real siempre lo decide quien toma el pedido */
+const COSTOS_DOMICILIO_SUGERIDOS = [3000, 5000, 8000, 10000];
 
 interface DeliveryFormProps {
   orderType: OrderType;
@@ -105,24 +108,55 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
               márcalo con <strong>No responde</strong> y el pedido sigue su curso normal.
             </p>
 
-            {/* ── Domicilio fuera del sector ── */}
-            <button
-              type="button"
-              className={`${styles.sectorToggle} ${details.fuera_sector ? styles.sectorActive : ''}`}
-              onClick={() => onChange({ ...details, fuera_sector: !details.fuera_sector })}
-              aria-pressed={!!details.fuera_sector}
-            >
-              <span className={styles.sectorCheck}>{details.fuera_sector ? '✓' : ''}</span>
-              <span className={styles.sectorText}>
-                <strong>🛵 Fuera del sector</strong>
-                <span className={styles.sectorSub}>
-                  Suma {formatCurrency(COSTO_DOMICILIO_FUERA_SECTOR)} al total del pedido
-                </span>
-              </span>
-              <span className={styles.sectorPrice}>
-                +{formatCurrency(COSTO_DOMICILIO_FUERA_SECTOR)}
-              </span>
-            </button>
+            {/* ── Costo de domicilio (opcional, lo define quien toma el pedido) ── */}
+            <div className={styles.sectorBox}>
+              <p className={styles.sectorLabel}>
+                🛵 Costo del domicilio <span className={styles.sectorOptional}>(opcional, si queda fuera del sector)</span>
+              </p>
+
+              <div className={styles.sectorChips}>
+                {COSTOS_DOMICILIO_SUGERIDOS.map((monto) => (
+                  <button
+                    key={monto}
+                    type="button"
+                    className={`${styles.sectorChip} ${details.costo_domicilio === monto ? styles.sectorChipActive : ''}`}
+                    onClick={() => onChange({ ...details, costo_domicilio: monto })}
+                  >
+                    {formatCurrency(monto)}
+                  </button>
+                ))}
+              </div>
+
+              <div className={styles.sectorInputRow}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className={styles.sectorInput}
+                  placeholder="Otro monto (ej. 12000)"
+                  value={details.costo_domicilio ? String(details.costo_domicilio) : ''}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '');
+                    onChange({ ...details, costo_domicilio: digits === '' ? undefined : parseInt(digits, 10) });
+                  }}
+                />
+                {!!details.costo_domicilio && (
+                  <button
+                    type="button"
+                    className={styles.sectorClear}
+                    onClick={() => onChange({ ...details, costo_domicilio: undefined })}
+                    aria-label="Quitar costo de domicilio"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              {!!details.costo_domicilio && (
+                <p className={styles.sectorPreview}>
+                  Se suma <strong>{formatCurrency(details.costo_domicilio)}</strong> al total del pedido.
+                </p>
+              )}
+            </div>
           </>
         )}
 

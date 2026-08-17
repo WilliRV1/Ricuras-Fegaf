@@ -24,7 +24,7 @@ import { DeliveryForm } from './DeliveryForm';
 import { DuplicateProductModal } from './DuplicateProductModal';
 import { PedidosEnCurso } from './PedidosEnCurso';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { TIPOS_ATENCION, COSTO_DOMICILIO_FUERA_SECTOR } from '@/lib/constants';
+import { TIPOS_ATENCION } from '@/lib/constants';
 import { toast } from '@/components/ui/Toast';
 import styles from './OrderContainer.module.css';
 
@@ -111,7 +111,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
       cliente_telefono: order.cliente_telefono ?? '',
       cliente_direccion: order.cliente_direccion ?? '',
       hora_entrega: horaEntrega,
-      fuera_sector: (order.costo_domicilio ?? 0) > 0,
+      costo_domicilio: order.costo_domicilio || undefined,
     });
     setFormErrors({});
     setEditingOrder(order);
@@ -240,11 +240,9 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
    * dependiendo del tipo, se completaron los datos requeridos.
    * Teléfono es OPCIONAL para domicilio.
    */
-  /** Cobro extra si el domicilio queda fuera del sector */
+  /** Cobro de domicilio, definido por quien toma el pedido (0 si no aplica) */
   const costoDomicilio =
-    orderType === TIPOS_ATENCION.DOMICILIO && orderDetails.fuera_sector
-      ? COSTO_DOMICILIO_FUERA_SECTOR
-      : 0;
+    orderType === TIPOS_ATENCION.DOMICILIO ? (orderDetails.costo_domicilio ?? 0) : 0;
 
   const isFormValid = (() => {
     if (!orderType) return false;
