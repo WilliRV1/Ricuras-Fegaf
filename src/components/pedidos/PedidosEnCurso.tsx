@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { PedidoWithDetalles } from '@/types';
-import { usePendingOrders } from '@/hooks/usePendingOrders';
-import { TIPOS_ATENCION } from '@/lib/constants';
+import { useOpenOrders } from '@/hooks/useOpenOrders';
+import { TIPOS_ATENCION, ESTADOS_PEDIDO } from '@/lib/constants';
 import { formatCurrency } from '@/lib/utils';
 import styles from './PedidosEnCurso.module.css';
 
@@ -14,14 +14,20 @@ interface PedidosEnCursoProps {
 }
 
 /**
- * Lista de pedidos que aún están pendientes en cocina, con opción de
- * modificarlos. Se cierra sola cuando no hay ninguno.
+ * Lista de pedidos que todavía no se han cobrado, con opción de modificarlos.
+ *
+ * Incluye los que ya salieron de cocina: ahí es donde el cliente pide algo de
+ * última hora y antes tocaba anular la venta entera. Se cierra sola cuando no
+ * hay ninguno.
  */
 export const PedidosEnCurso: React.FC<PedidosEnCursoProps> = ({ editingId, onEditar }) => {
-  const { orders, loading } = usePendingOrders();
+  const { orders, loading } = useOpenOrders();
   const [abierto, setAbierto] = useState(false);
 
   if (loading || orders.length === 0) return null;
+
+  const enCocina = orders.filter((o) => o.estado === ESTADOS_PEDIDO.PENDIENTE).length;
+  const porCobrar = orders.length - enCocina;
 
   const formatHora = (iso: string) =>
     new Date(iso).toLocaleTimeString('es-CO', {
@@ -39,11 +45,17 @@ export const PedidosEnCurso: React.FC<PedidosEnCursoProps> = ({ editingId, onEdi
         type="button"
       >
         <span className={styles.toggleTitle}>
-          🍳 Pedidos en cocina
+          🧾 Pedidos sin cobrar
           <span className={styles.count}>{orders.length}</span>
         </span>
         <span className={styles.toggleRight}>
-          {!abierto && <span className={styles.hint}>Toca para modificar uno</span>}
+          {!abierto && (
+            <span className={styles.hint}>
+              {enCocina > 0 && `${enCocina} en cocina`}
+              {enCocina > 0 && porCobrar > 0 && ' · '}
+              {porCobrar > 0 && `${porCobrar} por cobrar`}
+            </span>
+          )}
           <span className={`${styles.chevron} ${abierto ? styles.chevronOpen : ''}`}>▾</span>
         </span>
       </button>
@@ -53,6 +65,7 @@ export const PedidosEnCurso: React.FC<PedidosEnCursoProps> = ({ editingId, onEdi
           {orders.map((order) => {
             const esMesa = order.tipo === TIPOS_ATENCION.MESA;
             const enEdicion = editingId === order.id;
+            const yaListo = order.estado === ESTADOS_PEDIDO.LISTO;
 
             return (
               <div key={order.id} className={`${styles.card} ${enEdicion ? styles.cardEditing : ''}`}>
@@ -62,6 +75,9 @@ export const PedidosEnCurso: React.FC<PedidosEnCursoProps> = ({ editingId, onEdi
                     {esMesa ? `🍽️ Mesa ${order.numero_mesa}` : `🛵 ${order.cliente_nombre || 'Domicilio'}`}
                   </span>
                   <span className={styles.hora}>{formatHora(order.created_at)}</span>
+                  <span className={yaListo ? styles.estadoListo : styles.estadoCocina}>
+                    {yaListo ? '✅ Listo, por cobrar' : '🍳 En cocina'}
+                  </span>
                   {order.modificado_at && (
                     <span className={styles.modificadoTag}>🔄 Modificado</span>
                   )}
@@ -84,7 +100,7 @@ export const PedidosEnCurso: React.FC<PedidosEnCursoProps> = ({ editingId, onEdi
                     onClick={() => onEditar(order)}
                     disabled={enEdicion}
                   >
-                    {enEdicion ? 'Editando…' : '✏️ Modificar'}
+                    {enEdicion ? 'Editando…' : yaListo ? '➕ Agregar algo' : '✏️ Modificar'}
                   </button>
                 </div>
               </div>

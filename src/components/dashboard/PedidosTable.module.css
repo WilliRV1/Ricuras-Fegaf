@@ -76,6 +76,26 @@
 .methodBancolombia { color: #FCD34D; }
 .methodMixto { color: #C4B5FD; font-weight: 600; }
 
+/* Pedidos sin cobro: la deuda lleva nombre, el resto se explica solo */
+.methodDebe {
+  color: var(--color-warning);
+  font-weight: 700;
+}
+
+.deudorNombre {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.methodSinCobro {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 0.8125rem;
+}
+
 .total {
   font-weight: 800;
 }

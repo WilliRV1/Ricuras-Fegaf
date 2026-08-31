@@ -90,6 +90,14 @@ export interface Database {
           costo_domicilio: number
           /** Última modificación del pedido después de enviarlo (null = nunca) */
           modificado_at: string | null
+          /** Nombre de quien quedó debiendo (obligatorio al marcar como 'debe') */
+          deudor_nombre: string | null
+          /** Teléfono de contacto del deudor (opcional) */
+          deudor_telefono: string | null
+          /** Persona que canceló el pedido, de la lista fija del local */
+          cancelado_por: string | null
+          /** Pedido que reemplazó a este después de cancelarlo (null = nunca se rehízo) */
+          rehecho_en: number | null
           created_at: string
           closed_at: string | null
         }
@@ -110,6 +118,10 @@ export interface Database {
           vuelto?: number | null
           costo_domicilio?: number
           modificado_at?: string | null
+          deudor_nombre?: string | null
+          deudor_telefono?: string | null
+          cancelado_por?: string | null
+          rehecho_en?: number | null
           created_at?: string
           closed_at?: string | null
         }
@@ -130,6 +142,10 @@ export interface Database {
           vuelto?: number | null
           costo_domicilio?: number
           modificado_at?: string | null
+          deudor_nombre?: string | null
+          deudor_telefono?: string | null
+          cancelado_por?: string | null
+          rehecho_en?: number | null
           created_at?: string
           closed_at?: string | null
         }

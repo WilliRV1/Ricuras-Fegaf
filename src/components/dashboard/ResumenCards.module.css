@@ -60,6 +60,16 @@
 }
 
 /* Accent color per card type */
+/* La cifra con la que se cuadra la caja: se marca para encontrarla de un vistazo */
+.cardDestacada {
+  border-color: var(--card-accent, var(--color-primary));
+  box-shadow: 0 0 0 1px var(--card-accent, var(--color-primary)) inset;
+}
+
+.cardDestacada::before {
+  height: 5px;
+}
+
 .accentPrimary  { --card-accent: var(--color-primary); }
 .accentSuccess  { --card-accent: var(--color-success); }
 .accentWarning  { --card-accent: var(--color-warning); }

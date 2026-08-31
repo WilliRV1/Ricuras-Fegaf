@@ -53,10 +53,10 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
     }
   };
 
-  const handleCancelConfirmed = async (motivo: string) => {
+  const handleCancelConfirmed = async (motivo: string, canceladoPor: string) => {
     setIsCancelling(true);
     try {
-      const res = await cancelOrder(order.id, motivo);
+      const res = await cancelOrder(order.id, motivo, canceladoPor);
       if (res.success) {
         toast.success(`Pedido #${order.id} cancelado`);
       } else {

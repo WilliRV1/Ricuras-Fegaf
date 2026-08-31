@@ -4,28 +4,33 @@ import { PedidoWithDetalles } from '@/types';
 import { ESTADOS_PEDIDO } from '@/lib/constants';
 
 /**
- * Pedidos que siguen pendientes en cocina, en tiempo real.
+ * Pedidos abiertos —todavía sin cobrar— en tiempo real.
  *
- * Se usa en la pantalla de pedidos para poder modificar uno antes de que cocina
- * lo cierre. A diferencia de `useRealtimeOrders` (tablero de cocina), este hook
- * no reproduce sonidos: quien toma el pedido no necesita que le suene su propia
- * terminal cada vez que registra algo.
+ * Incluye los dos estados que se pueden modificar:
+ *  - `pendiente`: cocina todavía no lo despacha.
+ *  - `listo`: cocina ya lo despachó y está esperando el cobro. Es el momento
+ *    en que el cliente dice "y me das una gaseosa", así que también tiene que
+ *    poder modificarse.
+ *
+ * Se usa en la pantalla de pedidos. A diferencia de `useRealtimeOrders`
+ * (tablero de cocina), este hook no reproduce sonidos: quien toma el pedido no
+ * necesita que le suene su propia terminal cada vez que registra algo.
  */
-export function usePendingOrders() {
+export function useOpenOrders() {
   const [orders, setOrders] = useState<PedidoWithDetalles[]>([]);
   const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
 
-  const fetchPendientes = useCallback(async () => {
+  const fetchAbiertos = useCallback(async () => {
     const { data, error } = await supabase
       .from('pedidos')
       .select('*, detalle_pedidos(*, productos(nombre))')
-      .eq('estado', ESTADOS_PEDIDO.PENDIENTE)
+      .in('estado', [ESTADOS_PEDIDO.PENDIENTE, ESTADOS_PEDIDO.LISTO])
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error cargando pedidos pendientes:', error);
+      console.error('Error cargando pedidos abiertos:', error);
       return null;
     }
     return (data || []) as unknown as PedidoWithDetalles[];
@@ -35,7 +40,7 @@ export function usePendingOrders() {
     let mounted = true;
 
     const refrescar = async () => {
-      const data = await fetchPendientes();
+      const data = await fetchAbiertos();
       if (mounted && data) {
         setOrders(data);
         setLoading(false);
@@ -46,11 +51,11 @@ export function usePendingOrders() {
 
     refrescar();
 
-    // Cualquier cambio en pedidos (nuevo, listo, cancelado, modificado)
-    // se resuelve recargando la lista: son pocos registros y evita
-    // inconsistencias entre terminales.
+    // Cualquier cambio en pedidos (nuevo, listo, cobrado, cancelado,
+    // modificado) se resuelve recargando la lista: son pocos registros y
+    // evita inconsistencias entre terminales.
     const channel = supabase
-      .channel('pedidos-pendientes')
+      .channel('pedidos-abiertos')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => {
         refrescar();
       })
@@ -63,5 +68,5 @@ export function usePendingOrders() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { orders, loading, refetch: fetchPendientes };
+  return { orders, loading, refetch: fetchAbiertos };
 }

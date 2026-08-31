@@ -31,27 +31,41 @@ export async function markOrderAsReady(pedidoId: number) {
 /**
  * Cancela un pedido. Se usa desde cocina (pedidos pendientes) y desde
  * liquidación (pedidos ya marcados como listos que no se van a cobrar).
+ *
+ * El pedido no se borra: queda con estado 'cancelado' conservando sus
+ * productos y su total, para que en el dashboard se pueda ver exactamente qué
+ * se anuló, quién lo anuló y si se volvió a montar.
+ *
  * @param pedidoId ID numérico del pedido
- * @param motivo Opcional, razón de la cancelación
+ * @param motivo Razón de la cancelación
+ * @param canceladoPor Quién la está haciendo (lista `PERSONAL`)
  */
-export async function cancelOrder(pedidoId: number, motivo?: string) {
+export async function cancelOrder(
+  pedidoId: number,
+  motivo?: string,
+  canceladoPor?: string | null
+) {
   try {
     const supabase = await createClient();
 
-    const { error } = await supabase
-      .from('pedidos')
-      .update({
-        estado: ESTADOS_PEDIDO.CANCELADO,
-        motivo_cancelacion: motivo || null,
-        // Se registra la hora de cierre para que el pedido no quede "abierto"
-        // en las métricas del dashboard
-        closed_at: new Date().toISOString(),
-      })
-      .eq('id', pedidoId);
+    // @ts-expect-error - Tipos generados sin los RPC nuevos
+    const { error } = await supabase.rpc('cancel_order', {
+      p_pedido_id: pedidoId,
+      p_motivo: motivo ?? null,
+      p_cancelado_por: canceladoPor?.trim() || null,
+    });
 
     if (error) {
       console.error('Error al cancelar pedido:', error);
-      return { success: false, error: error.message };
+
+      if (error.message?.includes('PEDIDO_YA_PAGADO')) {
+        return { success: false, error: 'Este pedido ya fue cobrado, no se puede cancelar.' };
+      }
+      if (error.message?.includes('PEDIDO_NO_ENCONTRADO')) {
+        return { success: false, error: 'El pedido ya no existe.' };
+      }
+
+      return { success: false, error: 'No se pudo cancelar el pedido.' };
     }
 
     return { success: true };

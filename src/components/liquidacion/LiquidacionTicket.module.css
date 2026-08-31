@@ -372,6 +372,31 @@
   background: rgba(245, 158, 11, 0.12);
 }
 
+/* Botón 'Agregar algo' — el cliente pidió algo más justo antes de pagar */
+.agregarBtn {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  background: transparent;
+  border: 1px dashed var(--color-primary);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.03em;
+}
+
+.agregarBtn:hover:not(:disabled) {
+  background: rgba(255, 107, 53, 0.1);
+  border-style: solid;
+}
+
+.agregarBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Botón 'Anular' — el pedido no se va a cobrar */
 .anularBtn {
   width: 100%;

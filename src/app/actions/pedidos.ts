@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { CartItem, OrderType, OrderDetails, MetodoPago } from '@/types';
+import { CartItem, OrderType, OrderDetails, MetodoPago, PedidoWithDetalles } from '@/types';
 import { ESTADOS_PEDIDO, TIPOS_ATENCION, METODOS_PAGO } from '@/lib/constants';
 import { calcularRecargoDatafono } from '@/lib/utils';
 
@@ -81,7 +81,13 @@ export async function submitOrder(
   items: CartItem[],
   metodoPago: MetodoPago = null,
   /** Monto en efectivo con el que paga el cliente — para alistar la vuelta */
-  pagaCon: number | null = null
+  pagaCon: number | null = null,
+  /**
+   * Id del pedido cancelado que este pedido viene a reemplazar.
+   * Deja constancia de que sí se volvió a montar, que es lo que antes se
+   * olvidaba y descuadraba la caja.
+   */
+  rehacePedidoId: number | null = null
 ) {
   if (!orderType || items.length === 0) {
     return { success: false, error: 'Faltan datos obligatorios o el carrito está vacío.' };
@@ -114,13 +120,33 @@ export async function submitOrder(
     return { success: false, error: 'No se pudo crear el pedido de forma segura.' };
   }
 
+  // El enlace con el pedido cancelado es informativo: si falla, el pedido
+  // nuevo ya quedó bien guardado y no tiene sentido devolver un error.
+  if (rehacePedidoId) {
+    // @ts-expect-error - Tipos generados sin los RPC nuevos
+    const { error: linkError } = await supabase.rpc('link_rehecho', {
+      p_cancelado_id: rehacePedidoId,
+      p_nuevo_id: pedidoId as number,
+    });
+    if (linkError) {
+      console.error('No se pudo enlazar el pedido rehecho:', linkError);
+    }
+  }
+
   return { success: true, pedidoId: pedidoId };
 }
 
 /**
- * Modifica un pedido que todavía está pendiente en cocina.
+ * Modifica un pedido que todavía no se ha cobrado.
  * Reescribe los productos y recalcula los totales en una sola transacción.
- * Si cocina ya lo marcó como listo, la operación se rechaza.
+ *
+ * Funciona tanto con pedidos pendientes en cocina como con pedidos ya listos
+ * esperando el cobro — este último es el caso de "y me das una gaseosa"
+ * cuando el cliente ya va a pagar.
+ *
+ * @param volverACocina Solo aplica si el pedido estaba listo: true lo devuelve
+ *   al tablero de cocina (hay algo nuevo que preparar), false lo deja en
+ *   liquidación con el total actualizado.
  */
 export async function updateOrder(
   pedidoId: number,
@@ -128,7 +154,8 @@ export async function updateOrder(
   orderDetails: OrderDetails,
   items: CartItem[],
   metodoPago: MetodoPago = null,
-  pagaCon: number | null = null
+  pagaCon: number | null = null,
+  volverACocina: boolean = true
 ) {
   if (!orderType || items.length === 0) {
     return { success: false, error: 'El pedido debe tener al menos un producto.' };
@@ -151,7 +178,8 @@ export async function updateOrder(
     p_detalles: p.detallesJson,
     p_hora_entrega: p.horaEntregaISO,
     p_paga_con: p.pagaConFinal,
-    p_costo_domicilio: p.costoDomicilio
+    p_costo_domicilio: p.costoDomicilio,
+    p_volver_a_cocina: volverACocina
   });
 
   if (rpcError) {
@@ -160,7 +188,7 @@ export async function updateOrder(
     if (rpcError.message?.includes('PEDIDO_NO_EDITABLE')) {
       return {
         success: false,
-        error: 'Cocina ya marcó este pedido como listo, así que no se puede modificar. Anúlalo desde liquidación si hay que rehacerlo.',
+        error: 'Este pedido ya se cobró, se anuló o quedó como deuda, así que no se puede modificar.',
       };
     }
     if (rpcError.message?.includes('PEDIDO_NO_ENCONTRADO')) {
@@ -171,4 +199,37 @@ export async function updateOrder(
   }
 
   return { success: true, pedidoId };
+}
+
+/**
+ * Trae un pedido con sus productos para abrirlo en la pantalla de pedidos.
+ *
+ * Se usa cuando se llega a `/pedidos` con `?editar=` (agregar algo antes de
+ * cobrar, desde liquidación) o con `?rehacer=` (volver a montar un pedido que
+ * se canceló). En ambos casos hay que leer un pedido que no está en la lista
+ * de pendientes que ya tiene cargada la pantalla.
+ */
+export async function getOrderById(pedidoId: number) {
+  if (!Number.isInteger(pedidoId) || pedidoId <= 0) {
+    return { success: false as const, error: 'Pedido inválido.' };
+  }
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('pedidos')
+    .select('*, detalle_pedidos(*, productos(nombre))')
+    .eq('id', pedidoId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error cargando el pedido:', error);
+    return { success: false as const, error: 'No se pudo cargar el pedido.' };
+  }
+
+  if (!data) {
+    return { success: false as const, error: 'El pedido ya no existe.' };
+  }
+
+  return { success: true as const, order: data as unknown as PedidoWithDetalles };
 }
