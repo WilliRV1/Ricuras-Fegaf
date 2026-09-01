@@ -32,44 +32,54 @@
 }
 
 .row:hover {
-  background-color: rgba(239, 68, 68, 0.05);
+  background-color: rgba(245, 158, 11, 0.06);
 }
 
 .td {
   padding: 12px 16px;
   color: var(--color-text);
-  vertical-align: middle;
+  vertical-align: top;
+}
+
+/* El nombre es lo que hace cobrable la deuda: va grande y primero */
+.nombre {
+  display: block;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.telefono {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.fecha {
+  display: block;
+  font-weight: 600;
+}
+
+.vieja {
+  display: inline-block;
+  margin-top: 4px;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--color-danger);
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-full, 9999px);
 }
 
 .badge {
   display: inline-block;
-  background-color: rgba(239, 68, 68, 0.15);
-  color: var(--color-danger);
+  background-color: rgba(245, 158, 11, 0.15);
+  color: var(--color-warning);
   font-weight: 700;
   font-size: 0.8rem;
   padding: 3px 10px;
   border-radius: var(--radius-full, 9999px);
-}
-
-.motivo {
-  display: inline-block;
-  background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 3px 10px;
-  font-style: italic;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-}
-
-/* Aviso de ventas anuladas que nunca se volvieron a montar */
-.alerta {
-  padding: 12px 16px;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: var(--color-warning);
-  background-color: rgba(245, 158, 11, 0.12);
-  border-bottom: 1px solid var(--color-border);
 }
 
 .origen {
@@ -80,44 +90,48 @@
 
 .productos {
   display: block;
-  font-size: 0.875rem;
-  line-height: 1.4;
-  color: var(--color-text);
-}
-
-.rehecho,
-.sinRehacer {
-  display: inline-block;
   margin-top: 4px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: var(--radius-full, 9999px);
-}
-
-.rehecho {
-  color: var(--color-success);
-  background-color: rgba(34, 197, 94, 0.15);
-}
-
-.sinRehacer {
-  color: var(--color-warning);
-  background-color: rgba(245, 158, 11, 0.15);
-}
-
-.persona {
-  font-weight: 700;
-}
-
-.sinDato {
-  font-style: italic;
+  font-size: 0.8125rem;
+  line-height: 1.4;
   color: var(--color-text-muted);
 }
 
 .monto {
   text-align: right;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--color-warning);
   white-space: nowrap;
+}
+
+.totalLabel {
+  padding: 14px 16px;
+  text-align: right;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.totalValue {
+  padding: 14px 16px;
+  text-align: right;
+  font-weight: 800;
+  font-size: 1.125rem;
+  color: var(--color-warning);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  white-space: nowrap;
+}
+
+.nota {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
 }
 
 .empty {

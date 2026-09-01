@@ -1,7 +1,6 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { ESTADOS_PEDIDO } from '@/lib/constants';
 
 export interface PagoParcial {
   metodo: string;
@@ -59,23 +58,51 @@ export async function closeOrderWithPayments(pedidoId: number, pagos: PagoParcia
 /**
  * Marca un pedido como "debe" — el cliente se fue sin pagar.
  * No cuenta como ingreso hasta que se cobre más tarde.
+ *
+ * El nombre del deudor es obligatorio: una deuda anónima ("pedido #156,
+ * $71.000") no se puede cobrar, que era justamente el problema en el local.
+ *
  * @param pedidoId ID numérico del pedido
+ * @param deudorNombre Quién quedó debiendo
+ * @param deudorTelefono Teléfono de contacto, opcional
  */
-export async function markOrderAsDebe(pedidoId: number) {
+export async function markOrderAsDebe(
+  pedidoId: number,
+  deudorNombre: string,
+  deudorTelefono?: string | null
+) {
+  const nombre = deudorNombre.trim();
+  if (!nombre) {
+    return { success: false, error: 'Escribe el nombre de quien queda debiendo.' };
+  }
+
   try {
     const supabase = await createClient();
 
-    const { error: updateError } = await supabase
-      .from('pedidos')
-      .update({
-        estado: ESTADOS_PEDIDO.DEBE,
-        closed_at: new Date().toISOString()
-      })
-      .eq('id', pedidoId);
+    // @ts-expect-error - Tipos generados sin los RPC nuevos
+    const { error } = await supabase.rpc('mark_order_debe', {
+      p_pedido_id: pedidoId,
+      p_deudor_nombre: nombre,
+      p_deudor_telefono: deudorTelefono?.trim() || null,
+    });
 
-    if (updateError) {
-      console.error('Error al marcar pedido como debe:', updateError);
-      return { success: false, error: updateError.message };
+    if (error) {
+      console.error('Error al marcar pedido como debe:', error);
+
+      if (error.message?.includes('DEUDOR_REQUERIDO')) {
+        return { success: false, error: 'Escribe el nombre de quien queda debiendo.' };
+      }
+      if (error.message?.includes('PEDIDO_YA_PAGADO')) {
+        return { success: false, error: 'Este pedido ya fue cobrado.' };
+      }
+      if (error.message?.includes('PEDIDO_CANCELADO')) {
+        return { success: false, error: 'Este pedido está cancelado.' };
+      }
+      if (error.message?.includes('PEDIDO_NO_ENCONTRADO')) {
+        return { success: false, error: 'El pedido ya no existe.' };
+      }
+
+      return { success: false, error: 'No se pudo registrar la deuda.' };
     }
 
     return { success: true };

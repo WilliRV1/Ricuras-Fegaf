@@ -5,6 +5,22 @@ import { ESTADOS_PEDIDO } from '@/lib/constants';
 
 export type ConnectionStatus = 'connecting' | 'online' | 'offline';
 
+/**
+ * Deja el pedido en la lista con sus datos frescos, conservando el orden.
+ * Si ya estaba, lo reemplaza en su sitio; si no, lo agrega al final.
+ */
+function reemplazarOAgregar(
+  lista: PedidoWithDetalles[],
+  pedido: PedidoWithDetalles
+): PedidoWithDetalles[] {
+  const indice = lista.findIndex((o) => o.id === pedido.id);
+  if (indice === -1) return [...lista, pedido];
+
+  const copia = [...lista];
+  copia[indice] = pedido;
+  return copia;
+}
+
 export function useRealtimeLiquidacion() {
   const [orders, setOrders] = useState<PedidoWithDetalles[]>([]); // estado: listo
   const [deudas, setDeudas] = useState<PedidoWithDetalles[]>([]);  // estado: debe
@@ -83,10 +99,10 @@ export function useRealtimeLiquidacion() {
           if (updatedOrder.estado === ESTADOS_PEDIDO.LISTO) {
             const orderWithDetails = await fetchOrderDetails(updatedOrder.id);
             if (orderWithDetails && mounted) {
-              setOrders((prev) => {
-                if (prev.some(o => o.id === orderWithDetails.id)) return prev;
-                return [...prev, orderWithDetails];
-              });
+              // Se reemplaza siempre, no solo cuando el pedido es nuevo: si le
+              // agregaron algo antes de cobrar, los productos y el total
+              // cambiaron y el ticket tiene que reflejarlo.
+              setOrders((prev) => reemplazarOAgregar(prev, orderWithDetails));
               // Si estaba en deudas y volvió a listo, quitarlo de deudas
               setDeudas((prev) => prev.filter((o) => o.id !== updatedOrder.id));
             }
@@ -97,10 +113,7 @@ export function useRealtimeLiquidacion() {
             if (orderWithDetails && mounted) {
               // Mover de 'orders' a 'deudas'
               setOrders((prev) => prev.filter((o) => o.id !== updatedOrder.id));
-              setDeudas((prev) => {
-                if (prev.some(o => o.id === orderWithDetails.id)) return prev;
-                return [...prev, orderWithDetails];
-              });
+              setDeudas((prev) => reemplazarOAgregar(prev, orderWithDetails));
             }
           }
 

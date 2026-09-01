@@ -8,6 +8,8 @@ interface PedidoHistorial {
   tipo: string;
   numero_mesa: number | null;
   cliente_nombre: string | null;
+  /** Quién quedó debiendo, cuando el pedido está en estado 'debe' */
+  deudor_nombre?: string | null;
   estado: string;
   metodo_pago: string | null;
   subtotal: number;
@@ -39,6 +41,11 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
     return <span className={`${styles.badge} ${styles.badgeDomicilio}`}>🛵 Domicilio</span>;
   };
 
+  /** Nombre asociado al pedido: manda el del deudor, si lo hay */
+  const getNombre = (pedido: PedidoHistorial) =>
+    pedido.deudor_nombre ||
+    (pedido.tipo === TIPOS_ATENCION.DOMICILIO ? pedido.cliente_nombre : null);
+
   const getEstadoClass = (estado: string) => {
     switch (estado) {
       case ESTADOS_PEDIDO.PAGADO: return styles.estadoPagado;
@@ -59,7 +66,26 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
 
   const getMetodoPago = (pedido: PedidoHistorial) => {
     const { metodo_pago: metodo, pagos_pedido: pagos } = pedido;
-    if (!metodo) return '-';
+
+    // Un pedido sin cobrar no tiene método de pago. Antes salía una rayita
+    // suelta que no decía nada; ahora dice por qué no hay pago y, si es una
+    // deuda, quién la tiene.
+    if (pedido.estado === ESTADOS_PEDIDO.DEBE) {
+      return (
+        <span className={styles.methodDebe}>
+          💸 Debe
+          {pedido.deudor_nombre && (
+            <span className={styles.deudorNombre}>{pedido.deudor_nombre}</span>
+          )}
+        </span>
+      );
+    }
+
+    if (pedido.estado === ESTADOS_PEDIDO.CANCELADO) {
+      return <span className={styles.methodSinCobro}>❌ Anulado</span>;
+    }
+
+    if (!metodo) return <span className={styles.methodSinCobro}>Sin cobrar aún</span>;
 
     // Pago dividido: se muestra el desglose de cuánto entró por cada método
     if (metodo === METODO_PAGO_MIXTO && pagos && pagos.length > 0) {
@@ -142,9 +168,13 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
               <td className={styles.td}>{formatHora(pedido.created_at)}</td>
               <td className={styles.td}>
                 {getTipoBadge(pedido.tipo, pedido.numero_mesa)}
-                {pedido.tipo === TIPOS_ATENCION.DOMICILIO && pedido.cliente_nombre && (
+                {/*
+                  El nombre se muestra también en mesa: si el pedido quedó
+                  debiendo, es el único dato que permite ir a cobrarlo.
+                */}
+                {getNombre(pedido) && (
                   <div style={{ fontSize: '0.75rem', marginTop: '4px', color: 'var(--color-text-muted)' }}>
-                    {pedido.cliente_nombre}
+                    {getNombre(pedido)}
                   </div>
                 )}
               </td>

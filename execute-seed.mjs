@@ -1,7 +1,7 @@
 import { Client } from 'pg';
 import fs from 'fs';
 
-const connectionString = 'postgresql://postgres.kbvdhtrqktkdgjacsjuh:1JezyKIai4W5cQlB@aws-0-us-west-2.pooler.supabase.com:5432/postgres';
+const connectionString = 'postgresql://postgres.kbvdhtrqktkdgjacsjuh:1JezyKIai4W5cQlB@aws-1-us-west-2.pooler.supabase.com:5432/postgres';
 
 async function runSeed() {
   const client = new Client({

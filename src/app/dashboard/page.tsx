@@ -1,9 +1,16 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getResumenDelDia, getPedidosRecientes, getProductosVendidosDelDia } from '@/app/actions/dashboard';
+import {
+  getResumenDelDia,
+  getPedidosRecientes,
+  getProductosVendidosDelDia,
+  getCarteraPendiente,
+  getCancelacionesDelDia,
+} from '@/app/actions/dashboard';
 import { ResumenCards } from '@/components/dashboard/ResumenCards';
 import { PedidosTable } from '@/components/dashboard/PedidosTable';
 import { CancelacionesTable } from '@/components/dashboard/CancelacionesTable';
+import { CarteraTable } from '@/components/dashboard/CarteraTable';
 import { ProductosVendidosTable } from '@/components/dashboard/ProductosVendidosTable';
 import { StockManager } from '@/components/dashboard/StockManager';
 import { DatePicker } from '@/components/dashboard/DatePicker';
@@ -28,10 +35,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const todayISO = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   const targetDate = date || todayISO;
 
-  const [stats, pedidosRecientes, productosVendidos, { data: productos }] = await Promise.all([
+  const [
+    stats,
+    pedidosRecientes,
+    productosVendidos,
+    cartera,
+    cancelaciones,
+    { data: productos },
+  ] = await Promise.all([
     getResumenDelDia(targetDate),
     getPedidosRecientes(50, targetDate),
     getProductosVendidosDelDia(targetDate),
+    // La cartera no depende de la fecha: son todas las deudas abiertas
+    getCarteraPendiente(),
+    getCancelacionesDelDia(targetDate),
     (await import('@/lib/supabase/server')).createClient().then(sb => sb.from('productos').select('*').order('nombre', { ascending: true })),
   ]);
 
@@ -84,6 +101,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <ResumenCards {...stats} />
           </section>
 
+          {/* Cartera por cobrar — arrastra deudas de todos los días */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              💸 Cartera por Cobrar
+              {cartera.length > 0 ? ` (${cartera.length})` : ''}
+            </h2>
+            <CarteraTable deudas={cartera} />
+          </section>
+
           {/* Control de Stock */}
           {productos && productos.length > 0 && (
             <section className={styles.section}>
@@ -99,12 +125,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <ProductosVendidosTable productos={productosVendidos} />
           </section>
 
-          {stats.cancelados.length > 0 && (
+          {cancelaciones.length > 0 && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>
-                ❌ Pedidos Cancelados ({stats.cancelados.length})
+                ❌ Pedidos Cancelados ({cancelaciones.length})
               </h2>
-              <CancelacionesTable cancelados={stats.cancelados} />
+              <CancelacionesTable cancelados={cancelaciones} />
             </section>
           )}
 

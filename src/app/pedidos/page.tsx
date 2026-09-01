@@ -15,8 +15,25 @@ export const revalidate = 0; // Para asegurar que traiga datos frescos (Server S
  * Layout de dos columnas:
  * - **Columna principal**: Selector de tipo + formulario + menú digital.
  * - **Columna lateral**: Carrito de compras (a implementar Día 3).
+ *
+ * Acepta dos parámetros de URL, ambos enviados desde liquidación:
+ * - `?editar=<id>`: abre un pedido sin cobrar para agregarle algo.
+ * - `?rehacer=<id>`: carga los productos de un pedido anulado para volver a
+ *   montarlo sin digitarlo de nuevo.
  */
-export default async function PedidosPage() {
+interface PedidosPageProps {
+  searchParams: Promise<{ editar?: string; rehacer?: string }>;
+}
+
+/** Convierte un parámetro de URL en un id de pedido válido, o null */
+function parsePedidoId(valor?: string) {
+  if (!valor) return null;
+  const id = Number.parseInt(valor, 10);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+export default async function PedidosPage({ searchParams }: PedidosPageProps) {
+  const { editar, rehacer } = await searchParams;
   const supabase = createClient();
 
   // Traer categorías ordenadas
@@ -46,9 +63,11 @@ export default async function PedidosPage() {
       </header>
 
       <div className={styles.content}>
-        <OrderContainer 
-          initialCategorias={categorias || []} 
-          initialProductos={productos || []} 
+        <OrderContainer
+          initialCategorias={categorias || []}
+          initialProductos={productos || []}
+          editarId={parsePedidoId(editar)}
+          rehacerId={parsePedidoId(rehacer)}
         />
       </div>
 

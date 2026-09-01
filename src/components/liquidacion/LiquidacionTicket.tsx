@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { PedidoWithDetalles } from '@/types';
 import { TIPOS_ATENCION, METODOS_PAGO, SIN_DATO } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
 import { CancelOrderDialog } from '@/components/ui/CancelOrderDialog';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { DebtDialog } from '@/components/ui/DebtDialog';
 import { closeOrderWithPayments, markOrderAsDebe } from '@/app/actions/liquidacion';
 import { cancelOrder } from '@/app/actions/cocina';
 import { toast } from '@/components/ui/Toast';
@@ -26,11 +28,13 @@ const METODO_OPTIONS = [
 ];
 
 export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isDebe = false }) => {
+  const router = useRouter();
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMarkingDebe, setIsMarkingDebe] = useState(false);
   const [isAnulando, setIsAnulando] = useState(false);
   const [showAnularDialog, setShowAnularDialog] = useState(false);
+  const [showDebeDialog, setShowDebeDialog] = useState(false);
   const [showCobrarConfirm, setShowCobrarConfirm] = useState(false);
   /** Modo pago dividido: monto (texto) por cada método */
   const [dividido, setDividido] = useState(false);
@@ -72,6 +76,14 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
 
   const direccionUtil =
     !!order.cliente_direccion && order.cliente_direccion.trim() !== SIN_DATO;
+
+  // El nombre del deudor pisa al del domicilio: es el que sirve para cobrar.
+  // En mesa no hay nombre de cliente, así que solo aparece cuando hay deuda.
+  const nombreClienteUtil =
+    !!order.cliente_nombre && order.cliente_nombre.trim() !== SIN_DATO
+      ? order.cliente_nombre
+      : null;
+  const nombreMostrado = order.deudor_nombre || (isMesa ? null : nombreClienteUtil);
 
   /** Cambia entre cobro simple y dividido, limpiando lo anterior */
   const toggleDividido = () => {
@@ -120,22 +132,26 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
     setShowCobrarConfirm(true);
   };
 
-  const handleDebe = async () => {
-    if (!window.confirm(`¿Marcar el pedido #${order.id} como "Debe"?\n\nEl cliente se fue sin pagar. El pedido no contará como ingreso hasta que se cobre.`)) {
-      return;
-    }
+  /**
+   * Registra la deuda con el nombre de quien queda debiendo.
+   * Sin nombre la deuda es incobrable — es exactamente lo que pasaba antes,
+   * cuando en la cartera solo quedaba "pedido #156".
+   */
+  const handleDebeConfirmed = async (nombre: string, telefono: string) => {
     setIsMarkingDebe(true);
     try {
-      const res = await markOrderAsDebe(order.id);
+      const res = await markOrderAsDebe(order.id, nombre, telefono);
       if (res.success) {
-        toast.success(`Pedido #${order.id} marcado como deuda pendiente`);
+        toast.success(`${nombre} queda debiendo ${formatCurrency(base)} (pedido #${order.id})`);
       } else {
-        toast.error(res.error || 'Error al marcar como debe');
+        toast.error(res.error || 'Error al registrar la deuda');
         setIsMarkingDebe(false);
+        setShowDebeDialog(false);
       }
     } catch {
       toast.error('Error al procesar');
       setIsMarkingDebe(false);
+      setShowDebeDialog(false);
     }
   };
 
@@ -143,12 +159,19 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
    * Anula un pedido que ya salió de cocina y no se va a cobrar
    * (el cliente cambió el pedido, se digitó mal, etc.).
    */
-  const handleAnularConfirmed = async (motivo: string) => {
+  const handleAnularConfirmed = async (
+    motivo: string,
+    canceladoPor: string,
+    rehacer: boolean
+  ) => {
     setIsAnulando(true);
     try {
-      const res = await cancelOrder(order.id, motivo);
+      const res = await cancelOrder(order.id, motivo, canceladoPor);
       if (res.success) {
         toast.success(`Pedido #${order.id} anulado`);
+        // Se navega de una vez, antes de que realtime saque el ticket del
+        // tablero, para que el pedido quede cargado y no se olvide montarlo.
+        if (rehacer) router.push(`/pedidos?rehacer=${order.id}`);
       } else {
         toast.error(res.error || 'Error al anular el pedido');
         setIsAnulando(false);
@@ -174,11 +197,20 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
           <span className={styles.orderType}>
             {isMesa ? `🍽️ Mesa ${order.numero_mesa}` : '🛵 Domicilio'}
           </span>
-          {!isMesa && order.cliente_nombre && (
-            <span className={styles.clientName}>{order.cliente_nombre}</span>
+          {/*
+            En una deuda manda el nombre del deudor: puede no ser el mismo del
+            domicilio, y en mesa es el único nombre que existe.
+          */}
+          {nombreMostrado && (
+            <span className={styles.clientName}>{nombreMostrado}</span>
           )}
         </div>
       </div>
+
+      {/* Contacto del deudor — para poder cobrarle */}
+      {isDebe && order.deudor_telefono && (
+        <p className={styles.direccion}>📞 {order.deudor_telefono}</p>
+      )}
 
       {/* Dirección del domicilio — para confirmar a quién se le está cobrando */}
       {!isMesa && order.cliente_direccion && (
@@ -347,11 +379,27 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
           {!isDebe && (
             <button
               className={styles.debeBtn}
-              onClick={handleDebe}
+              onClick={() => setShowDebeDialog(true)}
               disabled={accionesBloqueadas}
               title="El cliente se fue sin pagar — registrar como deuda"
             >
               {isMarkingDebe ? '...' : '💸 Debe'}
+            </button>
+          )}
+
+          {/*
+            Agregar algo de última hora ("y me das una gaseosa"). Antes había
+            que anular la venta y volverla a montar, y a veces no se volvía a
+            montar. Una deuda ya cerrada no se toca: se cobra o nada.
+          */}
+          {!isDebe && (
+            <button
+              className={styles.agregarBtn}
+              onClick={() => router.push(`/pedidos?editar=${order.id}`)}
+              disabled={accionesBloqueadas}
+              title="El cliente pidió algo más antes de pagar"
+            >
+              ➕ Agregar algo
             </button>
           )}
 
@@ -395,10 +443,22 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
         onCancel={() => setShowCobrarConfirm(false)}
       />
 
+      {/* Registro de la deuda con nombre — sin nombre no se puede cobrar */}
+      <DebtDialog
+        isOpen={showDebeDialog}
+        orderId={order.id}
+        monto={base}
+        nombreSugerido={nombreClienteUtil}
+        isLoading={isMarkingDebe}
+        onConfirm={handleDebeConfirmed}
+        onCancel={() => setShowDebeDialog(false)}
+      />
+
       <CancelOrderDialog
         isOpen={showAnularDialog}
         orderId={order.id}
         confirmLabel="Anular pedido"
+        ofrecerRehacer
         aviso={
           <>
             El pedido saldrá de liquidación y <strong>no contará como venta</strong>.
