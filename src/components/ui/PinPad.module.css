@@ -1,0 +1,95 @@
+/* ============================================================
+   PinPad — teclado numérico grande, pensado para tablet
+   ============================================================ */
+
+.contenedor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+/* Los puntos dicen cuántos dígitos van sin mostrar el PIN */
+.puntos {
+  display: flex;
+  gap: 16px;
+}
+
+.punto {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  background: transparent;
+  transition: all var(--transition-fast);
+}
+
+.puntoLleno {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: scale(1.15);
+}
+
+.teclado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.tecla {
+  aspect-ratio: 1 / 1;
+  min-height: 64px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  /* Que un toque rápido repetido no seleccione el número */
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tecla:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.tecla:active:not(:disabled) {
+  transform: scale(0.94);
+  background: var(--color-surface-hover);
+}
+
+.tecla:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.teclaAccion {
+  font-size: 1.5rem;
+  color: var(--color-text-muted);
+}
+
+.teclaConfirmar {
+  color: var(--color-success);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.teclaConfirmar:not(:disabled) {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+@media (max-width: 380px) {
+  .teclado {
+    gap: 10px;
+  }
+
+  .tecla {
+    min-height: 56px;
+    font-size: 1.5rem;
+  }
+}

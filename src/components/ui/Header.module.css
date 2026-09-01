@@ -119,3 +119,57 @@
     display: none;
   }
 }
+
+/* ============================================================
+   Sesión abierta — quién está usando esta terminal
+   ============================================================ */
+
+.sesion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.sesionNombre {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.salirBtn {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.salirBtn:hover:not(:disabled) {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.salirBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .sesionNombre {
+    max-width: 80px;
+  }
+
+  .salirBtn {
+    padding: 8px 10px;
+  }
+}

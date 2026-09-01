@@ -34,6 +34,7 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
   const [isMarkingDebe, setIsMarkingDebe] = useState(false);
   const [isAnulando, setIsAnulando] = useState(false);
   const [showAnularDialog, setShowAnularDialog] = useState(false);
+  const [errorAnulacion, setErrorAnulacion] = useState('');
   const [showDebeDialog, setShowDebeDialog] = useState(false);
   const [showCobrarConfirm, setShowCobrarConfirm] = useState(false);
   /** Modo pago dividido: monto (texto) por cada método */
@@ -159,28 +160,34 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
    * Anula un pedido que ya salió de cocina y no se va a cobrar
    * (el cliente cambió el pedido, se digitó mal, etc.).
    */
-  const handleAnularConfirmed = async (
-    motivo: string,
-    canceladoPor: string,
-    rehacer: boolean
-  ) => {
+  const handleAnularConfirmed = async ({
+    motivo,
+    usuarioId,
+    pin,
+    rehacer,
+  }: {
+    motivo: string;
+    usuarioId: number;
+    pin: string;
+    rehacer: boolean;
+  }) => {
     setIsAnulando(true);
+    setErrorAnulacion('');
     try {
-      const res = await cancelOrder(order.id, motivo, canceladoPor);
+      const res = await cancelOrder(order.id, motivo, usuarioId, pin);
       if (res.success) {
         toast.success(`Pedido #${order.id} anulado`);
         // Se navega de una vez, antes de que realtime saque el ticket del
         // tablero, para que el pedido quede cargado y no se olvide montarlo.
         if (rehacer) router.push(`/pedidos?rehacer=${order.id}`);
       } else {
-        toast.error(res.error || 'Error al anular el pedido');
+        // El diálogo sigue abierto para volver a marcar el PIN
+        setErrorAnulacion(res.error || 'Error al anular el pedido');
         setIsAnulando(false);
-        setShowAnularDialog(false);
       }
     } catch {
-      toast.error('Error al procesar');
+      setErrorAnulacion('Error al procesar');
       setIsAnulando(false);
-      setShowAnularDialog(false);
     }
   };
 
@@ -458,6 +465,7 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
         isOpen={showAnularDialog}
         orderId={order.id}
         confirmLabel="Anular pedido"
+        errorServidor={errorAnulacion}
         ofrecerRehacer
         aviso={
           <>

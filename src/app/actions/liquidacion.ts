@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { nombreDeSesion } from '@/lib/sesionServidor';
 
 export interface PagoParcial {
   metodo: string;
@@ -30,6 +31,7 @@ export async function closeOrderWithPayments(pedidoId: number, pagos: PagoParcia
     const { data: total, error } = await supabase.rpc('close_order_with_payments', {
       p_pedido_id: pedidoId,
       p_pagos: pagosLimpios,
+      p_cobrado_por: await nombreDeSesion(),
     });
 
     if (error) {
@@ -40,6 +42,9 @@ export async function closeOrderWithPayments(pedidoId: number, pagos: PagoParcia
       }
       if (error.message?.includes('PEDIDO_YA_PAGADO')) {
         return { success: false, error: 'Este pedido ya fue cobrado.' };
+      }
+      if (error.message?.includes('PEDIDO_CANCELADO')) {
+        return { success: false, error: 'Este pedido está anulado. Si hay que cobrarlo, vuelve a montarlo.' };
       }
       if (error.message?.includes('PEDIDO_NO_ENCONTRADO')) {
         return { success: false, error: 'El pedido ya no existe.' };

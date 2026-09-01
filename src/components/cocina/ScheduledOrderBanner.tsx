@@ -46,6 +46,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
   const [isCancelling, setIsCancelling] = useState(false);
   const [showReadyConfirm, setShowReadyConfirm] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [errorCancelacion, setErrorCancelacion] = useState('');
 
   useEffect(() => {
     if (!order.hora_entrega) return;
@@ -85,21 +86,29 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
     }
   };
 
-  const handleCancelConfirmed = async (motivo: string, canceladoPor: string) => {
+  const handleCancelConfirmed = async ({
+    motivo,
+    usuarioId,
+    pin,
+  }: {
+    motivo: string;
+    usuarioId: number;
+    pin: string;
+  }) => {
     setIsCancelling(true);
+    setErrorCancelacion('');
     try {
-      const res = await cancelOrder(order.id, motivo, canceladoPor);
+      const res = await cancelOrder(order.id, motivo, usuarioId, pin);
       if (res.success) {
         toast.success(`Pedido #${order.id} cancelado`);
       } else {
-        toast.error(res.error || 'Error al cancelar pedido');
+        // El diálogo sigue abierto para volver a marcar el PIN
+        setErrorCancelacion(res.error || 'Error al cancelar pedido');
         setIsCancelling(false);
-        setShowCancelDialog(false);
       }
     } catch {
-      toast.error('Error de red');
+      setErrorCancelacion('Error de red');
       setIsCancelling(false);
-      setShowCancelDialog(false);
     }
   };
 
@@ -219,6 +228,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
       {/* Cancelar con motivo tipificado */}
       <CancelOrderDialog
         isOpen={showCancelDialog}
+        errorServidor={errorCancelacion}
         orderId={order.id}
         isLoading={isCancelling}
         onConfirm={handleCancelConfirmed}
