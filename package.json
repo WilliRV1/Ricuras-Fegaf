@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:db": "node scripts/test-migracion.mjs"
+    "test:db": "node scripts/test-migracion.mjs",
+    "test:usuarios": "node scripts/test-usuarios.mjs",
+    "test:acceso": "node scripts/test-acceso.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

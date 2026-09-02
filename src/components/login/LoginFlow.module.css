@@ -1,0 +1,140 @@
+/* ============================================================
+   LoginFlow — elegir persona y marcar el PIN
+   ============================================================ */
+
+.pantalla {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: var(--color-background);
+}
+
+.tarjeta {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px 28px 24px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  border-radius: var(--radius-md);
+  margin-bottom: 4px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.subtitulo {
+  margin: 0 0 12px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ── Botones de persona ── */
+
+.personas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.persona {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 116px;
+  padding: 18px 12px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.persona:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.persona:active {
+  transform: scale(0.97);
+}
+
+.personaIcono {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.personaNombre {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.personaRol {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.vacio {
+  margin: 12px 0;
+  padding: 16px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--color-text-muted);
+  background: var(--color-background);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+/* ── PIN ── */
+
+.error {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-danger);
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.volver {
+  margin-top: 16px;
+  padding: 10px 16px;
+  min-height: 44px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.volver:hover {
+  color: var(--color-text);
+}

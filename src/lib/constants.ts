@@ -49,15 +49,3 @@ export const TIPOS_ATENCION = {
   MESA: 'mesa',
   DOMICILIO: 'domicilio',
 } as const;
-
-/**
- * Personas que operan las terminales del local.
- *
- * Todos entran con la misma clave, así que no hay usuario en sesión: al
- * cancelar un pedido se elige de esta lista quién lo está haciendo. Es un dato
- * declarado, no una autenticación — sirve para saber a quién preguntarle qué
- * pasó con un pedido que desapareció, no para culpar a nadie.
- *
- * Para cambiar el equipo, editar esta lista.
- */
-export const PERSONAL = ['Simón', 'Pipe', 'Administración'] as const;

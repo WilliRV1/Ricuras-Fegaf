@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { ESTADOS_PEDIDO } from '@/lib/constants';
+import { confirmarPin } from './auth';
 
 /**
  * Marca un pedido como listo (terminado en cocina).
@@ -36,23 +37,34 @@ export async function markOrderAsReady(pedidoId: number) {
  * productos y su total, para que en el dashboard se pueda ver exactamente qué
  * se anuló, quién lo anuló y si se volvió a montar.
  *
+ * Exige el PIN de quien anula, no basta con la sesión abierta: las tablets
+ * quedan encendidas y pasan de mano en mano, así que sin el PIN el nombre
+ * registrado no querría decir nada.
+ *
  * @param pedidoId ID numérico del pedido
  * @param motivo Razón de la cancelación
- * @param canceladoPor Quién la está haciendo (lista `PERSONAL`)
+ * @param usuarioId Quién dice ser
+ * @param pin Su PIN, que lo demuestra
  */
 export async function cancelOrder(
   pedidoId: number,
-  motivo?: string,
-  canceladoPor?: string | null
+  motivo: string,
+  usuarioId: number,
+  pin: string
 ) {
   try {
+    const identidad = await confirmarPin(usuarioId, pin);
+    if (!identidad.success) {
+      return { success: false, error: identidad.error };
+    }
+
     const supabase = await createClient();
 
     // @ts-expect-error - Tipos generados sin los RPC nuevos
     const { error } = await supabase.rpc('cancel_order', {
       p_pedido_id: pedidoId,
       p_motivo: motivo ?? null,
-      p_cancelado_por: canceladoPor?.trim() || null,
+      p_cancelado_por: identidad.usuario.nombre,
     });
 
     if (error) {

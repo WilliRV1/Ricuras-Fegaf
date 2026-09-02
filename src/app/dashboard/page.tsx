@@ -1,5 +1,6 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { getSesion } from '@/app/actions/auth';
+import { rutaInicial } from '@/lib/session';
 import {
   getResumenDelDia,
   getPedidosRecientes,
@@ -15,6 +16,8 @@ import { ProductosVendidosTable } from '@/components/dashboard/ProductosVendidos
 import { StockManager } from '@/components/dashboard/StockManager';
 import { DatePicker } from '@/components/dashboard/DatePicker';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
+import { PersonalManager } from '@/components/dashboard/PersonalManager';
+import { ToastContainer } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
 export const dynamic = 'force-dynamic'; // Siempre renderizar en el servidor (sin caché)
@@ -24,10 +27,11 @@ interface DashboardPageProps {
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('dashboard_auth')?.value !== 'true') {
-    redirect('/dashboard/login');
-  }
+  // El proxy ya reparte por rol, pero la página también lo comprueba: es la
+  // que sirve las cifras del negocio y no debe depender de una sola barrera.
+  const sesion = await getSesion();
+  if (!sesion) redirect('/login');
+  if (sesion.rol !== 'admin') redirect(rutaInicial(sesion.rol));
 
   const { date } = await searchParams;
 
@@ -140,11 +144,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </h2>
             <PedidosTable pedidos={pedidosRecientes} />
           </section>
+
+          {/* Personal: quién puede entrar y con qué permisos */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>👥 Personal</h2>
+            <PersonalManager />
+          </section>
         </>
       )}
 
       {/* Auto-refresco de página cada 60s si estamos viendo "Hoy" */}
       {esHoy && <AutoRefresh />}
+
+      <ToastContainer />
     </main>
   );
 }

@@ -1,0 +1,324 @@
+/* ============================================================
+   PersonalManager — alta, reseteo y baja de personas
+   ============================================================ */
+
+.bloqueado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.bloqueadoTitulo {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.bloqueadoTexto {
+  margin: 0 0 8px;
+  max-width: 420px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.error {
+  width: 100%;
+  max-width: 320px;
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.contenedor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ayuda {
+  flex: 1;
+  min-width: 240px;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.nuevoBtn,
+.guardarBtn {
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: white;
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.nuevoBtn:hover:not(:disabled),
+.guardarBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.nuevoBtn:disabled,
+.guardarBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Alta de una persona ── */
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.etiqueta {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.input {
+  width: 100%;
+  height: 48px;
+  padding: 0 12px;
+  font-size: 1rem;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+}
+
+.roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.rolBtn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  text-align: left;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.rolBtn span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.rolBtn:hover:not(:disabled) {
+  border-color: var(--color-primary-light);
+}
+
+.rolActivo {
+  border-color: var(--color-primary);
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.temporalCaja {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.temporalFila {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.temporalPin {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  color: var(--color-primary);
+}
+
+.otroPinBtn {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.otroPinBtn:hover:not(:disabled) {
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+}
+
+.temporalNota {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+/* ── Listado ── */
+
+.tablaWrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.th {
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.fila,
+.filaInactiva {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.fila:last-child,
+.filaInactiva:last-child {
+  border-bottom: none;
+}
+
+.filaInactiva {
+  opacity: 0.55;
+}
+
+.td {
+  padding: 12px 16px;
+  color: var(--color-text);
+  vertical-align: top;
+}
+
+.nombre {
+  display: block;
+  font-weight: 700;
+}
+
+.tagPendiente,
+.tagBloqueado {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  border-radius: var(--radius-full, 9999px);
+}
+
+.tagPendiente {
+  color: var(--color-warning);
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.tagBloqueado {
+  color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.activo {
+  font-weight: 700;
+  color: var(--color-success);
+}
+
+.inactivo {
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.accionBtn {
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.accionBtn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.accionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

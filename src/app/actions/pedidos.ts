@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { CartItem, OrderType, OrderDetails, MetodoPago, PedidoWithDetalles } from '@/types';
 import { ESTADOS_PEDIDO, TIPOS_ATENCION, METODOS_PAGO } from '@/lib/constants';
 import { calcularRecargoDatafono } from '@/lib/utils';
+import { nombreDeSesion } from '@/lib/sesionServidor';
 
 /**
  * Calcula los montos y arma el payload que espera el RPC.
@@ -112,7 +113,8 @@ export async function submitOrder(
     p_detalles: p.detallesJson,
     p_hora_entrega: p.horaEntregaISO,
     p_paga_con: p.pagaConFinal,
-    p_costo_domicilio: p.costoDomicilio
+    p_costo_domicilio: p.costoDomicilio,
+    p_creado_por: await nombreDeSesion()
   });
 
   if (rpcError || !pedidoId) {
