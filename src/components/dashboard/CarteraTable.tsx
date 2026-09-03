@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './CarteraTable.module.css';
 import { formatCurrency } from '@/lib/utils';
+import { IconCheckCircle, IconPhone, IconLightbulb } from '@/components/ui/Icons';
 
 export interface DeudaPendiente {
   id: number;
@@ -56,7 +57,7 @@ export const CarteraTable: React.FC<CarteraTableProps> = ({ deudas }) => {
   if (deudas.length === 0) {
     return (
       <div className={styles.empty}>
-        <span className={styles.emptyIcon}>✅</span>
+        <span className={styles.emptyIcon}><IconCheckCircle size={32} style={{ color: 'var(--color-success)' }} /></span>
         <p>No hay nada pendiente por cobrar. Toda la venta está al día.</p>
       </div>
     );
@@ -84,7 +85,7 @@ export const CarteraTable: React.FC<CarteraTableProps> = ({ deudas }) => {
                 <td className={styles.td}>
                   <span className={styles.nombre}>{deuda.nombre}</span>
                   {deuda.telefono && (
-                    <span className={styles.telefono}>📞 {deuda.telefono}</span>
+                    <span className={styles.telefono}><IconPhone size={12} /> {deuda.telefono}</span>
                   )}
                 </td>
                 <td className={styles.td}>
@@ -117,7 +118,8 @@ export const CarteraTable: React.FC<CarteraTableProps> = ({ deudas }) => {
       </table>
 
       <p className={styles.nota}>
-        💡 Para cobrar una deuda, ábrela en <strong>Liquidación</strong> → sección
+        <IconLightbulb size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} />
+        Para cobrar una deuda, ábrela en <strong>Liquidación</strong> → sección
         &quot;Deudas Pendientes&quot; y registra el pago. Ahí sale de esta lista.
       </p>
     </div>

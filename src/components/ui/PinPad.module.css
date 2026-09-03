@@ -40,6 +40,9 @@
 }
 
 .tecla {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   aspect-ratio: 1 / 1;
   min-height: 64px;
   font-size: 1.75rem;
@@ -76,11 +79,11 @@
 
 .teclaConfirmar {
   color: var(--color-success);
-  border-color: rgba(34, 197, 94, 0.4);
+  border-color: rgba(52, 211, 153, 0.4);
 }
 
 .teclaConfirmar:not(:disabled) {
-  background: rgba(34, 197, 94, 0.1);
+  background: rgba(52, 211, 153, 0.1);
 }
 
 @media (max-width: 380px) {

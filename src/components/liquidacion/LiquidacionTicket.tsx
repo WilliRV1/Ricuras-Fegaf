@@ -12,6 +12,22 @@ import { closeOrderWithPayments, markOrderAsDebe } from '@/app/actions/liquidaci
 import { cancelOrder } from '@/app/actions/cocina';
 import { toast } from '@/components/ui/Toast';
 import { formatCurrency, calcularRecargoDatafono } from '@/lib/utils';
+import {
+  IconBanknote,
+  IconPhone,
+  IconCreditCard,
+  IconLandmark,
+  IconUtensils,
+  IconScooter,
+  IconPhoneCall,
+  IconMapPin,
+  IconAlertTriangle,
+  IconSplit,
+  IconUndo,
+  IconCheckCircle,
+  IconPlusCircle,
+  IconXCircle,
+} from '@/components/ui/Icons';
 import styles from './LiquidacionTicket.module.css';
 
 interface LiquidacionTicketProps {
@@ -21,10 +37,10 @@ interface LiquidacionTicketProps {
 }
 
 const METODO_OPTIONS = [
-  { key: METODOS_PAGO.EFECTIVO,    label: 'Efectivo',    icon: '💵' },
-  { key: METODOS_PAGO.NEQUI,       label: 'Nequi',       icon: '📱' },
-  { key: METODOS_PAGO.DATAFONO,    label: 'Datáfono',    icon: '💳' },
-  { key: METODOS_PAGO.BANCOLOMBIA, label: 'Bancolombia', icon: '🏦' },
+  { key: METODOS_PAGO.EFECTIVO,    label: 'Efectivo',    Icon: IconBanknote },
+  { key: METODOS_PAGO.NEQUI,       label: 'Nequi',       Icon: IconPhone },
+  { key: METODOS_PAGO.DATAFONO,    label: 'Datáfono',    Icon: IconCreditCard },
+  { key: METODOS_PAGO.BANCOLOMBIA, label: 'Bancolombia', Icon: IconLandmark },
 ];
 
 export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isDebe = false }) => {
@@ -199,10 +215,21 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
         <div className={styles.idAndType}>
           <h3 className={styles.orderId}>Pedido #{order.id}</h3>
           {isDebe && (
-            <span className={styles.debeBadge}>💸 DEBE</span>
+            <span className={styles.debeBadge}>
+              <IconBanknote size={12} style={{ verticalAlign: '-2px', marginRight: '4px' }} />
+              DEBE
+            </span>
           )}
-          <span className={styles.orderType}>
-            {isMesa ? `🍽️ Mesa ${order.numero_mesa}` : '🛵 Domicilio'}
+          <span className={styles.orderType} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+            {isMesa ? (
+              <>
+                <IconUtensils size={14} /> Mesa {order.numero_mesa}
+              </>
+            ) : (
+              <>
+                <IconScooter size={14} /> Domicilio
+              </>
+            )}
           </span>
           {/*
             En una deuda manda el nombre del deudor: puede no ser el mismo del
@@ -216,13 +243,16 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
 
       {/* Contacto del deudor — para poder cobrarle */}
       {isDebe && order.deudor_telefono && (
-        <p className={styles.direccion}>📞 {order.deudor_telefono}</p>
+        <p className={styles.direccion}>
+          <IconPhoneCall size={14} style={{ verticalAlign: '-2px', marginRight: '4px' }} />
+          {order.deudor_telefono}
+        </p>
       )}
 
       {/* Dirección del domicilio — para confirmar a quién se le está cobrando */}
       {!isMesa && order.cliente_direccion && (
         <p className={styles.direccion}>
-          📍{' '}
+          <IconMapPin size={14} style={{ verticalAlign: '-2px', marginRight: '4px' }} />
           {direccionUtil ? (
             <a
               className={styles.direccionLink}
@@ -246,7 +276,10 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
               <span className={styles.itemQty}>{detalle.cantidad}x</span>
               <span>{detalle.productos?.nombre || 'Producto eliminado'}</span>
               {detalle.notas && (
-                <div className={styles.itemNotes}>⚠️ {detalle.notas}</div>
+                <div className={styles.itemNotes}>
+                  <IconAlertTriangle size={12} style={{ verticalAlign: '-1px', marginRight: '3px' }} />
+                  {detalle.notas}
+                </div>
               )}
             </div>
             <span className={styles.itemPrice}>
@@ -281,7 +314,9 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
         {/* Efectivo informado al tomar el pedido — vuelta que se alistó */}
         {order.paga_con != null && (
           <div className={styles.summaryRow} style={{ color: 'var(--color-success)' }}>
-            <span>💵 Paga con {formatCurrency(order.paga_con)}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <IconBanknote size={14} /> Paga con {formatCurrency(order.paga_con)}
+            </span>
             <span>
               {(order.vuelto ?? 0) > 0
                 ? `Vuelta ${formatCurrency(order.vuelto ?? 0)}`
@@ -300,33 +335,43 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
             onClick={toggleDividido}
             disabled={accionesBloqueadas}
           >
-            {dividido ? '↩️ Un solo método' : '➗ Dividir pago'}
+            {dividido ? (
+              <>
+                <IconUndo size={13} style={{ verticalAlign: '-2px', marginRight: '4px' }} />
+                Un solo método
+              </>
+            ) : (
+              <>
+                <IconSplit size={13} style={{ verticalAlign: '-2px', marginRight: '4px' }} />
+                Dividir pago
+              </>
+            )}
           </button>
         </div>
 
         {!dividido ? (
           <div className={styles.methods}>
-            {METODO_OPTIONS.map(({ key, label, icon }) => (
+            {METODO_OPTIONS.map(({ key, label, Icon }) => (
               <button
                 key={key}
                 className={`${styles.methodBtn} ${selectedMethod === key ? styles.methodBtnActive : ''}`}
                 onClick={() => setSelectedMethod(key)}
               >
-                {icon} {label}
+                <Icon size={16} /> {label}
               </button>
             ))}
           </div>
         ) : (
           <div className={styles.splitBox}>
-            {METODO_OPTIONS.map(({ key, label, icon }) => {
+            {METODO_OPTIONS.map(({ key, label, Icon }) => {
               const monto = montoDe(key);
               const recargoFila =
                 key === METODOS_PAGO.DATAFONO && monto > 0 ? calcularRecargoDatafono(monto) : 0;
 
               return (
                 <div key={key} className={styles.splitRow}>
-                  <span className={styles.splitLabel}>
-                    {icon} {label}
+                  <span className={styles.splitLabel} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <Icon size={14} /> {label}
                   </span>
                   <div className={styles.splitInputWrap}>
                     <input
@@ -362,12 +407,17 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
 
             <div
               className={`${styles.splitStatus} ${restante === 0 ? styles.splitOk : styles.splitPendiente}`}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
-              {restante === 0
-                ? '✅ Los montos cuadran con el pedido'
-                : restante > 0
-                  ? `Falta asignar ${formatCurrency(restante)}`
-                  : `Sobran ${formatCurrency(Math.abs(restante))}`}
+              {restante === 0 ? (
+                <>
+                  <IconCheckCircle size={14} /> Los montos cuadran con el pedido
+                </>
+              ) : restante > 0 ? (
+                `Falta asignar ${formatCurrency(restante)}`
+              ) : (
+                `Sobran ${formatCurrency(Math.abs(restante))}`
+              )}
             </div>
           </div>
         )}
@@ -390,7 +440,14 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
               disabled={accionesBloqueadas}
               title="El cliente se fue sin pagar — registrar como deuda"
             >
-              {isMarkingDebe ? '...' : '💸 Debe'}
+              {isMarkingDebe ? (
+                '...'
+              ) : (
+                <>
+                  <IconBanknote size={14} style={{ verticalAlign: '-2px', marginRight: '4px' }} />
+                  Debe
+                </>
+              )}
             </button>
           )}
 
@@ -406,7 +463,8 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
               disabled={accionesBloqueadas}
               title="El cliente pidió algo más antes de pagar"
             >
-              ➕ Agregar algo
+              <IconPlusCircle size={14} style={{ verticalAlign: '-2px', marginRight: '4px' }} />
+              Agregar algo
             </button>
           )}
 
@@ -417,7 +475,14 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
             disabled={accionesBloqueadas}
             title="El pedido no se va a cobrar — sacarlo de liquidación"
           >
-            {isAnulando ? '...' : '🚫 Anular'}
+            {isAnulando ? (
+              '...'
+            ) : (
+              <>
+                <IconXCircle size={14} style={{ verticalAlign: '-2px', marginRight: '4px' }} />
+                Anular
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -433,9 +498,11 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
             {pagos.map((p) => {
               const rec = p.metodo === METODOS_PAGO.DATAFONO ? calcularRecargoDatafono(p.monto) : 0;
               const label = METODO_OPTIONS.find((m) => m.key === p.metodo);
+              const LabelIcon = label?.Icon;
               return (
                 <span key={p.metodo}>
-                  {label?.icon} {label?.label}: <strong>{formatCurrency(p.monto + rec)}</strong>
+                  {LabelIcon && <LabelIcon size={13} style={{ verticalAlign: '-2px', marginRight: '3px' }} />}
+                  {label?.label}: <strong>{formatCurrency(p.monto + rec)}</strong>
                   {rec > 0 && ` (incl. ${formatCurrency(rec)} de recargo)`}
                   <br />
                 </span>

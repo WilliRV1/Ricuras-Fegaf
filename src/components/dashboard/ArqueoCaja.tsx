@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react';
 import { abrirCaja, cerrarCaja } from '@/app/actions/caja';
 import { toast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
+import { IconLock, IconLockOpen } from '@/components/ui/Icons';
 import styles from './ArqueoCaja.module.css';
 
 // Formateador de moneda
@@ -76,7 +77,7 @@ export const ArqueoCaja: React.FC<ArqueoCajaProps> = ({ initialState }) => {
   if (!isOpen) {
     return (
       <div className={styles.containerClosed}>
-        <div className={styles.iconClosed}>🔒</div>
+        <div className={styles.iconClosed}><IconLock size={40} /></div>
         <div className={styles.infoClosed}>
           <h3>Caja Cerrada</h3>
           <p>Abre el turno para empezar a registrar las ventas del día.</p>
@@ -105,7 +106,7 @@ export const ArqueoCaja: React.FC<ArqueoCajaProps> = ({ initialState }) => {
     <div className={styles.containerOpen}>
       <div className={styles.header}>
         <div className={styles.titleRow}>
-          <span className={styles.iconOpen}>🔓</span>
+          <span className={styles.iconOpen}><IconLockOpen size={22} /></span>
           <h3>Caja Abierta</h3>
         </div>
         <span className={styles.timeOpen}>

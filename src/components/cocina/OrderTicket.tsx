@@ -7,6 +7,17 @@ import { markOrderAsReady, cancelOrder } from '@/app/actions/cocina';
 import { toast } from '@/components/ui/Toast';
 import { formatCurrency } from '@/lib/utils';
 import { SIN_DATO } from '@/lib/constants';
+import {
+  IconUtensils,
+  IconScooter,
+  IconUser,
+  IconClock,
+  IconMapPin,
+  IconPhoneCall,
+  IconBanknote,
+  IconAlertTriangle,
+  IconRefresh,
+} from '@/components/ui/Icons';
 import styles from './OrderTicket.module.css';
 
 interface OrderTicketProps {
@@ -91,7 +102,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
   }
 
   const isMesa = order.tipo === 'mesa';
-  const headerIcon = isMesa ? '🍽️' : '🛵';
+  const HeaderIcon = isMesa ? IconUtensils : IconScooter;
   const headerText = isMesa
     ? `Mesa #${order.numero_mesa}`
     : `Domicilio`;
@@ -127,7 +138,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
     <div className={`${styles.ticket} ${ticketClass} ${fueModificado ? styles.ticketModificado : ''}`}>
       {fueModificado && (
         <div className={styles.modificadoBanner}>
-          🔄 PEDIDO MODIFICADO — vuelve a leer la comanda
+          <IconRefresh size={14} /> PEDIDO MODIFICADO — vuelve a leer la comanda
           <span className={styles.modificadoHora}>{horaModificacion}</span>
         </div>
       )}
@@ -136,14 +147,14 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
         <div className={styles.idAndType}>
           <h4 className={styles.orderId}>Orden #{order.id}</h4>
           <span className={styles.orderType}>
-            {headerIcon} {headerText}
+            <HeaderIcon size={14} /> {headerText}
           </span>
           {!isMesa && order.cliente_nombre && (
-            <span className={styles.clientName}>👤 {order.cliente_nombre}</span>
+            <span className={styles.clientName}><IconUser size={13} /> {order.cliente_nombre}</span>
           )}
         </div>
         <div className={`${styles.timer} ${timerClass}`}>
-          ⏱️ {elapsedMinutes} min
+          <IconClock size={14} /> {elapsedMinutes} min
         </div>
       </div>
 
@@ -151,7 +162,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
       {!isMesa && (
         <div className={styles.domicilioBox}>
           <div className={styles.domicilioDireccion}>
-            <span className={styles.domicilioIcon}>📍</span>
+            <span className={styles.domicilioIcon}><IconMapPin size={18} /></span>
             {direccionUtil ? (
               <a
                 className={styles.direccionLink}
@@ -172,14 +183,14 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
           <div className={styles.domicilioMeta}>
             {telefonoDigitos ? (
               <a className={styles.telLink} href={`tel:${telefonoDigitos}`}>
-                📞 {order.cliente_telefono}
+                <IconPhoneCall size={13} /> {order.cliente_telefono}
               </a>
             ) : (
-              <span className={styles.domicilioSinDato}>📞 Sin teléfono</span>
+              <span className={styles.domicilioSinDato}><IconPhoneCall size={13} /> Sin teléfono</span>
             )}
 
             <span className={styles.cobrarTag}>
-              💰 Cobrar {formatCurrency(order.total)}
+              <IconBanknote size={15} /> Cobrar {formatCurrency(order.total)}
               {order.costo_domicilio > 0 && (
                 <span className={styles.cobrarExtra}>
                   (incl. {formatCurrency(order.costo_domicilio)} de domicilio)
@@ -193,7 +204,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
       {/* Efectivo — con cuánto paga y vuelta que hay que alistar */}
       {tienePagaCon && (
         <div className={styles.efectivoBanner}>
-          <span className={styles.efectivoIcon}>💵</span>
+          <span className={styles.efectivoIcon}><IconBanknote size={20} /></span>
           <div className={styles.efectivoText}>
             <span>Paga con <strong>{formatCurrency(order.paga_con!)}</strong></span>
             <span className={styles.vueltoValue}>
@@ -217,7 +228,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
               </div>
               {hasNotes && (
                 <div className={styles.itemNotes}>
-                  <span className={styles.noteIcon}>⚠️</span>
+                  <span className={styles.noteIcon}><IconAlertTriangle size={15} /></span>
                   <span>{detalle.notas}</span>
                 </div>
               )}
@@ -252,7 +263,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
         title={`¿Marcar el pedido #${order.id} como listo?`}
         message={
           <>
-            {isMesa ? `🍽️ Mesa #${order.numero_mesa}` : '🛵 Domicilio'} · {totalUnidades} producto
+            {isMesa ? <><IconUtensils size={14} /> {`Mesa #${order.numero_mesa}`}</> : <><IconScooter size={14} /> Domicilio</>} · {totalUnidades} producto
             {totalUnidades !== 1 ? 's' : ''}.
             <br />
             La comanda desaparecerá del tablero de cocina y pasará a liquidación.

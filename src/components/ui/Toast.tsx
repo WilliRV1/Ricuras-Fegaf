@@ -11,6 +11,7 @@
  */
 
 import React, { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { IconCheck, IconX, IconInfo } from './Icons';
 import styles from './Toast.module.css';
 
 /* ------------------------------------------------------------------ */
@@ -95,10 +96,10 @@ export const toast = {
 /*  Componente individual de Toast                                    */
 /* ------------------------------------------------------------------ */
 
-const VARIANT_ICONS: Record<ToastVariant, string> = {
-  success: '✓',
-  error: '✕',
-  info: 'ℹ',
+const VARIANT_ICONS: Record<ToastVariant, React.ComponentType<{ size?: number }>> = {
+  success: IconCheck,
+  error: IconX,
+  info: IconInfo,
 };
 
 function ToastItemComponent({ item }: { item: ToastItem }) {
@@ -139,7 +140,12 @@ function ToastItemComponent({ item }: { item: ToastItem }) {
       role="alert"
       aria-live="polite"
     >
-      <span className={iconClass}>{VARIANT_ICONS[item.variant]}</span>
+      <span className={iconClass}>
+        {(() => {
+          const IconComp = VARIANT_ICONS[item.variant];
+          return <IconComp size={18} />;
+        })()}
+      </span>
       <span className={styles.message}>{item.message}</span>
       <button className={styles.closeButton} onClick={handleDismiss} aria-label="Cerrar notificación">
         ×

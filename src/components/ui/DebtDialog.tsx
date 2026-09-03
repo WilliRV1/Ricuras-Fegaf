@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { formatCurrency } from '@/lib/utils';
+import { IconBanknote } from '@/components/ui/Icons';
 import styles from './DebtDialog.module.css';
 
 interface DebtDialogProps {
@@ -85,7 +86,10 @@ export const DebtDialog: React.FC<DebtDialogProps> = ({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className={styles.title}>💸 ¿Quién queda debiendo?</h3>
+        <h3 className={styles.title}>
+          <IconBanknote size={20} style={{ verticalAlign: '-4px', marginRight: '8px' }} />
+          ¿Quién queda debiendo?
+        </h3>
 
         <div className={styles.resumen}>
           Pedido <strong>#{orderId}</strong> · <strong>{formatCurrency(monto)}</strong>

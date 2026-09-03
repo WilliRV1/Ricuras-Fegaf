@@ -5,6 +5,16 @@ import { PedidoWithDetalles } from '@/types';
 import { useOpenOrders } from '@/hooks/useOpenOrders';
 import { TIPOS_ATENCION, ESTADOS_PEDIDO } from '@/lib/constants';
 import { formatCurrency } from '@/lib/utils';
+import {
+  IconReceipt,
+  IconUtensils,
+  IconScooter,
+  IconCheckCircle,
+  IconChefHat,
+  IconRefresh,
+  IconPlus,
+  IconPencil,
+} from '@/components/ui/Icons';
 import styles from './PedidosEnCurso.module.css';
 
 interface PedidosEnCursoProps {
@@ -45,7 +55,8 @@ export const PedidosEnCurso: React.FC<PedidosEnCursoProps> = ({ editingId, onEdi
         type="button"
       >
         <span className={styles.toggleTitle}>
-          🧾 Pedidos sin cobrar
+          <IconReceipt size={18} />
+          Pedidos sin cobrar
           <span className={styles.count}>{orders.length}</span>
         </span>
         <span className={styles.toggleRight}>
@@ -72,14 +83,24 @@ export const PedidosEnCurso: React.FC<PedidosEnCursoProps> = ({ editingId, onEdi
                 <div className={styles.cardHeader}>
                   <span className={styles.orderId}>#{order.id}</span>
                   <span className={styles.tipo}>
-                    {esMesa ? `🍽️ Mesa ${order.numero_mesa}` : `🛵 ${order.cliente_nombre || 'Domicilio'}`}
+                    {esMesa ? (
+                      <><IconUtensils size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /> Mesa {order.numero_mesa}</>
+                    ) : (
+                      <><IconScooter size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /> {order.cliente_nombre || 'Domicilio'}</>
+                    )}
                   </span>
                   <span className={styles.hora}>{formatHora(order.created_at)}</span>
                   <span className={yaListo ? styles.estadoListo : styles.estadoCocina}>
-                    {yaListo ? '✅ Listo, por cobrar' : '🍳 En cocina'}
+                    {yaListo ? (
+                      <><IconCheckCircle size={12} style={{ display: 'inline', verticalAlign: '-2px' }} /> Listo, por cobrar</>
+                    ) : (
+                      <><IconChefHat size={12} style={{ display: 'inline', verticalAlign: '-2px' }} /> En cocina</>
+                    )}
                   </span>
                   {order.modificado_at && (
-                    <span className={styles.modificadoTag}>🔄 Modificado</span>
+                    <span className={styles.modificadoTag}>
+                      <IconRefresh size={11} style={{ display: 'inline', verticalAlign: '-1px' }} /> Modificado
+                    </span>
                   )}
                 </div>
 
@@ -100,7 +121,13 @@ export const PedidosEnCurso: React.FC<PedidosEnCursoProps> = ({ editingId, onEdi
                     onClick={() => onEditar(order)}
                     disabled={enEdicion}
                   >
-                    {enEdicion ? 'Editando…' : yaListo ? '➕ Agregar algo' : '✏️ Modificar'}
+                    {enEdicion ? (
+                      'Editando…'
+                    ) : yaListo ? (
+                      <><IconPlus size={13} style={{ display: 'inline', verticalAlign: '-2px' }} /> Agregar algo</>
+                    ) : (
+                      <><IconPencil size={13} style={{ display: 'inline', verticalAlign: '-2px' }} /> Modificar</>
+                    )}
                   </button>
                 </div>
               </div>

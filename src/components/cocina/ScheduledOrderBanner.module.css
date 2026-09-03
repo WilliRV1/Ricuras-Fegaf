@@ -23,21 +23,21 @@
 
 /* Warning: faltan entre 15 y 45 min */
 .banner_warning {
-  background: rgba(245, 158, 11, 0.1);
-  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.5);
   animation: warningPulse 2.5s ease-in-out infinite;
 }
 
 /* Danger: faltan ≤ 15 min o ya venció */
 .banner_danger {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.6);
   animation: dangerShake 0.6s ease-in-out;
 }
 
 @keyframes warningPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-  50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.15); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.15); }
 }
 
 @keyframes dangerShake {
@@ -100,17 +100,18 @@
 }
 
 .badge_warning {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.4);
 }
 
 .badge_danger {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(248, 113, 113, 0.15);
+  border-color: rgba(248, 113, 113, 0.4);
 }
 
 .clockIcon {
-  font-size: 1.5rem;
+  display: inline-flex;
+  color: var(--color-text);
   flex-shrink: 0;
 }
 
@@ -165,6 +166,9 @@
 }
 
 .scheduledTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 0.6875rem;
   font-weight: 700;
   background: rgba(99, 102, 241, 0.2);
@@ -176,6 +180,9 @@
 }
 
 .orderType {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
@@ -198,6 +205,9 @@
 
 /* Pedido modificado después de enviarlo */
 .modificadoTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 0.6875rem;
   font-weight: 800;
   background: var(--color-warning);
@@ -218,10 +228,16 @@
 }
 
 .entregaDireccion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-weight: 600;
 }
 
 .entregaLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: #A5B4FC;
   font-weight: 700;
   text-decoration: underline;
@@ -230,10 +246,13 @@
 
 /* Efectivo — vuelta a alistar */
 .efectivoRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.8125rem;
   color: var(--color-success);
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
   border-radius: var(--radius-sm);
   padding: 5px 9px;
   align-self: flex-start;
@@ -257,7 +276,7 @@
 
 .cancelBtn {
   background: transparent;
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  border: 1px solid rgba(248, 113, 113, 0.4);
   color: var(--color-danger);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -269,7 +288,7 @@
 }
 
 .cancelBtn:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(248, 113, 113, 0.1);
   border-color: var(--color-danger);
 }
 

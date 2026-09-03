@@ -10,12 +10,13 @@ import {
 } from '@/app/actions/personal';
 import { toast } from '@/components/ui/Toast';
 import { PinPad } from '@/components/ui/PinPad';
+import { IconReceipt, IconChefHat, IconCrown, IconLock, IconPlus } from '@/components/ui/Icons';
 import styles from './PersonalManager.module.css';
 
-const ROLES: { valor: Rol; etiqueta: string; explicacion: string }[] = [
-  { valor: 'cajero', etiqueta: '🧾 Caja y pedidos', explicacion: 'Toma pedidos y cobra' },
-  { valor: 'cocina', etiqueta: '👨‍🍳 Cocina', explicacion: 'Solo ve el tablero de cocina' },
-  { valor: 'admin', etiqueta: '👑 Administración', explicacion: 'Todo, incluido este dashboard' },
+const ROLES: { valor: Rol; etiqueta: React.ReactNode; explicacion: string }[] = [
+  { valor: 'cajero', etiqueta: <><IconReceipt size={14} /> Caja y pedidos</>, explicacion: 'Toma pedidos y cobra' },
+  { valor: 'cocina', etiqueta: <><IconChefHat size={14} /> Cocina</>, explicacion: 'Solo ve el tablero de cocina' },
+  { valor: 'admin', etiqueta: <><IconCrown size={14} /> Administración</>, explicacion: 'Todo, incluido este dashboard' },
 ];
 
 /** PIN temporal sugerido: 4 dígitos que no sean obvios ni repetidos */
@@ -126,7 +127,10 @@ export const PersonalManager: React.FC = () => {
   if (!adminPin) {
     return (
       <div className={styles.bloqueado}>
-        <h3 className={styles.bloqueadoTitulo}>🔒 Marca tu PIN para administrar el personal</h3>
+        <h3 className={styles.bloqueadoTitulo}>
+          <IconLock size={18} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
+          Marca tu PIN para administrar el personal
+        </h3>
         <p className={styles.bloqueadoTexto}>
           Crear personas, resetear PINes y dar de baja exige tu PIN, no solo tener el
           dashboard abierto.
@@ -158,7 +162,7 @@ export const PersonalManager: React.FC = () => {
           onClick={() => setCreando((prev) => !prev)}
           disabled={cargando}
         >
-          {creando ? 'Cancelar' : '＋ Nueva persona'}
+          {creando ? 'Cancelar' : <><IconPlus size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} />Nueva persona</>}
         </button>
       </div>
 
@@ -189,7 +193,7 @@ export const PersonalManager: React.FC = () => {
                   onClick={() => setRol(opcion.valor)}
                   disabled={cargando}
                 >
-                  <strong>{opcion.etiqueta}</strong>
+                  <strong className={styles.rolEtiqueta}>{opcion.etiqueta}</strong>
                   <span>{opcion.explicacion}</span>
                 </button>
               ))}

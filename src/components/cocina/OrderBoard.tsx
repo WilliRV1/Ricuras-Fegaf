@@ -4,12 +4,37 @@ import React, { useState } from 'react';
 import { useRealtimeOrders, ConnectionStatus } from '@/hooks/useRealtimeOrders';
 import { OrderTicket } from './OrderTicket';
 import { ScheduledOrderBanner } from './ScheduledOrderBanner';
+import {
+  IconRefresh,
+  IconCalendar,
+  IconList,
+  IconUtensils,
+  IconScooter,
+  IconCheckCircle,
+  IconSearch,
+  IconChefHat,
+  IconAlertTriangle,
+} from '@/components/ui/Icons';
 import styles from './OrderBoard.module.css';
 
 const ConnectionIndicator = ({ status }: { status: ConnectionStatus }) => {
-  if (status === 'connecting') return <span className={styles.statusConnecting}>🔄 Conectando...</span>;
-  if (status === 'offline') return <span className={styles.statusOffline}>🔴 Desconectado (Reconectando...)</span>;
-  return <span className={styles.statusOnline}>🟢 Online</span>;
+  if (status === 'connecting')
+    return (
+      <span className={styles.statusConnecting}>
+        <IconRefresh size={14} className={styles.statusIconSpin} /> Conectando...
+      </span>
+    );
+  if (status === 'offline')
+    return (
+      <span className={styles.statusOffline}>
+        <span className={styles.statusDot} /> Desconectado (Reconectando...)
+      </span>
+    );
+  return (
+    <span className={styles.statusOnline}>
+      <span className={styles.statusDot} /> Online
+    </span>
+  );
 };
 
 type FilterType = 'all' | 'mesa' | 'domicilio';
@@ -19,13 +44,13 @@ export const OrderBoard: React.FC = () => {
   const [filterType, setFilterType] = useState<FilterType>('all');
 
   if (loading) {
-    return <div className={styles.loader}>Cargando comandas en tiempo real... ⏳</div>;
+    return <div className={styles.loader}>Cargando comandas en tiempo real...</div>;
   }
 
   if (error) {
     return (
       <div className={styles.errorState}>
-        <p>⚠️ Ocurrió un error de conexión al cargar las comandas.</p>
+        <p><IconAlertTriangle size={16} /> Ocurrió un error de conexión al cargar las comandas.</p>
         <small>{error}</small>
       </div>
     );
@@ -45,7 +70,7 @@ export const OrderBoard: React.FC = () => {
         <section className={styles.scheduledSection}>
           <div className={styles.scheduledHeader}>
             <h2 className={styles.scheduledTitle}>
-              📅 Pedidos Programados
+              <IconCalendar size={18} /> Pedidos Programados
               <span className={styles.scheduledCount}>{scheduledOrders.length}</span>
             </h2>
             <p className={styles.scheduledSubtitle}>
@@ -69,19 +94,19 @@ export const OrderBoard: React.FC = () => {
             className={`${styles.filterBtn} ${filterType === 'all' ? styles.filterBtnActive : ''}`}
             onClick={() => setFilterType('all')}
           >
-            📋 Todos <span className={styles.filterCount}>{regularOrders.length}</span>
+            <IconList size={16} /> Todos <span className={styles.filterCount}>{regularOrders.length}</span>
           </button>
           <button
             className={`${styles.filterBtn} ${filterType === 'mesa' ? styles.filterBtnActive : ''}`}
             onClick={() => setFilterType('mesa')}
           >
-            🍽️ Mesas <span className={styles.filterCount}>{countMesas}</span>
+            <IconUtensils size={16} /> Mesas <span className={styles.filterCount}>{countMesas}</span>
           </button>
           <button
             className={`${styles.filterBtn} ${filterType === 'domicilio' ? styles.filterBtnActive : ''}`}
             onClick={() => setFilterType('domicilio')}
           >
-            🛵 Domicilios <span className={styles.filterCount}>{countDomicilios}</span>
+            <IconScooter size={16} /> Domicilios <span className={styles.filterCount}>{countDomicilios}</span>
           </button>
         </div>
         <div style={{ fontWeight: 'bold' }}>
@@ -91,14 +116,18 @@ export const OrderBoard: React.FC = () => {
 
       {filteredOrders.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>{filterType === 'all' ? '✨' : '🔍'}</div>
+          <div className={styles.emptyIcon}>
+            {filterType === 'all' ? <IconCheckCircle size={64} /> : <IconSearch size={64} />}
+          </div>
           <h3 className={styles.emptyTitle}>
             {filterType === 'all' ? '¡Todo al día!' : 'Sin resultados'}
           </h3>
           <p className={styles.emptyText}>
-            {filterType === 'all'
-              ? 'No hay pedidos pendientes en cocina. Buen trabajo 👨‍🍳'
-              : `No hay pedidos pendientes para la categoría "${filterType}".`}
+            {filterType === 'all' ? (
+              <>No hay pedidos pendientes en cocina. Buen trabajo <IconChefHat size={14} /></>
+            ) : (
+              `No hay pedidos pendientes para la categoría "${filterType}".`
+            )}
           </p>
         </div>
       ) : (

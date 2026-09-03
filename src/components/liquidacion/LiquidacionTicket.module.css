@@ -15,8 +15,8 @@
 
 .ticket:hover {
   transform: translateY(-3px);
-  border-color: rgba(16, 185, 129, 0.35);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.08);
+  border-color: rgba(52, 211, 153, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(52, 211, 153, 0.08);
 }
 
 .header {
@@ -56,9 +56,9 @@
   align-items: center;
   padding: 3px 10px;
   border-radius: var(--radius-full);
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #FCA5A5;
+  background: rgba(248, 113, 113, 0.2);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  color: var(--color-danger);
   font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -183,17 +183,17 @@
 }
 
 .methodBtnActive {
-  background-color: rgba(16, 185, 129, 0.12);
+  background-color: rgba(52, 211, 153, 0.12);
   border-color: var(--color-success);
   color: var(--color-success);
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
 }
 
 .methodBtnActive[data-method="datafono"] {
-  background-color: rgba(245, 158, 11, 0.12);
+  background-color: rgba(251, 191, 36, 0.12);
   border-color: var(--color-warning);
   color: var(--color-warning);
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
 }
 
 .confirmBtn {
@@ -222,7 +222,7 @@
   font-size: 0.875rem;
   font-weight: 700;
   background: transparent;
-  border: 1px dashed rgba(239, 68, 68, 0.5);
+  border: 1px dashed rgba(248, 113, 113, 0.5);
   color: var(--color-danger);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -231,7 +231,7 @@
 }
 
 .debeBtn:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.08);
+  background: rgba(248, 113, 113, 0.08);
   border-color: var(--color-danger);
   border-style: solid;
 }
@@ -364,12 +364,12 @@
 
 .splitOk {
   color: var(--color-success);
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(52, 211, 153, 0.12);
 }
 
 .splitPendiente {
   color: var(--color-warning);
-  background: rgba(245, 158, 11, 0.12);
+  background: rgba(251, 191, 36, 0.12);
 }
 
 /* Botón 'Agregar algo' — el cliente pidió algo más justo antes de pagar */

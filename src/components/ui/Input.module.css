@@ -43,7 +43,7 @@
 }
 
 .inputError:focus {
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
 }
 
 .errorText {

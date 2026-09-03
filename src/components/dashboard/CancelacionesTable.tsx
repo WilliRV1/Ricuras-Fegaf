@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './CancelacionesTable.module.css';
 import { formatCurrency } from '@/lib/utils';
+import { IconCheckCircle, IconAlertTriangle, IconRefresh } from '@/components/ui/Icons';
 
 export interface CancelacionDetalle {
   id: number;
@@ -27,7 +28,7 @@ export const CancelacionesTable: React.FC<CancelacionesTableProps> = ({ cancelad
   if (cancelados.length === 0) {
     return (
       <div className={styles.empty}>
-        <span className={styles.emptyIcon}>✅</span>
+        <span className={styles.emptyIcon}><IconCheckCircle size={32} style={{ color: 'var(--color-success)' }} /></span>
         <p>Sin cancelaciones en este período. ¡Excelente!</p>
       </div>
     );
@@ -43,7 +44,8 @@ export const CancelacionesTable: React.FC<CancelacionesTableProps> = ({ cancelad
       */}
       {sinRehacer.length > 0 && (
         <div className={styles.alerta}>
-          ⚠️ {sinRehacer.length} pedido{sinRehacer.length !== 1 ? 's' : ''} anulado
+          <IconAlertTriangle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} />
+          {sinRehacer.length} pedido{sinRehacer.length !== 1 ? 's' : ''} anulado
           {sinRehacer.length !== 1 ? 's' : ''} no se volvió a montar
           {sinRehacer.length !== 1 ? 'n' : ''}. Si el cliente sí se llevó la comida, esa venta
           no está registrada en ninguna parte.
@@ -72,7 +74,7 @@ export const CancelacionesTable: React.FC<CancelacionesTableProps> = ({ cancelad
               <td className={styles.td}>
                 <span className={styles.productos}>{c.productos}</span>
                 {c.rehechoEn !== null ? (
-                  <span className={styles.rehecho}>🔁 Rehecho en #{c.rehechoEn}</span>
+                  <span className={styles.rehecho}><IconRefresh size={11} /> Rehecho en #{c.rehechoEn}</span>
                 ) : (
                   <span className={styles.sinRehacer}>Sin volver a montar</span>
                 )}

@@ -4,43 +4,45 @@
   /* Brand Colors */
   --color-primary: #FF6B35;
   --color-primary-dark: #E5541F;
-  --color-primary-light: #FF8F66;
-  
-  /* Backgrounds & Surfaces (Dark theme por defecto) */
-  --color-background: #0A1628; /* Slate 950 - more premium */
-  --color-surface: #1E293B;   /* Slate 800 */
-  --color-surface-hover: #2D3F55;
-  --color-border: #2D3F55;
-  --color-border-subtle: #1E293B;
-  
+  --color-primary-light: #FF9A66;
+
+  /* Backgrounds & Surfaces (tema oscuro cálido) */
+  --color-background: #15110E;
+  --color-surface: #231C16;
+  --color-surface-2: #1B1512;
+  --color-surface-hover: #2C2319;
+  --color-border: #372C21;
+  --color-border-subtle: #241D17;
+
   /* Text */
-  --color-text: #F1F5F9;       /* Slate 100 */
-  --color-text-muted: #94A3B8; /* Slate 400 */
-  --color-text-subtle: #64748B;/* Slate 500 */
-  
+  --color-text: #FBF4EC;
+  --color-text-muted: #B7A897;
+  --color-text-subtle: #9A8B76;
+
   /* Semantic Colors */
-  --color-danger: #EF4444;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-info: #3B82F6;
+  --color-danger: #F87171;
+  --color-success: #34D399;
+  --color-warning: #FBBF24;
+  --color-info: #60A5FA;
 
   /* Radii */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.35);
-  --shadow-glow: 0 0 20px rgba(255, 107, 53, 0.35);
-  --shadow-glow-lg: 0 0 40px rgba(255, 107, 53, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 8px 26px rgba(0, 0, 0, 0.42);
+  --shadow-glow: 0 0 26px rgba(255, 107, 53, 0.38);
+  --shadow-glow-lg: 0 0 40px rgba(255, 107, 53, 0.22);
   --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.5);
-  
+
   /* Typography */
   --font-family: var(--font-inter), system-ui, sans-serif;
-  
+  --font-family-display: var(--font-sora), var(--font-inter), system-ui, sans-serif;
+
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 280ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -121,6 +123,12 @@ body {
   .main-content {
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
+}
+
+h1, h2, h3 {
+  font-family: var(--font-family-display);
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 /* Componentes nativos básicos */

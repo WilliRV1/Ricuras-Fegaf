@@ -31,10 +31,9 @@
 }
 
 .emptyIcon {
-  font-size: 3rem;
+  display: flex;
   margin-bottom: 16px;
-  filter: grayscale(1);
-  opacity: 0.5;
+  color: var(--color-text-subtle);
 }
 
 .emptyTitle {
@@ -143,7 +142,7 @@
 }
 
 .clearBtn:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(248, 113, 113, 0.1);
   color: var(--color-danger);
 }
 
@@ -178,7 +177,8 @@
 }
 
 .paymentIcon {
-  font-size: 1rem;
+  display: inline-flex;
+  color: currentColor;
 }
 
 .paymentOptions {
@@ -214,7 +214,8 @@
 }
 
 .paymentOptionIcon {
-  font-size: 1.25rem;
+  display: flex;
+  color: var(--color-text);
 }
 
 .paymentOptionLabel {
@@ -246,8 +247,8 @@
   gap: 10px;
   padding: 12px;
   margin-top: 4px;
-  background: rgba(16, 185, 129, 0.07);
-  border: 1px dashed rgba(16, 185, 129, 0.4);
+  background: rgba(52, 211, 153, 0.07);
+  border: 1px dashed rgba(52, 211, 153, 0.4);
   border-radius: var(--radius-md);
 }
 
@@ -287,7 +288,7 @@
 }
 
 .billeteActive {
-  background: rgba(16, 185, 129, 0.18);
+  background: rgba(52, 211, 153, 0.18);
   border-color: var(--color-success);
   color: var(--color-success);
 }
@@ -408,8 +409,8 @@
   font-size: 0.8125rem;
   line-height: 1.4;
   color: var(--color-info);
-  background: rgba(59, 130, 246, 0.15);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(96, 165, 250, 0.15);
+  border: 1px solid rgba(96, 165, 250, 0.2);
   padding: 10px 12px;
   border-radius: var(--radius-md);
   margin: 0;

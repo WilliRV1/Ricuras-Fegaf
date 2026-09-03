@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { IconBackspace, IconCheck } from '@/components/ui/Icons';
 import styles from './PinPad.module.css';
 
 interface PinPadProps {
   /** Dígitos escritos hasta ahora */
   valor: string;
   onChange: (valor: string) => void;
-  /** Se dispara al completar los 4 dígitos o al tocar ✓ */
+  /** Se dispara al completar los 4 dígitos o al tocar el botón de confirmar */
   onCompleto: (pin: string) => void;
   longitud?: number;
   disabled?: boolean;
@@ -97,7 +98,7 @@ export const PinPad: React.FC<PinPadProps> = ({
           disabled={disabled || valor.length === 0}
           aria-label="Borrar"
         >
-          ←
+          <IconBackspace size={22} />
         </button>
 
         <button
@@ -116,7 +117,7 @@ export const PinPad: React.FC<PinPadProps> = ({
           disabled={disabled || valor.length !== longitud}
           aria-label="Confirmar"
         >
-          ✓
+          <IconCheck size={24} />
         </button>
       </div>
     </div>

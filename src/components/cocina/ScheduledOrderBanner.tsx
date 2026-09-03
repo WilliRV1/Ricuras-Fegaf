@@ -9,6 +9,17 @@ import { SIN_DATO } from '@/lib/constants';
 import { markOrderAsReady, cancelOrder } from '@/app/actions/cocina';
 import { toast } from '@/components/ui/Toast';
 import { formatCurrency } from '@/lib/utils';
+import {
+  IconClock,
+  IconCalendar,
+  IconRefresh,
+  IconUtensils,
+  IconScooter,
+  IconMapPin,
+  IconPhoneCall,
+  IconBanknote,
+  IconCheckCircle,
+} from '@/components/ui/Icons';
 import styles from './ScheduledOrderBanner.module.css';
 
 interface ScheduledOrderBannerProps {
@@ -137,7 +148,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
       <div className={styles.leftSection}>
         {/* Icono de reloj + countdown */}
         <div className={`${styles.countdownBadge} ${styles[`badge_${urgency}`]}`}>
-          <span className={styles.clockIcon}>⏰</span>
+          <span className={styles.clockIcon}><IconClock size={22} /></span>
           <div className={styles.countdownText}>
             <span className={styles.countdownValue}>{countdown?.label ?? '—'}</span>
             <span className={styles.countdownSub}>
@@ -151,12 +162,16 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
         <div className={styles.orderInfo}>
           <div className={styles.orderHeader}>
             <span className={styles.orderId}>#{order.id}</span>
-            <span className={styles.scheduledTag}>📅 {horaEntregaLabel}</span>
+            <span className={styles.scheduledTag}><IconCalendar size={12} /> {horaEntregaLabel}</span>
             {order.modificado_at && (
-              <span className={styles.modificadoTag}>🔄 MODIFICADO</span>
+              <span className={styles.modificadoTag}><IconRefresh size={12} /> MODIFICADO</span>
             )}
             <span className={styles.orderType}>
-              {isMesa ? `🍽️ Mesa ${order.numero_mesa}` : `🛵 ${order.cliente_nombre || 'Domicilio'}`}
+              {isMesa ? (
+                <><IconUtensils size={13} /> {`Mesa ${order.numero_mesa}`}</>
+              ) : (
+                <><IconScooter size={13} /> {order.cliente_nombre || 'Domicilio'}</>
+              )}
             </span>
           </div>
           <div className={styles.itemsList}>
@@ -171,7 +186,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
           {!isMesa && (
             <div className={styles.entregaRow}>
               <span className={styles.entregaDireccion}>
-                📍{' '}
+                <IconMapPin size={14} />{' '}
                 {direccionUtil ? (
                   <a
                     className={styles.entregaLink}
@@ -187,7 +202,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
               </span>
               {telefonoDigitos && (
                 <a className={styles.entregaLink} href={`tel:${telefonoDigitos}`}>
-                  📞 {order.cliente_telefono}
+                  <IconPhoneCall size={13} /> {order.cliente_telefono}
                 </a>
               )}
             </div>
@@ -195,7 +210,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
 
           {tienePagaCon && (
             <div className={styles.efectivoRow}>
-              💵 Paga con <strong>{formatCurrency(order.paga_con!)}</strong>
+              <IconBanknote size={14} /> Paga con <strong>{formatCurrency(order.paga_con!)}</strong>
               {vuelto > 0 ? (
                 <> · alistar vuelta <strong>{formatCurrency(vuelto)}</strong></>
               ) : (
@@ -214,7 +229,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
           onClick={() => setShowReadyConfirm(true)}
           disabled={isSubmitting || isCancelling}
         >
-          {isSubmitting ? '...' : '✅ Listo'}
+          {isSubmitting ? '...' : <><IconCheckCircle size={16} /> Listo</>}
         </Button>
         <button
           className={styles.cancelBtn}
@@ -241,7 +256,7 @@ export const ScheduledOrderBanner: React.FC<ScheduledOrderBannerProps> = ({ orde
         title={`¿Marcar el pedido #${order.id} como listo?`}
         message={
           <>
-            📅 Programado para las <strong>{horaEntregaLabel}</strong> · {totalUnidades} producto
+            <IconCalendar size={14} /> Programado para las <strong>{horaEntregaLabel}</strong> · {totalUnidades} producto
             {totalUnidades !== 1 ? 's' : ''}.
             <br />
             Saldrá del tablero de cocina y pasará a liquidación.

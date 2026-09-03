@@ -2,6 +2,16 @@ import React from 'react';
 import styles from './PedidosTable.module.css';
 import { formatCurrency } from '@/lib/utils';
 import { TIPOS_ATENCION, ESTADOS_PEDIDO, METODOS_PAGO, METODO_PAGO_MIXTO } from '@/lib/constants';
+import {
+  IconUtensils,
+  IconScooter,
+  IconBanknote,
+  IconPhone,
+  IconCreditCard,
+  IconLandmark,
+  IconXCircle,
+  IconRefresh,
+} from '@/components/ui/Icons';
 
 interface PedidoHistorial {
   id: number;
@@ -36,9 +46,17 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
 
   const getTipoBadge = (tipo: string, numeroMesa: number | null) => {
     if (tipo === TIPOS_ATENCION.MESA) {
-      return <span className={`${styles.badge} ${styles.badgeMesa}`}>🍽️ Mesa {numeroMesa}</span>;
+      return (
+        <span className={`${styles.badge} ${styles.badgeMesa}`}>
+          <IconUtensils size={13} /> Mesa {numeroMesa}
+        </span>
+      );
     }
-    return <span className={`${styles.badge} ${styles.badgeDomicilio}`}>🛵 Domicilio</span>;
+    return (
+      <span className={`${styles.badge} ${styles.badgeDomicilio}`}>
+        <IconScooter size={13} /> Domicilio
+      </span>
+    );
   };
 
   /** Nombre asociado al pedido: manda el del deudor, si lo hay */
@@ -57,11 +75,11 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
     }
   };
 
-  const METODO_ICONOS: Record<string, string> = {
-    [METODOS_PAGO.EFECTIVO]: '💵',
-    [METODOS_PAGO.NEQUI]: '📱',
-    [METODOS_PAGO.DATAFONO]: '💳',
-    [METODOS_PAGO.BANCOLOMBIA]: '🏦',
+  const METODO_ICONOS: Record<string, React.ReactNode> = {
+    [METODOS_PAGO.EFECTIVO]: <IconBanknote size={11} />,
+    [METODOS_PAGO.NEQUI]: <IconPhone size={11} />,
+    [METODOS_PAGO.DATAFONO]: <IconCreditCard size={11} />,
+    [METODOS_PAGO.BANCOLOMBIA]: <IconLandmark size={11} />,
   };
 
   const getMetodoPago = (pedido: PedidoHistorial) => {
@@ -73,7 +91,7 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
     if (pedido.estado === ESTADOS_PEDIDO.DEBE) {
       return (
         <span className={styles.methodDebe}>
-          💸 Debe
+          <span className={styles.methodDebeRow}><IconBanknote size={13} /> Debe</span>
           {pedido.deudor_nombre && (
             <span className={styles.deudorNombre}>{pedido.deudor_nombre}</span>
           )}
@@ -82,7 +100,7 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
     }
 
     if (pedido.estado === ESTADOS_PEDIDO.CANCELADO) {
-      return <span className={styles.methodSinCobro}>❌ Anulado</span>;
+      return <span className={styles.methodSinCobro}><IconXCircle size={13} /> Anulado</span>;
     }
 
     if (!metodo) return <span className={styles.methodSinCobro}>Sin cobrar aún</span>;
@@ -91,10 +109,10 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
     if (metodo === METODO_PAGO_MIXTO && pagos && pagos.length > 0) {
       return (
         <div>
-          <span className={styles.methodMixto}>🔀 Mixto</span>
+          <span className={styles.methodMixto}><IconRefresh size={13} /> Mixto</span>
           <div style={{ fontSize: '0.6875rem', marginTop: '4px', color: 'var(--color-text-muted)' }}>
             {pagos.map((p, i) => (
-              <div key={i}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 {METODO_ICONOS[p.metodo] ?? ''} {formatCurrency(Number(p.monto))}
               </div>
             ))}
@@ -104,10 +122,10 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
     }
 
     switch (metodo) {
-      case METODOS_PAGO.EFECTIVO: return <span className={styles.methodEfectivo}>💵 Efectivo</span>;
-      case METODOS_PAGO.NEQUI: return <span className={styles.methodNequi}>📱 Nequi</span>;
-      case METODOS_PAGO.DATAFONO: return <span className={styles.methodDatafono}>💳 Datáfono</span>;
-      case METODOS_PAGO.BANCOLOMBIA: return <span className={styles.methodBancolombia}>🏦 Bancolombia</span>;
+      case METODOS_PAGO.EFECTIVO: return <span className={styles.methodEfectivo}><IconBanknote size={13} /> Efectivo</span>;
+      case METODOS_PAGO.NEQUI: return <span className={styles.methodNequi}><IconPhone size={13} /> Nequi</span>;
+      case METODOS_PAGO.DATAFONO: return <span className={styles.methodDatafono}><IconCreditCard size={13} /> Datáfono</span>;
+      case METODOS_PAGO.BANCOLOMBIA: return <span className={styles.methodBancolombia}><IconLandmark size={13} /> Bancolombia</span>;
       default: return metodo;
     }
   };
@@ -133,9 +151,9 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
     let colorStyle: React.CSSProperties = { color: 'var(--color-text)', background: 'transparent' };
     
     if (diffMin >= 40) {
-      colorStyle = { color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }; // Rojo
+      colorStyle = { color: 'var(--color-danger)', background: 'rgba(248, 113, 113, 0.1)', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 'bold' }; // Rojo
     } else if (diffMin >= 25) {
-      colorStyle = { color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }; // Naranja
+      colorStyle = { color: 'var(--color-warning)', background: 'rgba(251, 191, 36, 0.1)', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 'bold' }; // Naranja
     } else {
       colorStyle = { color: 'var(--color-text-muted)', background: 'transparent' };
     }

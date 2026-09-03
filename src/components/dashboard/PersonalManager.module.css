@@ -36,8 +36,8 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-danger);
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
   border-radius: var(--radius-sm);
 }
 
@@ -155,6 +155,12 @@
 .rolBtn span {
   font-size: 0.75rem;
   color: var(--color-text-muted);
+}
+
+.rolEtiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .rolBtn:hover:not(:disabled) {
@@ -275,12 +281,12 @@
 
 .tagPendiente {
   color: var(--color-warning);
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(251, 191, 36, 0.15);
 }
 
 .tagBloqueado {
   color: var(--color-danger);
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(248, 113, 113, 0.15);
 }
 
 .activo {

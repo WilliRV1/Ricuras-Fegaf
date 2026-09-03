@@ -39,9 +39,9 @@
 }
 
 .emptyIcon {
-  font-size: 2rem;
+  display: flex;
   line-height: 1;
-  filter: grayscale(0.5);
+  color: var(--color-text-subtle);
 }
 
 .emptyText {

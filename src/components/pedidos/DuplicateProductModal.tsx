@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Producto } from '@/types';
+import { IconBurger, IconPlus, IconPencil } from '@/components/ui/Icons';
 import styles from './DuplicateProductModal.module.css';
 
 interface DuplicateProductModalProps {
@@ -27,7 +28,7 @@ export const DuplicateProductModal: React.FC<DuplicateProductModalProps> = ({
     <div className={styles.backdrop} onClick={onCancel}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <span className={styles.icon}>🍔</span>
+          <span className={styles.icon}><IconBurger size={36} /></span>
           <h3 className={styles.title}>{producto.nombre}</h3>
           <p className={styles.subtitle}>
             Ya está en tu pedido. ¿Qué deseas hacer?
@@ -37,7 +38,7 @@ export const DuplicateProductModal: React.FC<DuplicateProductModalProps> = ({
         <div className={styles.options}>
           {/* Opción: sumar al existente */}
           <button className={`${styles.optionBtn} ${styles.optionSum}`} onClick={onAddToExisting}>
-            <span className={styles.optionIcon}>➕</span>
+            <span className={styles.optionIcon}><IconPlus size={24} /></span>
             <div className={styles.optionText}>
               <strong>Agregar uno más</strong>
               <span>Suma una unidad al que ya está en el pedido</span>
@@ -46,7 +47,7 @@ export const DuplicateProductModal: React.FC<DuplicateProductModalProps> = ({
 
           {/* Opción: agregar independiente */}
           <button className={`${styles.optionBtn} ${styles.optionNew}`} onClick={onAddNew}>
-            <span className={styles.optionIcon}>📝</span>
+            <span className={styles.optionIcon}><IconPencil size={24} /></span>
             <div className={styles.optionText}>
               <strong>Con condiciones distintas</strong>
               <span>Agrega como ítem separado para personalizarlo diferente</span>

@@ -10,7 +10,7 @@
   background: linear-gradient(
     135deg,
     var(--color-surface) 0%,
-    rgba(30, 41, 59, 0.85) 100%
+    var(--color-surface-2) 100%
   );
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -47,6 +47,8 @@
 
 .noRespondeBtn {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
   height: 44px;
   padding: 0 12px;
   background: transparent;
@@ -66,7 +68,7 @@
 }
 
 .noRespondeActive {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(251, 191, 36, 0.15);
   border-style: solid;
   border-color: var(--color-warning);
   color: var(--color-warning);

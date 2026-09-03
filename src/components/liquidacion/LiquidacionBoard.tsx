@@ -3,12 +3,29 @@
 import React, { useState } from 'react';
 import { useRealtimeLiquidacion, ConnectionStatus } from '@/hooks/useRealtimeLiquidacion';
 import { LiquidacionTicket } from './LiquidacionTicket';
+import { IconRefresh, IconDot, IconAlertTriangle, IconCheckCircle, IconBanknote } from '@/components/ui/Icons';
 import styles from './LiquidacionBoard.module.css';
 
 const ConnectionIndicator = ({ status }: { status: ConnectionStatus }) => {
-  if (status === 'connecting') return <span style={{ color: 'var(--color-warning)' }}>🔄 Conectando...</span>;
-  if (status === 'offline') return <span style={{ color: 'var(--color-danger)' }}>🔴 Desconectado (Reconectando...)</span>;
-  return <span style={{ color: 'var(--color-success)' }}>🟢 Online</span>;
+  if (status === 'connecting') {
+    return (
+      <span style={{ color: 'var(--color-warning)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        <IconRefresh size={14} /> Conectando...
+      </span>
+    );
+  }
+  if (status === 'offline') {
+    return (
+      <span style={{ color: 'var(--color-danger)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        <IconDot size={12} /> Desconectado (Reconectando...)
+      </span>
+    );
+  }
+  return (
+    <span style={{ color: 'var(--color-success)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+      <IconDot size={12} /> Online
+    </span>
+  );
 };
 
 export const LiquidacionBoard: React.FC = () => {
@@ -16,13 +33,15 @@ export const LiquidacionBoard: React.FC = () => {
   const [deudasOpen, setDeudasOpen] = useState(false);
 
   if (loading) {
-    return <div className={styles.loader}>Cargando pedidos por cobrar... ⏳</div>;
+    return <div className={styles.loader}>Cargando pedidos por cobrar...</div>;
   }
 
   if (error) {
     return (
       <div className={styles.errorState}>
-        <p>⚠️ Ocurrió un error de conexión al cargar las cuentas.</p>
+        <p style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+          <IconAlertTriangle size={18} /> Ocurrió un error de conexión al cargar las cuentas.
+        </p>
         <small>{error}</small>
       </div>
     );
@@ -47,7 +66,8 @@ export const LiquidacionBoard: React.FC = () => {
           >
             <div className={styles.deudasTitleRow}>
               <span className={styles.deudasTitleText}>
-                💸 Deudas Pendientes
+                <IconBanknote size={16} style={{ verticalAlign: '-3px', marginRight: '6px' }} />
+                Deudas Pendientes
               </span>
               <span className={styles.deudasCount}>{deudas.length}</span>
             </div>
@@ -87,13 +107,13 @@ export const LiquidacionBoard: React.FC = () => {
           ============================================================ */}
       {orders.length === 0 && deudas.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>🎉</div>
+          <div className={styles.emptyIcon}><IconCheckCircle size={56} /></div>
           <h3 className={styles.emptyTitle}>Sin cuentas pendientes</h3>
           <p className={styles.emptyText}>Todas las comandas han sido liquidadas. ¡Excelente!</p>
         </div>
       ) : orders.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>✅</div>
+          <div className={styles.emptyIcon}><IconCheckCircle size={56} /></div>
           <h3 className={styles.emptyTitle}>Sin cuentas nuevas por cobrar</h3>
           <p className={styles.emptyText}>Solo quedan las deudas pendientes de arriba.</p>
         </div>

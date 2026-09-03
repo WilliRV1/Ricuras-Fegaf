@@ -32,7 +32,7 @@
 }
 
 .row:hover {
-  background-color: rgba(245, 158, 11, 0.06);
+  background-color: rgba(251, 191, 36, 0.06);
 }
 
 .td {
@@ -50,7 +50,9 @@
 }
 
 .telefono {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin-top: 2px;
   font-size: 0.8125rem;
   color: var(--color-text-muted);
@@ -64,7 +66,7 @@
 .vieja {
   display: inline-block;
   margin-top: 4px;
-  background-color: rgba(239, 68, 68, 0.15);
+  background-color: rgba(248, 113, 113, 0.15);
   color: var(--color-danger);
   font-weight: 700;
   font-size: 0.75rem;
@@ -74,7 +76,7 @@
 
 .badge {
   display: inline-block;
-  background-color: rgba(245, 158, 11, 0.15);
+  background-color: rgba(251, 191, 36, 0.15);
   color: var(--color-warning);
   font-weight: 700;
   font-size: 0.8rem;

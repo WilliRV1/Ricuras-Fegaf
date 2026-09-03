@@ -27,6 +27,18 @@ import { PedidosEnCurso } from './PedidosEnCurso';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { TIPOS_ATENCION, ESTADOS_PEDIDO } from '@/lib/constants';
 import { toast } from '@/components/ui/Toast';
+import {
+  IconPlus,
+  IconPencil,
+  IconRefresh,
+  IconCheck,
+  IconClipboard,
+  IconSearch,
+  IconLock,
+  IconCart,
+  IconUtensils,
+  IconScooter,
+} from '@/components/ui/Icons';
 import styles from './OrderContainer.module.css';
 
 interface OrderContainerProps {
@@ -414,10 +426,16 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
         {editingOrder && (
           <div className={styles.editingBanner}>
             <div className={styles.editingText}>
-              <strong>
-                {yaDespachado
-                  ? `➕ Agregando al pedido #${editingOrder.id} (ya salió de cocina)`
-                  : `✏️ Estás modificando el pedido #${editingOrder.id}`}
+              <strong className={styles.editingBannerTitle}>
+                {yaDespachado ? (
+                  <>
+                    <IconPlus size={16} /> Agregando al pedido #{editingOrder.id} (ya salió de cocina)
+                  </>
+                ) : (
+                  <>
+                    <IconPencil size={16} /> Estás modificando el pedido #{editingOrder.id}
+                  </>
+                )}
               </strong>
               <span>
                 {yaDespachado
@@ -458,7 +476,9 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
         {rehaciendoPedidoId !== null && (
           <div className={styles.editingBanner}>
             <div className={styles.editingText}>
-              <strong>🔁 Volviendo a montar el pedido #{rehaciendoPedidoId}</strong>
+              <strong className={styles.editingBannerTitle}>
+                <IconRefresh size={16} /> Volviendo a montar el pedido #{rehaciendoPedidoId}
+              </strong>
               <span>
                 Se cargaron los mismos productos del pedido anulado. Ajusta lo que cambió y
                 envíalo a cocina — se guardará como un pedido nuevo.
@@ -477,14 +497,18 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
           {/* Indicador de paso 1 */}
           <div className={styles.stepIndicator}>
             <span className={`${styles.stepBadge} ${isStep1Complete ? styles.completed : ''}`}>
-              {isStep1Complete ? '✓' : '1'}
+              {isStep1Complete ? <IconCheck size={14} /> : '1'}
             </span>
             <span className={styles.stepLabel}>
               Tipo de Atención
               {orderType && (
                 <span className={styles.stepLabelMuted}>
                   {' — '}
-                  {orderType === TIPOS_ATENCION.MESA ? '🍽️ Mesa' : '🛵 Domicilio'}
+                  {orderType === TIPOS_ATENCION.MESA ? (
+                    <><IconUtensils size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /> Mesa</>
+                  ) : (
+                    <><IconScooter size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /> Domicilio</>
+                  )}
                 </span>
               )}
             </span>
@@ -497,7 +521,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
             <>
               <div className={styles.stepIndicator}>
                 <span className={`${styles.stepBadge} ${isStep2Complete ? styles.completed : ''}`}>
-                  {isStep2Complete ? '✓' : '2'}
+                  {isStep2Complete ? <IconCheck size={14} /> : '2'}
                 </span>
                 <span className={styles.stepLabel}>
                   {orderType === TIPOS_ATENCION.MESA ? 'Número de Mesa' : 'Datos del Cliente'}
@@ -523,7 +547,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
             <div className={styles.stepIndicator}>
               <span className={styles.stepBadge}>3</span>
               <h2 className={styles.menuTitle}>
-                <span className={styles.menuTitleIcon}>📋</span>
+                <span className={styles.menuTitleIcon}><IconClipboard size={20} /></span>
                 Menú Digital
               </h2>
             </div>
@@ -534,7 +558,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
 
           {/* Barra de Búsqueda */}
           <div className={styles.searchContainer}>
-            <span className={styles.searchIcon}>🔍</span>
+            <span className={styles.searchIcon}><IconSearch size={18} /></span>
             <input
               type="text"
               className={styles.searchInput}
@@ -562,7 +586,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
                 onAddProduct={handleAddProduct}
               />
               <div className={styles.lockOverlay}>
-                <span className={styles.lockIcon}>🔒</span>
+                <span className={styles.lockIcon}><IconLock size={40} /></span>
                 <span className={styles.lockText}>Selecciona un tipo de atención primero</span>
                 <span className={styles.lockSubtext}>Elige &quot;Mesa&quot; o &quot;Domicilio&quot; para comenzar</span>
               </div>
@@ -602,7 +626,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
           className={`${styles.cartFab} ${isMobileCartOpen ? styles.hidden : ''}`}
           onClick={() => setIsMobileCartOpen(true)}
         >
-          <span className={styles.fabIcon}>🛒</span>
+          <span className={styles.fabIcon}><IconCart size={20} /></span>
           <span className={styles.fabText}>Ver Pedido</span>
           <span className={styles.fabBadge}>{cartItemCount}</span>
         </button>

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Rol, puedeVer } from '@/lib/session';
+import { IconHome, IconOrder, IconChefHat, IconCreditCard, IconBarChart } from './Icons';
 import styles from './BottomNav.module.css';
 
 interface BottomNavProps {
@@ -12,11 +13,11 @@ interface BottomNavProps {
 }
 
 const TODOS_LOS_ENLACES = [
-  { href: '/', label: 'Inicio', icon: '🏠' },
-  { href: '/pedidos', label: 'Pedidos', icon: '🍔' },
-  { href: '/cocina', label: 'KDS', icon: '👨‍🍳' },
-  { href: '/liquidacion', label: 'Liquidación', icon: '💳' },
-  { href: '/dashboard', label: 'Dashboard', icon: '📊' },
+  { href: '/', label: 'Inicio', Icon: IconHome },
+  { href: '/pedidos', label: 'Pedidos', Icon: IconOrder },
+  { href: '/cocina', label: 'KDS', Icon: IconChefHat },
+  { href: '/liquidacion', label: 'Liquidación', Icon: IconCreditCard },
+  { href: '/dashboard', label: 'Dashboard', Icon: IconBarChart },
 ];
 
 export const BottomNav = ({ sesion }: BottomNavProps) => {
@@ -39,7 +40,7 @@ export const BottomNav = ({ sesion }: BottomNavProps) => {
               href={link.href}
               className={`${styles.navItem} ${isActive ? styles.active : ''}`}
             >
-              <span className={styles.icon}>{link.icon}</span>
+              <span className={styles.icon}><link.Icon size={22} /></span>
               <span className={styles.label}>{link.label}</span>
             </Link>
           );

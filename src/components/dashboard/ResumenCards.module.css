@@ -32,7 +32,8 @@
 }
 
 .cardIcon {
-  font-size: 1.75rem;
+  display: flex;
+  align-items: center;
   line-height: 1;
 }
 

@@ -1,6 +1,19 @@
 import React from 'react';
 import styles from './ResumenCards.module.css';
 import { formatCurrency } from '@/lib/utils';
+import {
+  IconBanknote,
+  IconTrendingUp,
+  IconClipboard,
+  IconReceipt,
+  IconClock,
+  IconScooter,
+  IconXCircle,
+  IconCreditCard,
+  IconPhone,
+  IconLandmark,
+  IconHandshake,
+} from '@/components/ui/Icons';
 
 interface ResumenCardsProps {
   totalPedidos: number;
@@ -65,7 +78,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
 
       {/* Total Facturado */}
       <div className={`${styles.card} ${styles.accentPrimary}`}>
-        <div className={styles.cardIcon}>💰</div>
+        <div className={styles.cardIcon} style={{ color: 'var(--color-primary)' }}><IconBanknote size={22} /></div>
         <p className={styles.cardLabel}>Total Facturado</p>
         <p className={styles.cardValue}>{formatCurrency(totalFacturado)}</p>
         <p className={styles.cardSub}>
@@ -75,7 +88,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
 
       {/* Fiado del día — lo que se vendió pero no se ha cobrado */}
       <div className={`${styles.card} ${styles.accentWarning}`}>
-        <div className={styles.cardIcon}>💸</div>
+        <div className={styles.cardIcon} style={{ color: 'var(--color-warning)' }}><IconBanknote size={22} /></div>
         <p className={styles.cardLabel}>Se Debe de Hoy</p>
         <p className={styles.cardValue}>{formatCurrency(totalFiadoHoy)}</p>
         <p className={styles.cardSub}>
@@ -86,7 +99,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
 
       {/* La cifra con la que se cuadra al cerrar */}
       <div className={`${styles.card} ${styles.accentSuccess} ${styles.cardDestacada}`}>
-        <div className={styles.cardIcon}>🧮</div>
+        <div className={styles.cardIcon} style={{ color: 'var(--color-success)' }}><IconTrendingUp size={22} /></div>
         <p className={styles.cardLabel}>Venta Real del Día</p>
         <p className={styles.cardValue}>{formatCurrency(ventaRealDelDia)}</p>
         <p className={styles.cardSub}>
@@ -96,7 +109,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
 
       {/* Cartera acumulada — arrastra deudas de días anteriores */}
       <div className={`${styles.card} ${styles.accentDanger}`}>
-        <div className={styles.cardIcon}>📋</div>
+        <div className={styles.cardIcon} style={{ color: 'var(--color-danger)' }}><IconClipboard size={22} /></div>
         <p className={styles.cardLabel}>Cartera por Cobrar</p>
         <p className={styles.cardValue}>{formatCurrency(carteraTotal)}</p>
         <p className={styles.cardSub}>
@@ -112,7 +125,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
       */}
       {totalCobrosDeudasViejas > 0 && (
         <div className={`${styles.card} ${styles.accentTeal}`}>
-          <div className={styles.cardIcon}>🤝</div>
+          <div className={styles.cardIcon} style={{ color: '#2DD4BF' }}><IconHandshake size={22} /></div>
           <p className={styles.cardLabel}>Deudas Viejas Cobradas Hoy</p>
           <p className={styles.cardValue}>{formatCurrency(totalCobrosDeudasViejas)}</p>
           <p className={styles.cardSub}>
@@ -124,7 +137,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
 
       {/* Total Pedidos */}
       <div className={`${styles.card} ${styles.accentBlue}`}>
-        <div className={styles.cardIcon}>🧾</div>
+        <div className={styles.cardIcon} style={{ color: '#60A5FA' }}><IconReceipt size={22} /></div>
         <p className={styles.cardLabel}>Pedidos Completados</p>
         <p className={styles.cardValue}>{totalPedidos}</p>
         <p className={styles.cardSub}>
@@ -134,7 +147,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
 
       {/* Hora Pico */}
       <div className={`${styles.card} ${styles.accentOrange}`}>
-        <div className={styles.cardIcon}>🕐</div>
+        <div className={styles.cardIcon} style={{ color: '#FB923C' }}><IconClock size={22} /></div>
         <p className={styles.cardLabel}>Hora Pico</p>
         <p className={styles.cardValue} style={{ fontSize: '1.2rem' }}>{horaPico}</p>
         <p className={styles.cardSub}>Horario con más pedidos</p>
@@ -142,7 +155,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
 
       {/* Tiempo Medio */}
       <div className={`${styles.card} ${styles.accentTeal}`}>
-        <div className={styles.cardIcon}>⏱️</div>
+        <div className={styles.cardIcon} style={{ color: '#2DD4BF' }}><IconClock size={22} /></div>
         <p className={styles.cardLabel}>Tiempo Medio</p>
         <p className={styles.cardValue} style={{ fontSize: '1.2rem' }}>
           {tiempoPromedioMinutos ? `${tiempoPromedioMinutos} min` : 'N/A'}
@@ -152,7 +165,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
 
       {/* Domicilios fuera del sector */}
       <div className={`${styles.card} ${styles.accentOrange}`}>
-        <div className={styles.cardIcon}>🛵</div>
+        <div className={styles.cardIcon} style={{ color: '#FB923C' }}><IconScooter size={22} /></div>
         <p className={styles.cardLabel}>Domicilios Fuera del Sector</p>
         <p className={styles.cardValue}>{formatCurrency(totalDomicilios)}</p>
         <p className={styles.cardSub}>
@@ -162,7 +175,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
 
       {/* Cancelados */}
       <div className={`${styles.card} ${styles.accentDanger}`}>
-        <div className={styles.cardIcon}>❌</div>
+        <div className={styles.cardIcon} style={{ color: 'var(--color-danger)' }}><IconXCircle size={22} /></div>
         <p className={styles.cardLabel}>Cancelados</p>
         <p className={styles.cardValue}>{cantidadCancelados}</p>
         <p className={styles.cardSub}>
@@ -174,28 +187,28 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
 
       {/* Efectivo */}
       <div className={`${styles.card} ${styles.accentSuccess}`}>
-        <div className={styles.cardIcon}>💵</div>
+        <div className={styles.cardIcon} style={{ color: 'var(--color-success)' }}><IconBanknote size={22} /></div>
         <p className={styles.cardLabel}>Efectivo</p>
         <p className={styles.cardValue}>{formatCurrency(porMetodoPago.efectivo)}</p>
       </div>
 
       {/* Nequi */}
       <div className={`${styles.card} ${styles.accentPurple}`}>
-        <div className={styles.cardIcon}>📱</div>
+        <div className={styles.cardIcon} style={{ color: '#A78BFA' }}><IconPhone size={22} /></div>
         <p className={styles.cardLabel}>Nequi</p>
         <p className={styles.cardValue}>{formatCurrency(porMetodoPago.nequi)}</p>
       </div>
 
       {/* Datáfono */}
       <div className={`${styles.card} ${styles.accentWarning}`}>
-        <div className={styles.cardIcon}>💳</div>
+        <div className={styles.cardIcon} style={{ color: 'var(--color-warning)' }}><IconCreditCard size={22} /></div>
         <p className={styles.cardLabel}>Datáfono</p>
         <p className={styles.cardValue}>{formatCurrency(porMetodoPago.datafono)}</p>
       </div>
 
       {/* Bancolombia */}
       <div className={`${styles.card} ${styles.accentPrimary}`}>
-        <div className={styles.cardIcon}>🏦</div>
+        <div className={styles.cardIcon} style={{ color: 'var(--color-primary)' }}><IconLandmark size={22} /></div>
         <p className={styles.cardLabel}>Bancolombia</p>
         <p className={styles.cardValue}>{formatCurrency(porMetodoPago.bancolombia)}</p>
       </div>
