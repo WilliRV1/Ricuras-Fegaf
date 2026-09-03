@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { UsuarioLogin } from '@/lib/session';
 import { iniciarSesion, cambiarPin } from '@/app/actions/auth';
 import { PinPad } from '@/components/ui/PinPad';
+import { cartStore } from '@/hooks/useCart';
 import styles from './LoginFlow.module.css';
 
 interface LoginFlowProps {
@@ -82,6 +83,8 @@ export const LoginFlow: React.FC<LoginFlowProps> = ({ usuarios, errorCarga }) =>
       return;
     }
 
+    // Por si la sesión anterior quedó vencida sin cerrar sesión a mano.
+    cartStore.clearCart();
     router.push(res.destino);
     router.refresh();
   };
@@ -123,6 +126,8 @@ export const LoginFlow: React.FC<LoginFlowProps> = ({ usuarios, errorCarga }) =>
       return;
     }
 
+    // Por si la sesión anterior quedó vencida sin cerrar sesión a mano.
+    cartStore.clearCart();
     router.push(res.destino);
     router.refresh();
   };

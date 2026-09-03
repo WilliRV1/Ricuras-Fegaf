@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Rol, puedeVer } from '@/lib/session';
 import { cerrarSesion } from '@/app/actions/auth';
+import { cartStore } from '@/hooks/useCart';
 import styles from './Header.module.css';
 
 interface HeaderProps {
@@ -34,6 +35,10 @@ export const Header: React.FC<HeaderProps> = ({ sesion }) => {
 
   const salir = async () => {
     setSaliendo(true);
+    // El carrito vive en este navegador, no en la sesión: si no se limpia,
+    // el siguiente que entre en esta misma tablet se encuentra el pedido a
+    // medias de quien salió, y podría enviarlo pensando que es suyo.
+    cartStore.clearCart();
     await cerrarSesion();
     router.push('/login');
     router.refresh();

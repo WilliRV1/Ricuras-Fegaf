@@ -1,25 +1,40 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { ESTADOS_PEDIDO } from '@/lib/constants';
 import { confirmarPin } from './auth';
+import { sesionConAcceso } from '@/lib/sesionServidor';
 
 /**
  * Marca un pedido como listo (terminado en cocina).
+ *
+ * Pasa por el RPC `mark_order_ready` en vez de un UPDATE directo: la tabla
+ * `pedidos` ya no acepta escrituras directas de la clave pública (ver
+ * migración 20260902000000), así que un UPDATE aquí no haría nada.
+ *
  * @param pedidoId ID numérico del pedido
  */
 export async function markOrderAsReady(pedidoId: number) {
+  if (!(await sesionConAcceso('/cocina'))) {
+    return { success: false, error: 'Necesitas una sesión con acceso a Cocina.' };
+  }
+
   try {
     const supabase = await createClient();
 
-    const { error } = await supabase
-      .from('pedidos')
-      .update({ estado: ESTADOS_PEDIDO.LISTO })
-      .eq('id', pedidoId);
+    // @ts-expect-error - Tipos generados sin los RPC nuevos
+    const { error } = await supabase.rpc('mark_order_ready', { p_pedido_id: pedidoId });
 
     if (error) {
       console.error('Error al marcar pedido como listo:', error);
-      return { success: false, error: error.message };
+
+      if (error.message?.includes('PEDIDO_NO_PENDIENTE')) {
+        return { success: false, error: 'Este pedido ya no está pendiente (alguien más ya lo marcó, lo anuló o lo modificó).' };
+      }
+      if (error.message?.includes('PEDIDO_NO_ENCONTRADO')) {
+        return { success: false, error: 'El pedido ya no existe.' };
+      }
+
+      return { success: false, error: 'No se pudo marcar el pedido como listo.' };
     }
 
     return { success: true };
@@ -52,6 +67,14 @@ export async function cancelOrder(
   usuarioId: number,
   pin: string
 ) {
+  // Se usa desde dos pantallas distintas, así que basta con acceso a
+  // cualquiera de las dos; el PIN de abajo ya identifica a la persona.
+  const tieneAcceso =
+    (await sesionConAcceso('/cocina')) || (await sesionConAcceso('/liquidacion'));
+  if (!tieneAcceso) {
+    return { success: false, error: 'Necesitas una sesión con acceso a Cocina o Liquidación.' };
+  }
+
   try {
     const identidad = await confirmarPin(usuarioId, pin);
     if (!identidad.success) {

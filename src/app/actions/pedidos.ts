@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { CartItem, OrderType, OrderDetails, MetodoPago, PedidoWithDetalles } from '@/types';
 import { ESTADOS_PEDIDO, TIPOS_ATENCION, METODOS_PAGO } from '@/lib/constants';
 import { calcularRecargoDatafono } from '@/lib/utils';
-import { nombreDeSesion } from '@/lib/sesionServidor';
+import { nombreDeSesion, sesionConAcceso } from '@/lib/sesionServidor';
 
 /**
  * Calcula los montos y arma el payload que espera el RPC.
@@ -90,6 +90,13 @@ export async function submitOrder(
    */
   rehacePedidoId: number | null = null
 ) {
+  // Defensa adicional a la del proxy: si alguien invoca este action sin
+  // pasar por la pantalla de pedidos (o con una sesión de cocina, que no
+  // debería tomar pedidos), se corta aquí también.
+  if (!(await sesionConAcceso('/pedidos'))) {
+    return { success: false, error: 'Necesitas una sesión con acceso a Pedidos.' };
+  }
+
   if (!orderType || items.length === 0) {
     return { success: false, error: 'Faltan datos obligatorios o el carrito está vacío.' };
   }
@@ -159,6 +166,10 @@ export async function updateOrder(
   pagaCon: number | null = null,
   volverACocina: boolean = true
 ) {
+  if (!(await sesionConAcceso('/pedidos'))) {
+    return { success: false, error: 'Necesitas una sesión con acceso a Pedidos.' };
+  }
+
   if (!orderType || items.length === 0) {
     return { success: false, error: 'El pedido debe tener al menos un producto.' };
   }
@@ -212,6 +223,10 @@ export async function updateOrder(
  * de pendientes que ya tiene cargada la pantalla.
  */
 export async function getOrderById(pedidoId: number) {
+  if (!(await sesionConAcceso('/pedidos'))) {
+    return { success: false as const, error: 'Necesitas una sesión con acceso a Pedidos.' };
+  }
+
   if (!Number.isInteger(pedidoId) || pedidoId <= 0) {
     return { success: false as const, error: 'Pedido inválido.' };
   }

@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { nombreDeSesion } from '@/lib/sesionServidor';
+import { nombreDeSesion, sesionConAcceso } from '@/lib/sesionServidor';
 
 export interface PagoParcial {
   metodo: string;
@@ -16,6 +16,10 @@ export interface PagoParcial {
  * el servidor lo valida y rechaza el cobro si no cuadra.
  */
 export async function closeOrderWithPayments(pedidoId: number, pagos: PagoParcial[]) {
+  if (!(await sesionConAcceso('/liquidacion'))) {
+    return { success: false, error: 'Necesitas una sesión con acceso a Liquidación.' };
+  }
+
   try {
     const supabase = await createClient();
 
@@ -76,6 +80,10 @@ export async function markOrderAsDebe(
   deudorNombre: string,
   deudorTelefono?: string | null
 ) {
+  if (!(await sesionConAcceso('/liquidacion'))) {
+    return { success: false, error: 'Necesitas una sesión con acceso a Liquidación.' };
+  }
+
   const nombre = deudorNombre.trim();
   if (!nombre) {
     return { success: false, error: 'Escribe el nombre de quien queda debiendo.' };
