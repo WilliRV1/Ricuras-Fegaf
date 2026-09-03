@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './ProductosVendidosTable.module.css';
 import { formatCurrency } from '@/lib/utils';
+import { IconUtensils } from '@/components/ui/Icons';
 
 interface ProductoVendido {
   nombre: string;
@@ -16,7 +17,7 @@ export const ProductosVendidosTable: React.FC<ProductosVendidosTableProps> = ({ 
   if (!productos || productos.length === 0) {
     return (
       <div className={styles.empty}>
-        <span>🍽️</span>
+        <span><IconUtensils size={32} style={{ color: 'var(--color-text-subtle)' }} /></span>
         <p>No hay productos vendidos registrados hoy.</p>
       </div>
     );

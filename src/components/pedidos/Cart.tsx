@@ -19,6 +19,18 @@ import { toast } from '../ui/Toast';
 import { METODOS_PAGO } from '@/lib/constants';
 import { calcularRecargoDatafono } from '@/lib/utils';
 import { MetodoPago, OrderType } from '@/types';
+import {
+  IconBanknote,
+  IconPhone,
+  IconCreditCard,
+  IconLandmark,
+  IconCart,
+  IconAlertTriangle,
+  IconCheckCircle,
+  IconRefresh,
+  IconUtensils,
+  IconChefHat,
+} from '@/components/ui/Icons';
 import styles from './Cart.module.css';
 
 interface CartProps {
@@ -35,11 +47,11 @@ interface CartProps {
   initialPagaCon?: number | null;
 }
 
-const METODO_LABELS: Record<string, { label: string; icon: string }> = {
-  efectivo:    { label: 'Efectivo',    icon: '💵' },
-  nequi:       { label: 'Nequi',       icon: '📱' },
-  datafono:    { label: 'Datáfono',    icon: '💳' },
-  bancolombia: { label: 'Bancolombia', icon: '🏦' },
+const METODO_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
+  efectivo:    { label: 'Efectivo',    icon: <IconBanknote size={20} /> },
+  nequi:       { label: 'Nequi',       icon: <IconPhone size={20} /> },
+  datafono:    { label: 'Datáfono',    icon: <IconCreditCard size={20} /> },
+  bancolombia: { label: 'Bancolombia', icon: <IconLandmark size={20} /> },
 };
 
 /** Billetes de uso común en Colombia para elegir con un toque */
@@ -140,9 +152,17 @@ export const Cart: React.FC<CartProps> = ({
         await new Promise((res) => setTimeout(res, 800));
       }
       toast.success(
-        esEdicion
-          ? `Pedido #${editingOrderId} actualizado — cocina ya ve los cambios 🔄`
-          : 'Pedido enviado a cocina exitosamente 👨‍🍳'
+        esEdicion ? (
+          <>
+            <IconRefresh size={16} style={{ display: 'inline', verticalAlign: '-3px', marginRight: 4 }} />
+            Pedido #{editingOrderId} actualizado — cocina ya ve los cambios
+          </>
+        ) : (
+          <>
+            <IconChefHat size={16} style={{ display: 'inline', verticalAlign: '-3px', marginRight: 4 }} />
+            Pedido enviado a cocina exitosamente
+          </>
+        )
       );
       clearCart();
       resetPago();
@@ -178,7 +198,7 @@ export const Cart: React.FC<CartProps> = ({
   if (items.length === 0) {
     return (
       <div className={styles.emptyContainer}>
-        <div className={styles.emptyIcon}>🛒</div>
+        <div className={styles.emptyIcon}><IconCart size={40} /></div>
         <h3 className={styles.emptyTitle}>Tu carrito está vacío</h3>
         <p className={styles.emptyText}>
           Agrega productos del menú para comenzar tu pedido.
@@ -222,7 +242,7 @@ export const Cart: React.FC<CartProps> = ({
         {orderType === 'domicilio' && (
           <div className={styles.paymentSection}>
             <p className={styles.paymentLabel}>
-              <span className={styles.paymentIcon}>💳</span>
+              <span className={styles.paymentIcon}><IconCreditCard size={16} /></span>
               Método de pago
             </p>
             <div className={styles.paymentOptions}>
@@ -249,7 +269,8 @@ export const Cart: React.FC<CartProps> = ({
             {esEfectivoDomicilio && (
               <div className={styles.efectivoBox}>
                 <p className={styles.efectivoLabel}>
-                  💵 ¿Con cuánto paga? <span className={styles.efectivoOptional}>(para alistar la vuelta)</span>
+                  <IconBanknote size={16} style={{ display: 'inline', verticalAlign: '-3px', marginRight: 4 }} />
+                  ¿Con cuánto paga? <span className={styles.efectivoOptional}>(para alistar la vuelta)</span>
                 </p>
 
                 <div className={styles.billetes}>
@@ -299,14 +320,21 @@ export const Cart: React.FC<CartProps> = ({
 
                 {pagaConInsuficiente ? (
                   <p className={styles.vueltaError}>
-                    ⚠️ Paga con {formatCOP(pagaCon!)} pero el total es {formatCOP(total)}.
+                    <IconAlertTriangle size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} />
+                    Paga con {formatCOP(pagaCon!)} pero el total es {formatCOP(total)}.
                   </p>
                 ) : vuelta !== null ? (
                   <p className={styles.vueltaOk}>
                     {vuelta === 0 ? (
-                      <>✅ Paga completo — <strong>no hay que llevar vuelta</strong></>
+                      <>
+                        <IconCheckCircle size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} />
+                        Paga completo — <strong>no hay que llevar vuelta</strong>
+                      </>
                     ) : (
-                      <>🔁 Vuelta a alistar: <strong>{formatCOP(vuelta)}</strong></>
+                      <>
+                        <IconRefresh size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} />
+                        Vuelta a alistar: <strong>{formatCOP(vuelta)}</strong>
+                      </>
                     )}
                   </p>
                 ) : (
@@ -362,7 +390,8 @@ export const Cart: React.FC<CartProps> = ({
         {/* ── Aviso: mesa paga al final ── */}
         {orderType === 'mesa' && (
           <p className={styles.mesaNotice}>
-            🍽️ El pago se registra al cerrar la cuenta en la mesa.
+            <IconUtensils size={16} />
+            El pago se registra al cerrar la cuenta en la mesa.
           </p>
         )}
 

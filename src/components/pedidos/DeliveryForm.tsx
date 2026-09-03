@@ -4,6 +4,7 @@ import { OrderType, OrderDetails } from '@/types';
 import { TIPOS_ATENCION, SIN_DATO } from '@/lib/constants';
 import { formatCurrency } from '@/lib/utils';
 import { Input } from '../ui/Input';
+import { IconCheck, IconXCircle, IconLightbulb, IconScooter, IconClock, IconCalendar } from '@/components/ui/Icons';
 import deliveryStyles from './DeliveryForm.module.css';
 
 /** Montos sugeridos de un toque — el valor real siempre lo decide quien toma el pedido */
@@ -73,7 +74,11 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
           }
           aria-pressed={marcado}
         >
-          {marcado ? '✓ No responde' : '🚫 No responde'}
+          {marcado ? (
+            <><IconCheck size={12} style={{ display: 'inline', verticalAlign: '-1px', marginRight: 3 }} /> No responde</>
+          ) : (
+            <><IconXCircle size={12} style={{ display: 'inline', verticalAlign: '-1px', marginRight: 3 }} /> No responde</>
+          )}
         </button>
       </div>
     );
@@ -104,14 +109,16 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
             {renderCampoDomicilio('cliente_direccion', 'Dirección *', 'Ej: Calle 123 #45-67')}
 
             <p className={styles.noRespondeHint}>
-              💡 Si el cliente no da un dato (no dice su nombre, no confirma la dirección),
+              <IconLightbulb size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} />
+              Si el cliente no da un dato (no dice su nombre, no confirma la dirección),
               márcalo con <strong>No responde</strong> y el pedido sigue su curso normal.
             </p>
 
             {/* ── Costo de domicilio (opcional, lo define quien toma el pedido) ── */}
             <div className={styles.sectorBox}>
               <p className={styles.sectorLabel}>
-                🛵 Costo del domicilio <span className={styles.sectorOptional}>(opcional, si queda fuera del sector)</span>
+                <IconScooter size={16} style={{ display: 'inline', verticalAlign: '-3px', marginRight: 4 }} />
+                Costo del domicilio <span className={styles.sectorOptional}>(opcional, si queda fuera del sector)</span>
               </p>
 
               <div className={styles.sectorChips}>
@@ -163,7 +170,8 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
         {/* ── Hora de entrega programada (opcional para ambos tipos) ── */}
         <div className={deliveryStyles.horaEntregaGroup}>
           <label className={deliveryStyles.horaEntregaLabel}>
-            ⏰ Hora de entrega programada
+            <IconClock size={16} />
+            Hora de entrega programada
             <span className={deliveryStyles.horaEntregaOptional}>(opcional)</span>
           </label>
           <input
@@ -174,7 +182,8 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
           />
           {details.hora_entrega && (
             <p className={deliveryStyles.horaEntregaHint}>
-              📅 Este pedido quedará como <strong>programado</strong> y se mostrará en la parte superior de cocina con un countdown.
+              <IconCalendar size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} />
+              Este pedido quedará como <strong>programado</strong> y se mostrará en la parte superior de cocina con un countdown.
             </p>
           )}
         </div>

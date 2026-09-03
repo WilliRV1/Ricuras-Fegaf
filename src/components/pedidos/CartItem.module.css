@@ -80,7 +80,7 @@
   width: 32px;
   height: 32px;
   border-radius: var(--radius-sm);
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(248, 113, 113, 0.1);
   color: var(--color-danger);
   font-size: 1.1rem;
   transition: all 0.2s ease;
@@ -233,7 +233,8 @@
 }
 
 .notesIcon {
-  font-size: 0.9rem;
+  display: inline-flex;
+  color: var(--color-primary);
 }
 
 .notesText {

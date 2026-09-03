@@ -3,12 +3,13 @@ import Link from 'next/link';
 import styles from './page.module.css';
 import { sesionActual } from '@/lib/sesionServidor';
 import { puedeVer } from '@/lib/session';
+import { IconOrder, IconChefHat, IconCreditCard, IconBarChart } from '@/components/ui/Icons';
 
 const TARJETAS = [
-  { href: '/pedidos', icon: '🍔', title: 'Tomar Pedido', desc: 'Menú digital y envío de comandas a cocina.' },
-  { href: '/cocina', icon: '👨‍🍳', title: 'Cocina (KDS)', desc: 'Tablero de comandas en tiempo real.' },
-  { href: '/liquidacion', icon: '💳', title: 'Liquidación', desc: 'Cierre de órdenes y métodos de pago.' },
-  { href: '/dashboard', icon: '📊', title: 'Dashboard', desc: 'Métricas de ventas y cuadre diario.' },
+  { href: '/pedidos', Icon: IconOrder, tint: styles.iconPrimary, title: 'Tomar Pedido', desc: 'Menú digital y envío de comandas a cocina.' },
+  { href: '/cocina', Icon: IconChefHat, tint: styles.iconInfo, title: 'Cocina (KDS)', desc: 'Tablero de comandas en tiempo real.' },
+  { href: '/liquidacion', Icon: IconCreditCard, tint: styles.iconSuccess, title: 'Liquidación', desc: 'Cierre de órdenes y métodos de pago.' },
+  { href: '/dashboard', Icon: IconBarChart, tint: styles.iconWarning, title: 'Dashboard', desc: 'Métricas de ventas y cuadre diario.' },
 ];
 
 export default async function Home() {
@@ -38,7 +39,7 @@ export default async function Home() {
       <section className={styles.grid}>
         {tarjetas.map((t) => (
           <Link key={t.href} href={t.href} className={styles.card}>
-            <div className={styles.cardIcon}>{t.icon}</div>
+            <div className={`${styles.cardIcon} ${t.tint}`}><t.Icon size={26} /></div>
             <h2 className={styles.cardTitle}>{t.title}</h2>
             <p className={styles.cardDesc}>{t.desc}</p>
           </Link>

@@ -16,7 +16,7 @@
   transform: translate(-50%, -50%);
   width: 60vw;
   height: 60vw;
-  background: radial-gradient(circle, rgba(255, 107, 53, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
+  background: radial-gradient(circle, rgba(255, 107, 53, 0.18) 0%, rgba(21, 17, 14, 0) 70%);
   z-index: -1;
   pointer-events: none;
 }
@@ -46,6 +46,7 @@
 }
 
 .title {
+  font-family: var(--font-family-display);
   font-size: 3.5rem;
   font-weight: 800;
   line-height: 1.1;
@@ -72,7 +73,7 @@
 }
 
 .card {
-  background: rgba(30, 41, 59, 0.6);
+  background: rgba(35, 28, 22, 0.6);
   backdrop-filter: blur(12px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -95,21 +96,31 @@
   transform: translateY(-6px);
   border-color: rgba(255, 107, 53, 0.5);
   box-shadow: 0 20px 50px -10px rgba(255, 107, 53, 0.25), 0 0 0 1px rgba(255, 107, 53, 0.1);
-  background: rgba(30, 41, 59, 0.9);
+  background: rgba(35, 28, 22, 0.9);
 }
 
 .card:hover .cardIcon {
-  transform: scale(1.15) rotate(-3deg);
+  transform: scale(1.08) rotate(-3deg);
 }
 
 .cardIcon {
-  font-size: 3rem;
-  line-height: 1;
+  width: 56px;
+  height: 56px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
   transition: transform var(--transition-bounce);
-  display: inline-block;
 }
 
+.iconPrimary { background: rgba(255, 107, 53, 0.14); color: var(--color-primary-light); }
+.iconInfo { background: rgba(96, 165, 250, 0.14); color: var(--color-info); }
+.iconSuccess { background: rgba(52, 211, 153, 0.14); color: var(--color-success); }
+.iconWarning { background: rgba(251, 191, 36, 0.14); color: var(--color-warning); }
+
 .cardTitle {
+  font-family: var(--font-family-display);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-text);

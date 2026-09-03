@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { CartItem as CartItemType } from '@/types';
 import { useCart } from '@/hooks/useCart';
+import { IconTrash, IconScissors, IconPencil } from '@/components/ui/Icons';
 import styles from './CartItem.module.css';
 
 interface CartItemProps {
@@ -76,7 +77,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item, lineIndex = 1, lineTot
           title="Eliminar del carrito"
           disabled={isExiting}
         >
-          🗑️
+          <IconTrash size={16} />
         </button>
       </div>
 
@@ -111,7 +112,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item, lineIndex = 1, lineTot
               type="button"
               title="Separar en unidades para escribir observaciones distintas en cada una"
             >
-              ✂️ Separar en {item.cantidad}
+              <IconScissors size={14} /> Separar en {item.cantidad}
             </button>
           )}
         </div>
@@ -140,7 +141,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item, lineIndex = 1, lineTot
               onClick={() => setIsEditingNotes(true)}
               title="Haz clic para editar"
             >
-              <span className={styles.notesIcon}>📝</span>
+              <span className={styles.notesIcon}><IconPencil size={14} /></span>
               <span className={styles.notesText}>{item.notas}</span>
             </div>
           )}

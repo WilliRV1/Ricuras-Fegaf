@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react';
 import { Producto } from '@/types';
 import { toggleProductStatus } from '@/app/actions/productos';
 import { toast } from '@/components/ui/Toast';
+import { IconClipboard } from '@/components/ui/Icons';
 import styles from './StockManager.module.css';
 
 interface StockManagerProps {
@@ -43,7 +44,7 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos }) => {
         aria-expanded={isOpen}
       >
         <div className={styles.headerLeft}>
-          <span className={styles.icon}>📦</span>
+          <span className={styles.icon}><IconClipboard size={20} /></span>
           <h2 className={styles.title}>Control de Stock Rápido</h2>
         </div>
         <div className={styles.headerRight}>

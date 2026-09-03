@@ -18,6 +18,16 @@ import { DatePicker } from '@/components/dashboard/DatePicker';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import { PersonalManager } from '@/components/dashboard/PersonalManager';
 import { ToastContainer } from '@/components/ui/Toast';
+import {
+  IconBarChart,
+  IconCalendar,
+  IconRefresh,
+  IconAlertTriangle,
+  IconClipboard,
+  IconUtensils,
+  IconXCircle,
+  IconUser,
+} from '@/components/ui/Icons';
 import styles from './page.module.css';
 
 export const dynamic = 'force-dynamic'; // Siempre renderizar en el servidor (sin caché)
@@ -66,7 +76,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <main className={styles.main}>
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>📊 Dashboard de Ventas</h1>
+          <h1 className={styles.title}>
+            <IconBarChart size={28} style={{ marginRight: '10px', verticalAlign: '-4px' }} />
+            Dashboard de Ventas
+          </h1>
           <p className={styles.subtitle}>
             {esHoy ? `Hoy — ${fechaLabel}` : fechaLabel}
           </p>
@@ -75,26 +88,31 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <DatePicker currentDate={targetDate} />
           {!esHoy && (
             <a href="/dashboard" className={styles.refreshBtn}>
-              📅 Volver a Hoy
+              <IconCalendar size={15} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
+              Volver a Hoy
             </a>
           )}
           {esHoy && (
             <a href="/dashboard" className={styles.refreshBtn}>
-              🔄 Actualizar
+              <IconRefresh size={15} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
+              Actualizar
             </a>
           )}
         </div>
       </header>
 
       {!stats ? (
-        <div className={styles.errorState}>⚠️ Error al cargar métricas. Recarga la página.</div>
+        <div className={styles.errorState}>
+          <IconAlertTriangle size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
+          Error al cargar métricas. Recarga la página.
+        </div>
       ) : (
         <>
           {/* Arqueo de Caja (Deshabilitado temporalmente a petición del usuario) */}
           {/* 
           {esHoy && (
             <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>💰 Turno de Caja</h2>
+              <h2 className={styles.sectionTitle}>Turno de Caja</h2>
               <ArqueoCaja initialState={estadoCaja} />
             </section>
           )} 
@@ -108,7 +126,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           {/* Cartera por cobrar — arrastra deudas de todos los días */}
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
-              💸 Cartera por Cobrar
+              <IconClipboard size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
+              Cartera por Cobrar
               {cartera.length > 0 ? ` (${cartera.length})` : ''}
             </h2>
             <CarteraTable deudas={cartera} />
@@ -124,7 +143,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           {/* Productos más vendidos del día */}
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
-              🍽️ Productos Vendidos{productosVendidos.length > 0 ? ` (${productosVendidos.length} distintos)` : ''}
+              <IconUtensils size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
+              Productos Vendidos{productosVendidos.length > 0 ? ` (${productosVendidos.length} distintos)` : ''}
             </h2>
             <ProductosVendidosTable productos={productosVendidos} />
           </section>
@@ -132,7 +152,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           {cancelaciones.length > 0 && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>
-                ❌ Pedidos Cancelados ({cancelaciones.length})
+                <IconXCircle size={16} style={{ marginRight: '6px', verticalAlign: '-3px', color: 'var(--color-danger)' }} />
+                Pedidos Cancelados ({cancelaciones.length})
               </h2>
               <CancelacionesTable cancelados={cancelaciones} />
             </section>
@@ -147,7 +168,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
           {/* Personal: quién puede entrar y con qué permisos */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>👥 Personal</h2>
+            <h2 className={styles.sectionTitle}>
+              <IconUser size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
+              Personal
+            </h2>
             <PersonalManager />
           </section>
         </>

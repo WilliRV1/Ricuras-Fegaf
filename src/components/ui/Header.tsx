@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Rol, puedeVer } from '@/lib/session';
 import { cerrarSesion } from '@/app/actions/auth';
 import { cartStore } from '@/hooks/useCart';
+import { IconHome, IconOrder, IconChefHat, IconCreditCard, IconBarChart } from './Icons';
 import styles from './Header.module.css';
 
 interface HeaderProps {
@@ -15,11 +16,11 @@ interface HeaderProps {
 }
 
 const TODOS_LOS_ENLACES = [
-  { href: '/', label: 'Inicio', icon: '🏠' },
-  { href: '/pedidos', label: 'Pedidos', icon: '📱' },
-  { href: '/cocina', label: 'Cocina', icon: '👨‍🍳' },
-  { href: '/liquidacion', label: 'Liquidación', icon: '💰' },
-  { href: '/dashboard', label: 'Dashboard', icon: '📊' },
+  { href: '/', label: 'Inicio', Icon: IconHome },
+  { href: '/pedidos', label: 'Pedidos', Icon: IconOrder },
+  { href: '/cocina', label: 'Cocina', Icon: IconChefHat },
+  { href: '/liquidacion', label: 'Liquidación', Icon: IconCreditCard },
+  { href: '/dashboard', label: 'Dashboard', Icon: IconBarChart },
 ];
 
 export const Header: React.FC<HeaderProps> = ({ sesion }) => {
@@ -65,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({ sesion }) => {
               href={link.href}
               className={`${styles.navLink} ${pathname === link.href ? styles.active : ''}`}
             >
-              <span className={styles.navIcon}>{link.icon}</span>
+              <span className={styles.navIcon}><link.Icon size={17} /></span>
               <span className={styles.navLabel}>{link.label}</span>
             </Link>
           ))}

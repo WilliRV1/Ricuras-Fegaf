@@ -4,7 +4,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  background: rgba(10, 22, 40, 0.90);
+  background: rgba(21, 17, 14, 0.90);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid rgba(255, 107, 53, 0.15);
@@ -37,7 +37,7 @@
 }
 
 .icon {
-  font-size: 1.35rem;
+  display: flex;
   transition: transform var(--transition-bounce);
 }
 

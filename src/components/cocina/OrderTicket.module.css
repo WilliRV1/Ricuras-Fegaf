@@ -20,25 +20,25 @@
 }
 
 .ticketWarning {
-  background-color: rgba(245, 158, 11, 0.04);
-  border-color: rgba(245, 158, 11, 0.3);
+  background-color: rgba(251, 191, 36, 0.04);
+  border-color: rgba(251, 191, 36, 0.3);
 }
 
 .ticketDanger {
-  background-color: rgba(239, 68, 68, 0.05);
-  border-color: rgba(239, 68, 68, 0.4);
+  background-color: rgba(248, 113, 113, 0.05);
+  border-color: rgba(248, 113, 113, 0.4);
   animation: ticketDangerPulse 3s infinite;
 }
 
 @keyframes ticketDangerPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-  50% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15); }
 }
 
 /* Pedido modificado después de enviarlo */
 .ticketModificado {
   border-color: var(--color-warning);
-  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.4);
 }
 
 .modificadoBanner {
@@ -101,6 +101,9 @@
   font-size: 0.875rem;
   color: var(--color-text);
   opacity: 0.9;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Cronómetro */
@@ -115,17 +118,17 @@
 }
 
 .timerNormal {
-  background-color: rgba(16, 185, 129, 0.15); /* Success green */
+  background-color: rgba(52, 211, 153, 0.15); /* Success green */
   color: var(--color-success);
 }
 
 .timerWarning {
-  background-color: rgba(245, 158, 11, 0.15); /* Warning amber */
+  background-color: rgba(251, 191, 36, 0.15); /* Warning amber */
   color: var(--color-warning);
 }
 
 .timerDanger {
-  background-color: rgba(239, 68, 68, 0.15); /* Danger red */
+  background-color: rgba(248, 113, 113, 0.15); /* Danger red */
   color: var(--color-danger);
   animation: pulse 2s infinite;
 }
@@ -158,8 +161,10 @@
 }
 
 .domicilioIcon {
-  font-size: 1.125rem;
+  display: inline-flex;
+  color: var(--color-primary-light);
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .direccionLink {
@@ -203,11 +208,14 @@
   font-size: 0.8125rem;
   color: var(--color-text-muted);
   font-style: italic;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .cobrarTag {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
   gap: 5px;
   font-size: 0.9375rem;
@@ -227,13 +235,14 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
   border-radius: var(--radius-sm);
 }
 
 .efectivoIcon {
-  font-size: 1.25rem;
+  display: inline-flex;
+  color: var(--color-success);
   flex-shrink: 0;
 }
 
@@ -294,14 +303,14 @@
 
 /* Notas resaltadas */
 .itemRowHasNotes {
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(248, 113, 113, 0.3);
+  background: rgba(248, 113, 113, 0.05);
 }
 
 .itemNotes {
   margin-top: 6px;
   padding: 6px 8px;
-  background-color: rgba(239, 68, 68, 0.15);
+  background-color: rgba(248, 113, 113, 0.15);
   color: #FCA5A5; /* Red 300 for dark mode */
   border-left: 3px solid var(--color-danger);
   font-size: 0.875rem;
@@ -313,7 +322,8 @@
 }
 
 .noteIcon {
-  font-size: 1rem;
+  display: inline-flex;
+  margin-top: 2px;
 }
 
 /* Acciones */

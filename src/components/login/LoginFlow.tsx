@@ -7,6 +7,7 @@ import { UsuarioLogin } from '@/lib/session';
 import { iniciarSesion, cambiarPin } from '@/app/actions/auth';
 import { PinPad } from '@/components/ui/PinPad';
 import { cartStore } from '@/hooks/useCart';
+import { IconCrown, IconReceipt, IconChefHat, IconUser, IconChevronLeft } from '@/components/ui/Icons';
 import styles from './LoginFlow.module.css';
 
 interface LoginFlowProps {
@@ -23,10 +24,10 @@ type Paso =
   | { tipo: 'pin-nuevo'; usuario: UsuarioLogin; pinTemporal: string }
   | { tipo: 'pin-nuevo-repetir'; usuario: UsuarioLogin; pinTemporal: string; pinNuevo: string };
 
-const ICONO_ROL: Record<string, string> = {
-  admin: '👑',
-  cajero: '🧾',
-  cocina: '👨‍🍳',
+const ICONO_ROL: Record<string, React.ComponentType<{ size?: number }>> = {
+  admin: IconCrown,
+  cajero: IconReceipt,
+  cocina: IconChefHat,
 };
 
 const ETIQUETA_ROL: Record<string, string> = {
@@ -161,18 +162,23 @@ export const LoginFlow: React.FC<LoginFlowProps> = ({ usuarios, errorCarga }) =>
               </p>
             ) : (
               <div className={styles.personas}>
-                {usuarios.map((usuario) => (
-                  <button
-                    key={usuario.id}
-                    type="button"
-                    className={styles.persona}
-                    onClick={() => elegirPersona(usuario)}
-                  >
-                    <span className={styles.personaIcono}>{ICONO_ROL[usuario.rol] ?? '👤'}</span>
-                    <span className={styles.personaNombre}>{usuario.nombre}</span>
-                    <span className={styles.personaRol}>{ETIQUETA_ROL[usuario.rol] ?? usuario.rol}</span>
-                  </button>
-                ))}
+                {usuarios.map((usuario) => {
+                  const IconoRol = ICONO_ROL[usuario.rol] ?? IconUser;
+                  return (
+                    <button
+                      key={usuario.id}
+                      type="button"
+                      className={styles.persona}
+                      onClick={() => elegirPersona(usuario)}
+                    >
+                      <span className={styles.personaIcono}>
+                        <IconoRol size={30} />
+                      </span>
+                      <span className={styles.personaNombre}>{usuario.nombre}</span>
+                      <span className={styles.personaRol}>{ETIQUETA_ROL[usuario.rol] ?? usuario.rol}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </>
@@ -201,7 +207,8 @@ export const LoginFlow: React.FC<LoginFlowProps> = ({ usuarios, errorCarga }) =>
             />
 
             <button type="button" className={styles.volver} onClick={volverAlInicio}>
-              {paso.tipo === 'pin' ? '← Elegir otro nombre' : '← Cancelar'}
+              <IconChevronLeft size={16} />
+              {paso.tipo === 'pin' ? 'Elegir otro nombre' : 'Cancelar'}
             </button>
           </>
         )}

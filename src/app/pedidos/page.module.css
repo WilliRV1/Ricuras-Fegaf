@@ -61,7 +61,7 @@
   background: linear-gradient(
     135deg,
     var(--color-surface) 0%,
-    rgba(30, 41, 59, 0.7) 100%
+    var(--color-surface-2) 100%
   );
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-lg);
@@ -75,9 +75,9 @@
 }
 
 .cartPlaceholderIcon {
-  font-size: 2.5rem;
+  display: flex;
   line-height: 1;
-  filter: grayscale(0.5);
+  color: var(--color-text-subtle);
 }
 
 .emptyCartPlaceholder h3 {

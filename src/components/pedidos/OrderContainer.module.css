@@ -73,6 +73,12 @@
   color: var(--color-text);
 }
 
+.editingBannerTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* Casilla "cocina tiene que preparar lo que agregué" */
 .avisarCocina {
   display: flex;
@@ -202,7 +208,8 @@
 }
 
 .menuTitleIcon {
-  font-size: 1.25rem;
+  display: flex;
+  color: var(--color-primary);
 }
 
 /* Contador de productos encontrados */
@@ -228,7 +235,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   border-radius: var(--radius-lg);
@@ -253,9 +260,10 @@
 }
 
 .lockIcon {
-  font-size: 2.5rem;
+  display: flex;
+  justify-content: center;
   line-height: 1;
-  filter: grayscale(0.3);
+  color: var(--color-text-subtle);
 }
 
 .lockText {
@@ -318,7 +326,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(10, 22, 40, 0.6);
+    background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 999;

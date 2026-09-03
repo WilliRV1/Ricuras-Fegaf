@@ -21,7 +21,7 @@
   max-width: 400px;
   padding: 14px 18px;
   border-radius: var(--radius-md);
-  background: rgba(30, 41, 59, 0.92);
+  background: rgba(35, 28, 22, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -48,22 +48,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
 }
 
 /* Variantes de ícono */
 .iconSuccess {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(52, 211, 153, 0.15);
   color: var(--color-success);
 }
 
 .iconError {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(248, 113, 113, 0.15);
   color: var(--color-danger);
 }
 
 .iconInfo {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(96, 165, 250, 0.15);
   color: var(--color-info);
 }
 

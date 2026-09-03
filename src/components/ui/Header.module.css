@@ -6,7 +6,7 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(10, 22, 40, 0.80);
+  background: rgba(21, 17, 14, 0.80);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 107, 53, 0.12);
@@ -45,6 +45,7 @@
 }
 
 .title {
+  font-family: var(--font-family-display);
   font-weight: 800;
   font-size: 1.125rem;
   color: var(--color-text);
@@ -85,7 +86,8 @@
 }
 
 .navIcon {
-  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
 }
 
 /* ----------------------------------------------------------

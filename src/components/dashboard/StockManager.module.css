@@ -20,7 +20,7 @@
 }
 
 .headerToggle:hover {
-  background-color: var(--color-bg);
+  background-color: var(--color-background);
 }
 
 .headerLeft {
@@ -30,7 +30,9 @@
 }
 
 .icon {
-  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  color: var(--color-primary);
 }
 
 .title {
@@ -50,7 +52,7 @@
   font-size: 0.875rem;
   color: var(--color-danger);
   font-weight: 600;
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: rgba(248, 113, 113, 0.1);
   padding: 4px 10px;
   border-radius: var(--radius-full);
 }
@@ -98,8 +100,8 @@
 }
 
 .cardInactive {
-  background-color: rgba(239, 68, 68, 0.05);
-  border-color: rgba(239, 68, 68, 0.2);
+  background-color: rgba(248, 113, 113, 0.05);
+  border-color: rgba(248, 113, 113, 0.2);
   opacity: 0.8;
 }
 

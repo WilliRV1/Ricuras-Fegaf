@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Sora } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+const sora = Sora({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  variable: "--font-sora",
   display: "swap",
 });
 
@@ -29,7 +36,7 @@ export default async function RootLayout({
   const datosSesion = sesion ? { nombre: sesion.nombre, rol: sesion.rol } : null;
 
   return (
-    <html lang="es" className={inter.variable}>
+    <html lang="es" className={`${inter.variable} ${sora.variable}`}>
       <body>
         <Header sesion={datosSesion} />
         <main className="main-content">

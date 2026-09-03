@@ -146,27 +146,27 @@
 }
 
 /* Colores por método de pago */
-.efectivo { border-color: rgba(16, 185, 129, 0.3); }
+.efectivo { border-color: rgba(52, 211, 153, 0.3); }
 .efectivo .metricValue { color: var(--color-success); }
 
 .nequi { border-color: rgba(138, 43, 226, 0.3); }
 .nequi .metricValue { color: #A78BFA; }
 
-.datafono { border-color: rgba(245, 158, 11, 0.3); }
+.datafono { border-color: rgba(251, 191, 36, 0.3); }
 .datafono .metricValue { color: var(--color-warning); }
 
 /* Pedidos por tipo */
 .total { border-color: rgba(255, 107, 53, 0.3); }
 .total .metricValueLg { color: var(--color-primary-light); }
 
-.mesa { border-color: rgba(59, 130, 246, 0.3); }
+.mesa { border-color: rgba(96, 165, 250, 0.3); }
 .mesa .metricValueLg { color: #60A5FA; }
 
-.domicilio { border-color: rgba(16, 185, 129, 0.3); }
+.domicilio { border-color: rgba(52, 211, 153, 0.3); }
 .domicilio .metricValueLg { color: var(--color-success); }
 
 .errorState {
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: rgba(248, 113, 113, 0.1);
   border: 1px solid var(--color-danger);
   border-radius: var(--radius-md);
   padding: 24px;
