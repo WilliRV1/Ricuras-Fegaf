@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test:db": "node scripts/test-migracion.mjs",
     "test:usuarios": "node scripts/test-usuarios.mjs",
-    "test:acceso": "node scripts/test-acceso.mjs"
+    "test:acceso": "node scripts/test-acceso.mjs",
+    "test:precios": "node scripts/test-precios.mjs",
+    "test:caja": "node scripts/test-arqueos-caja.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

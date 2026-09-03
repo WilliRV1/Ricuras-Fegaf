@@ -336,7 +336,12 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
 
   const isFormValid = (() => {
     if (!orderType) return false;
-    if (orderType === TIPOS_ATENCION.MESA) return !!orderDetails.numero_mesa;
+    if (orderType === TIPOS_ATENCION.MESA) {
+      // "0" es un string truthy, así que sin este chequeo pasaba como mesa
+      // válida. Se exige un número mayor a cero.
+      const mesa = Number(orderDetails.numero_mesa);
+      return Number.isInteger(mesa) && mesa > 0;
+    }
     return !!(
       orderDetails.cliente_direccion
     );
