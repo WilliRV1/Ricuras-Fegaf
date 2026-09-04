@@ -14,7 +14,7 @@ import { CancelacionesTable } from '@/components/dashboard/CancelacionesTable';
 import { CarteraTable } from '@/components/dashboard/CarteraTable';
 import { ProductosVendidosTable } from '@/components/dashboard/ProductosVendidosTable';
 import { StockManager } from '@/components/dashboard/StockManager';
-import { DatePicker } from '@/components/dashboard/DatePicker';
+import { DateRangeFilter } from '@/components/dashboard/DateRangeFilter';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import { PersonalManager } from '@/components/dashboard/PersonalManager';
 import { ToastContainer } from '@/components/ui/Toast';
@@ -33,7 +33,9 @@ import styles from './page.module.css';
 export const dynamic = 'force-dynamic'; // Siempre renderizar en el servidor (sin caché)
 
 interface DashboardPageProps {
-  searchParams: Promise<{ date?: string }>;
+  // 'date' se mantiene por compatibilidad con enlaces guardados de antes del
+  // filtro por rango: si llega solo, se toma como un rango de un día.
+  searchParams: Promise<{ from?: string; to?: string; date?: string }>;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -43,11 +45,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   if (!sesion) redirect('/login');
   if (!esAdminOSuperior(sesion.rol)) redirect(rutaInicial(sesion.rol));
 
-  const { date } = await searchParams;
+  const { from: fromParam, to: toParam, date } = await searchParams;
 
   // Calcular la fecha en la zona horaria de Colombia (America/Bogota)
   const todayISO = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const targetDate = date || todayISO;
+  const from = fromParam || date || todayISO;
+  const to = toParam || date || from;
 
   const [
     stats,
@@ -57,20 +60,26 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     cancelaciones,
     { data: productos },
   ] = await Promise.all([
-    getResumenDelDia(targetDate),
-    getPedidosRecientes(50, targetDate),
-    getProductosVendidosDelDia(targetDate),
+    getResumenDelDia(from, to),
+    getPedidosRecientes(50, from, to),
+    getProductosVendidosDelDia(from, to),
     // La cartera no depende de la fecha: son todas las deudas abiertas
     getCarteraPendiente(),
-    getCancelacionesDelDia(targetDate),
+    getCancelacionesDelDia(from, to),
     (await import('@/lib/supabase/server')).createClient().then(sb => sb.from('productos').select('*').order('nombre', { ascending: true })),
   ]);
 
-  const fechaLabel = new Date(`${targetDate}T12:00:00`).toLocaleDateString('es-CO', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-  });
+  const formatoFecha = (f: string) =>
+    new Date(`${f}T12:00:00`).toLocaleDateString('es-CO', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    });
 
-  const esHoy = targetDate === todayISO;
+  const esUnSoloDia = from === to;
+  const fechaLabel = esUnSoloDia
+    ? formatoFecha(from)
+    : `Del ${new Date(`${from}T12:00:00`).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })} al ${formatoFecha(to)}`;
+
+  const esHoy = from === todayISO && to === todayISO;
 
   return (
     <main className={styles.main}>
@@ -85,7 +94,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <DatePicker currentDate={targetDate} />
+          <DateRangeFilter from={from} to={to} />
           {!esHoy && (
             <a href="/dashboard" className={styles.refreshBtn}>
               <IconCalendar size={15} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
@@ -161,9 +170,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
-              {esHoy ? 'Últimos Pedidos (Hoy)' : `Pedidos del ${fechaLabel}`}
+              {esHoy ? 'Últimos Pedidos (Hoy)' : esUnSoloDia ? `Pedidos del ${fechaLabel}` : `Pedidos — ${fechaLabel}`}
             </h2>
-            <PedidosTable pedidos={pedidosRecientes} />
+            <PedidosTable pedidos={pedidosRecientes} mostrarFecha={!esUnSoloDia} />
           </section>
 
           {/* Personal: quién puede entrar y con qué permisos */}
