@@ -9,7 +9,7 @@
  * proxy de Next, que puede ejecutarse fuera de Node.
  */
 
-export type Rol = 'cajero' | 'cocina' | 'admin';
+export type Rol = 'cajero' | 'cocina' | 'admin' | 'dev';
 
 export interface Sesion {
   id: number;
@@ -137,7 +137,7 @@ export async function leerToken(token: string | undefined): Promise<Sesion | nul
     const sesion = JSON.parse(new TextDecoder().decode(desdeBase64Url(cuerpo))) as Sesion;
 
     if (typeof sesion.id !== 'number' || typeof sesion.nombre !== 'string') return null;
-    if (!['cajero', 'cocina', 'admin'].includes(sesion.rol)) return null;
+    if (!['cajero', 'cocina', 'admin', 'dev'].includes(sesion.rol)) return null;
     if (sesion.exp < Math.floor(Date.now() / 1000)) return null;
 
     return sesion;
@@ -156,13 +156,21 @@ const RUTAS_POR_ROL: Record<Rol, string[]> = {
   cocina: ['/cocina'],
   cajero: ['/', '/pedidos', '/cocina', '/liquidacion'],
   admin: ['/', '/pedidos', '/cocina', '/liquidacion', '/dashboard'],
+  // Dev/tester: mismo alcance que admin, para probar todo el sistema sin
+  // usar la cuenta real de administración del negocio.
+  dev: ['/', '/pedidos', '/cocina', '/liquidacion', '/dashboard'],
 };
 
 /** Primera pantalla al entrar, según lo que hace cada quien */
 export function rutaInicial(rol: Rol): string {
   if (rol === 'cocina') return '/cocina';
-  if (rol === 'admin') return '/dashboard';
+  if (rol === 'admin' || rol === 'dev') return '/dashboard';
   return '/pedidos';
+}
+
+/** Roles con acceso total al sistema (administración + panel de personal) */
+export function esAdminOSuperior(rol: Rol): boolean {
+  return rol === 'admin' || rol === 'dev';
 }
 
 export function puedeVer(rol: Rol, ruta: string): boolean {

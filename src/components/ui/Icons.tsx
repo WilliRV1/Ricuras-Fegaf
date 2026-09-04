@@ -256,6 +256,16 @@ export function IconCrown({ size = 24, ...props }: IconProps) {
   );
 }
 
+/** Código entre corchetes angulares: cuenta de desarrollo/pruebas. */
+export function IconCode({ size = 24, ...props }: IconProps) {
+  return (
+    <svg {...base(size, props)}>
+      <polyline points="8 6 2 12 8 18" />
+      <polyline points="16 6 22 12 16 18" />
+    </svg>
+  );
+}
+
 export function IconChevronLeft({ size = 24, ...props }: IconProps) {
   return (
     <svg {...base(size, props)}>

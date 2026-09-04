@@ -128,6 +128,11 @@ for (const ruta of ['/pedidos', '/liquidacion', '/cocina', '/dashboard']) {
   check(`administración entra a ${ruta}`, (await pedir(ruta, admin)).estado === 200);
 }
 
+const dev = await cookieDe('dev');
+for (const ruta of ['/pedidos', '/liquidacion', '/cocina', '/dashboard']) {
+  check(`dev/tester entra a ${ruta}`, (await pedir(ruta, dev)).estado === 200);
+}
+
 console.log('\n[4] Con sesión abierta, el login sobra');
 const loginConSesion = await pedir('/login', admin);
 check(
