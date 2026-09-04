@@ -33,9 +33,11 @@ interface PedidoHistorial {
 
 interface PedidosTableProps {
   pedidos: PedidoHistorial[];
+  /** true cuando la tabla muestra más de un día: la columna "Hora" agrega la fecha para no confundir filas de días distintos */
+  mostrarFecha?: boolean;
 }
 
-export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
+export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos, mostrarFecha = false }) => {
   if (!pedidos || pedidos.length === 0) {
     return (
       <div className={styles.container} style={{ textAlign: 'center', padding: '40px' }}>
@@ -132,11 +134,18 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos }) => {
 
   const formatHora = (isoDate: string | null) => {
     if (!isoDate) return '-';
-    return new Date(isoDate).toLocaleTimeString('es-CO', { 
+    const hora = new Date(isoDate).toLocaleTimeString('es-CO', {
       timeZone: 'America/Bogota',
-      hour: '2-digit', 
-      minute: '2-digit' 
+      hour: '2-digit',
+      minute: '2-digit'
     });
+    if (!mostrarFecha) return hora;
+    const dia = new Date(isoDate).toLocaleDateString('es-CO', {
+      timeZone: 'America/Bogota',
+      day: '2-digit',
+      month: '2-digit'
+    });
+    return `${dia} ${hora}`;
   };
 
   const getTiempoBadge = (created: string | null, closed: string | null) => {

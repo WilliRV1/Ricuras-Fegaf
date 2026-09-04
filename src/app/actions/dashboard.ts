@@ -16,15 +16,24 @@ function ventaNeta(pedido: { total: number | null; costo_domicilio: number | nul
 
 /**
  * Calcula la ventana de tiempo para las consultas del Dashboard.
- * Si es "Hoy" y hay un turno abierto, usa la hora de apertura del turno.
- * De lo contrario, usa el día calendario estricto.
+ *
+ * Si el rango es exactamente "hoy" (un solo día, el de hoy) y hay un turno de
+ * caja abierto, usa la hora de apertura del turno en vez de la medianoche —
+ * así el corte coincide con el que la dueña usa para cuadrar caja. Para
+ * cualquier otro rango (un día pasado, una semana, un mes) se usa el
+ * calendario estricto: el turno abierto solo tiene sentido para "hoy".
  */
-async function getTimeWindow(supabase: Awaited<ReturnType<typeof createClient>>, dateStr?: string) {
+async function getTimeWindow(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  fromStr?: string,
+  toStr?: string
+) {
   const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const esHoy = !dateStr || dateStr === bogotaDateStr;
-  const actualDateStr = dateStr || bogotaDateStr;
+  const from = fromStr || bogotaDateStr;
+  const to = toStr || from;
+  const esSoloHoy = from === to && from === bogotaDateStr;
 
-  if (esHoy) {
+  if (esSoloHoy) {
     // Buscar si hay turno abierto
     const { data: arqueo } = await supabase
       .from('arqueos_caja')
@@ -40,21 +49,23 @@ async function getTimeWindow(supabase: Awaited<ReturnType<typeof createClient>>,
     }
   }
 
-  // Fallback a día calendario
+  // Fallback a calendario estricto (día único o rango de varios días)
   return {
-    startOfDay: new Date(`${actualDateStr}T00:00:00-05:00`).toISOString(),
-    endOfDay: new Date(`${actualDateStr}T23:59:59.999-05:00`).toISOString()
+    startOfDay: new Date(`${from}T00:00:00-05:00`).toISOString(),
+    endOfDay: new Date(`${to}T23:59:59.999-05:00`).toISOString()
   };
 }
 
 /**
- * Retorna el resumen de un día específico o el día actual.
- * @param dateStr Formato 'YYYY-MM-DD' opcional.
+ * Retorna el resumen del rango [fromStr, toStr] (ambos inclusive), o del día
+ * actual si no se pasa ninguno.
+ * @param fromStr Formato 'YYYY-MM-DD' opcional.
+ * @param toStr Formato 'YYYY-MM-DD' opcional; si se omite, igual a fromStr.
  */
-export async function getResumenDelDia(dateStr?: string) {
+export async function getResumenDelDia(fromStr?: string, toStr?: string) {
   const supabase = await createClient();
 
-  const { startOfDay, endOfDay } = await getTimeWindow(supabase, dateStr);
+  const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
 
   // Tres consultas independientes:
   //  1. Los pedidos del día (la venta de hoy).
@@ -271,10 +282,10 @@ export async function getCarteraPendiente() {
  * Cancelar no borra el pedido: queda todo guardado. Esta consulta es la que
  * permite reconstruir una venta que alguien anuló y no volvió a montar.
  */
-export async function getCancelacionesDelDia(dateStr?: string) {
+export async function getCancelacionesDelDia(fromStr?: string, toStr?: string) {
   const supabase = await createClient();
 
-  const { startOfDay, endOfDay } = await getTimeWindow(supabase, dateStr);
+  const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
 
   const { data, error } = await supabase
     .from('pedidos')
@@ -289,10 +300,14 @@ export async function getCancelacionesDelDia(dateStr?: string) {
     return [];
   }
 
+  // Con un rango de más de un día, la hora sola no basta para distinguir filas.
+  const conFecha = !!fromStr && !!toStr && fromStr !== toStr;
+
   return (data ?? []).map(p => ({
     id: p.id,
     hora: new Intl.DateTimeFormat('es-CO', {
       timeZone: 'America/Bogota',
+      ...(conFecha ? { day: '2-digit' as const, month: '2-digit' as const } : {}),
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
@@ -323,10 +338,10 @@ function resumirProductos(
 /**
  * Retorna los últimos N pedidos con sus detalles para la tabla histórica.
  */
-export async function getPedidosRecientes(limit: number = 20, dateStr?: string) {
+export async function getPedidosRecientes(limit: number = 20, fromStr?: string, toStr?: string) {
   const supabase = await createClient();
 
-  const { startOfDay, endOfDay } = await getTimeWindow(supabase, dateStr);
+  const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
 
   const { data, error } = await supabase
     .from('pedidos')
@@ -348,10 +363,10 @@ export async function getPedidosRecientes(limit: number = 20, dateStr?: string) 
  * Retorna un resumen de los productos vendidos en el día, agrupados por nombre.
  * Solo incluye pedidos con estado 'pagado'.
  */
-export async function getProductosVendidosDelDia(dateStr?: string) {
+export async function getProductosVendidosDelDia(fromStr?: string, toStr?: string) {
   const supabase = await createClient();
 
-  const { startOfDay, endOfDay } = await getTimeWindow(supabase, dateStr);
+  const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
 
   // Traer todos los detalle_pedidos de pedidos pagados en el día
   const { data, error } = await supabase

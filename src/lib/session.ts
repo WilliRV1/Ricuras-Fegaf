@@ -81,17 +81,21 @@ function desdeBase64Url(texto: string): Uint8Array {
   return Uint8Array.from(binario, (c) => c.charCodeAt(0));
 }
 
-async function firmar(datos: string): Promise<string> {
+async function firmarCon(datos: string, clavePlana: string): Promise<string> {
   const codificador = new TextEncoder();
   const clave = await crypto.subtle.importKey(
     'raw',
-    codificador.encode(secreto()),
+    codificador.encode(clavePlana),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']
   );
   const firma = await crypto.subtle.sign('HMAC', clave, codificador.encode(datos));
   return aBase64Url(new Uint8Array(firma));
+}
+
+function firmar(datos: string): Promise<string> {
+  return firmarCon(datos, secreto());
 }
 
 /** Comparación en tiempo constante: comparar con === filtra información */
@@ -144,6 +148,58 @@ export async function leerToken(token: string | undefined): Promise<Sesion | nul
   } catch {
     return null;
   }
+}
+
+/* ------------------------------------------------------------------
+   Token para Supabase — le prueba a la base que la sesión ya inició
+   ------------------------------------------------------------------
+
+   La sesión de esta app es propia (la cookie de arriba), no la de Supabase:
+   Postgres no tiene forma de saber por sí solo si alguien ya entró. Por eso
+   las políticas de lectura de las tablas con datos del negocio (pedidos,
+   detalle_pedidos, pagos_pedido, arqueos_caja) exigían antes 'anon' —
+   cualquiera con la clave pública del proyecto podía leerlas sin loguearse,
+   dueño del teléfono/dirección del cliente incluido.
+
+   La solución: al iniciar sesión también se firma un JWT normal (header.
+   payload.firma, todo en base64url) con el JWT Secret del proyecto de
+   Supabase — el mismo que usa para firmar sus propias claves. PostgREST y
+   Realtime lo validan solos, sin que exista ningún usuario de Supabase Auth:
+   ven `role: authenticated` y las políticas pueden exigir esa etiqueta en
+   vez de dejar pasar a cualquiera. Ver migración
+   20260904000000_cerrar_lectura_publica.sql. */
+
+function secretoSupabase(): string | null {
+  const desdeEntorno = process.env.SUPABASE_JWT_SECRET;
+  return desdeEntorno && desdeEntorno.length >= 16 ? desdeEntorno : null;
+}
+
+/**
+ * Firma un JWT que Supabase acepta como "autenticado", a partir de una
+ * sesión ya validada. Devuelve null si falta SUPABASE_JWT_SECRET — en ese
+ * caso el cliente de Supabase sigue funcionando como 'anon' (comportamiento
+ * de antes), no se rompe nada, solo no se cierra la lectura pública.
+ */
+export async function crearTokenSupabase(sesion: Sesion): Promise<string | null> {
+  const clave = secretoSupabase();
+  if (!clave) return null;
+
+  const encabezado = { alg: 'HS256', typ: 'JWT' };
+  const cuerpo = {
+    role: 'authenticated',
+    sub: String(sesion.id),
+    app_rol: sesion.rol,
+    iat: Math.floor(Date.now() / 1000),
+    exp: sesion.exp,
+  };
+
+  const cuerpoTexto = new TextEncoder().encode(JSON.stringify(cuerpo));
+  const encabezadoTexto = new TextEncoder().encode(JSON.stringify(encabezado));
+  const encabezadoB64 = aBase64Url(encabezadoTexto);
+  const cuerpoB64 = aBase64Url(cuerpoTexto);
+  const firma = await firmarCon(`${encabezadoB64}.${cuerpoB64}`, clave);
+
+  return `${encabezadoB64}.${cuerpoB64}.${firma}`;
 }
 
 /* ------------------------------------------------------------------
