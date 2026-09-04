@@ -47,7 +47,7 @@ export default async function Home() {
       </section>
 
       <footer className={styles.footer}>
-        <p>© 2026 Ricuras Fegaf — Fase 1 (MVP)</p>
+        <p>© 2026 Ricuras Fegaf</p>
       </footer>
     </main>
   );
