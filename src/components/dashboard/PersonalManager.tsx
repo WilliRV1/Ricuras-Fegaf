@@ -10,13 +10,14 @@ import {
 } from '@/app/actions/personal';
 import { toast } from '@/components/ui/Toast';
 import { PinPad } from '@/components/ui/PinPad';
-import { IconReceipt, IconChefHat, IconCrown, IconLock, IconPlus } from '@/components/ui/Icons';
+import { IconReceipt, IconChefHat, IconCrown, IconCode, IconLock, IconPlus } from '@/components/ui/Icons';
 import styles from './PersonalManager.module.css';
 
 const ROLES: { valor: Rol; etiqueta: React.ReactNode; explicacion: string }[] = [
   { valor: 'cajero', etiqueta: <><IconReceipt size={14} /> Caja y pedidos</>, explicacion: 'Toma pedidos y cobra' },
   { valor: 'cocina', etiqueta: <><IconChefHat size={14} /> Cocina</>, explicacion: 'Solo ve el tablero de cocina' },
   { valor: 'admin', etiqueta: <><IconCrown size={14} /> Administración</>, explicacion: 'Todo, incluido este dashboard' },
+  { valor: 'dev', etiqueta: <><IconCode size={14} /> Dev / Tester</>, explicacion: 'Igual que administración, para pruebas' },
 ];
 
 /** PIN temporal sugerido: 4 dígitos que no sean obvios ni repetidos */

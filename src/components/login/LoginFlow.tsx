@@ -7,7 +7,7 @@ import { UsuarioLogin } from '@/lib/session';
 import { iniciarSesion, cambiarPin } from '@/app/actions/auth';
 import { PinPad } from '@/components/ui/PinPad';
 import { cartStore } from '@/hooks/useCart';
-import { IconCrown, IconReceipt, IconChefHat, IconUser, IconChevronLeft } from '@/components/ui/Icons';
+import { IconCrown, IconReceipt, IconChefHat, IconCode, IconUser, IconChevronLeft } from '@/components/ui/Icons';
 import styles from './LoginFlow.module.css';
 
 interface LoginFlowProps {
@@ -28,12 +28,14 @@ const ICONO_ROL: Record<string, React.ComponentType<{ size?: number }>> = {
   admin: IconCrown,
   cajero: IconReceipt,
   cocina: IconChefHat,
+  dev: IconCode,
 };
 
 const ETIQUETA_ROL: Record<string, string> = {
   admin: 'Administración',
   cajero: 'Caja y pedidos',
   cocina: 'Cocina',
+  dev: 'Dev / Tester',
 };
 
 /**

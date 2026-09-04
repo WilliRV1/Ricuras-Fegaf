@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { leerToken, COOKIE_SESION, PersonaAdmin } from '@/lib/session';
+import { leerToken, COOKIE_SESION, PersonaAdmin, esAdminOSuperior } from '@/lib/session';
 import { mensajeDeErrorAuth } from '@/lib/authErrors';
 import { cookies } from 'next/headers';
 
@@ -20,7 +20,7 @@ import { cookies } from 'next/headers';
 /** Id de quien tiene la sesión abierta, si es administrador */
 async function adminDeLaSesion() {
   const sesion = await leerToken((await cookies()).get(COOKIE_SESION)?.value);
-  if (!sesion || sesion.rol !== 'admin') return null;
+  if (!sesion || !esAdminOSuperior(sesion.rol)) return null;
   return sesion;
 }
 

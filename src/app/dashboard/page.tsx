@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSesion } from '@/app/actions/auth';
-import { rutaInicial } from '@/lib/session';
+import { rutaInicial, esAdminOSuperior } from '@/lib/session';
 import {
   getResumenDelDia,
   getPedidosRecientes,
@@ -41,7 +41,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   // que sirve las cifras del negocio y no debe depender de una sola barrera.
   const sesion = await getSesion();
   if (!sesion) redirect('/login');
-  if (sesion.rol !== 'admin') redirect(rutaInicial(sesion.rol));
+  if (!esAdminOSuperior(sesion.rol)) redirect(rutaInicial(sesion.rol));
 
   const { date } = await searchParams;
 

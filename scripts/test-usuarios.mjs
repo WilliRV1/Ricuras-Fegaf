@@ -217,6 +217,21 @@ try {
     'NOMBRE_REPETIDO'
   );
 
+  const { rows: [nuevoDev] } = await client.query(
+    'SELECT crear_usuario($1, $2, $3, $4, $5) AS id',
+    [admin.id, '8462', '  Tester  ', 'dev', '5031']
+  );
+  check('la dueña puede crear una cuenta dev/tester', Number.isInteger(nuevoDev.id));
+
+  const { rows: [tester] } = await client.query('SELECT rol FROM usuarios WHERE id = $1', [nuevoDev.id]);
+  check('la cuenta dev queda con rol dev', tester.rol === 'dev', `(${tester.rol})`);
+
+  const { rows: [creadoPorDev] } = await client.query(
+    'SELECT crear_usuario($1, $2, $3, $4, $5) AS id',
+    [nuevoDev.id, '5031', 'Creado por dev', 'cajero', '5032']
+  );
+  check('una cuenta dev administra igual que admin', Number.isInteger(creadoPorDev.id));
+
   await debeFallar(
     client,
     'rechaza un rol inventado',
