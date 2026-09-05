@@ -41,21 +41,34 @@ try {
   await client.query(sql);
   console.log('  ok    es idempotente');
 
-  await client.query("SET LOCAL ROLE anon");
+  // Desde 20260904000000_cerrar_lectura_publica, la lectura de arqueos_caja
+  // ya no es para 'anon': el dashboard la lee con sesión, así que el rol
+  // real a simular es 'authenticated'. anon se prueba aparte, para
+  // confirmar que de verdad quedó afuera (antes sí podía leerla).
+  await client.query("SET LOCAL ROLE authenticated");
 
-  console.log('\n[2] Lectura pública sigue funcionando (la necesita el dashboard)');
+  console.log('\n[2] Con sesión (authenticated) la lectura sigue funcionando (la necesita el dashboard)');
   const lectura = await client.query('SELECT * FROM arqueos_caja LIMIT 1');
   check('SELECT no lanza error', true, `(${lectura.rowCount} filas)`);
 
-  console.log('\n[3] Escritura directa queda bloqueada');
+  console.log('\n[3] Escritura directa queda bloqueada, incluso con sesión');
+  await client.query('SAVEPOINT intento_insert');
   const ins = await client.query(
     `INSERT INTO arqueos_caja (base_inicial, estado) VALUES (0, 'abierto') RETURNING id`
   ).catch((e) => ({ error: e }));
+  if (ins.error) await client.query('ROLLBACK TO SAVEPOINT intento_insert');
   check(
     'INSERT directo se rechaza (RLS sin política = error, no filtrado silencioso)',
     !!ins.error && ins.error.message.includes('row-level security'),
     ins.error ? '' : '(se insertó igual)'
   );
+
+  await client.query('RESET ROLE');
+  await client.query('SET LOCAL ROLE anon');
+
+  console.log('\n[4] Sin sesión (anon) la lectura ya NO funciona');
+  const { rows: sinSesion } = await client.query('SELECT * FROM arqueos_caja');
+  check('anon ve 0 filas (antes veía todas)', sinSesion.length === 0, `(vio ${sinSesion.length})`);
 
   await client.query('ROLLBACK');
   console.log(
