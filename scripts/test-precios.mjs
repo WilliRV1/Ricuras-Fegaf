@@ -4,9 +4,15 @@
  * transacción que termina en ROLLBACK.
  *
  * A diferencia de los otros scripts de prueba, este SÍ verifica RLS de
- * verdad: usa `SET LOCAL ROLE anon` para que las consultas directas a las
- * tablas se ejecuten con los mismos permisos que tiene la app en producción
- * (la conexión de este script es superusuario y por defecto se saltaría RLS).
+ * verdad: usa `SET LOCAL ROLE authenticated` para que las consultas directas
+ * a las tablas se ejecuten con los mismos permisos que tiene la app en
+ * producción cuando hay sesión (la conexión de este script es superusuario y
+ * por defecto se saltaría RLS). Antes de la migración
+ * 20260904000000_cerrar_lectura_publica esto probaba con `anon`, porque el
+ * servidor siempre leía como público; ahora el servidor firma un JWT y se
+ * identifica como `authenticated` en cuanto hay sesión — que es el caso real
+ * en toda pantalla que llega a llamar estas funciones (nunca se llaman sin
+ * sesión), así que ese es el rol que hay que simular.
  *
  *   node scripts/test-precios.mjs
  */
@@ -80,10 +86,10 @@ try {
   const detalles = (items) => JSON.stringify(items);
 
   // ── Simular exactamente lo que hace la app: mismo usuario RPC (postgres
-  //    ejecuta las funciones, pero SET LOCAL ROLE anon hace que cualquier
-  //    intento de tocar una tabla DIRECTAMENTE pase por las políticas RLS
-  //    reales, igual que en producción con la clave pública). ──
-  await client.query("SET LOCAL ROLE anon");
+  //    ejecuta las funciones, pero SET LOCAL ROLE authenticated hace que
+  //    cualquier intento de tocar una tabla DIRECTAMENTE pase por las
+  //    políticas RLS reales, igual que en producción con una sesión activa). ──
+  await client.query("SET LOCAL ROLE authenticated");
 
   console.log('\n[2] La app ya no puede escribir las tablas directamente');
   await debeFallar(
