@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { ESTADOS_PEDIDO, METODOS_PAGO, TIPOS_ATENCION } from '@/lib/constants';
+import { sesionConAcceso } from '@/lib/sesionServidor';
 
 /**
  * Venta que le queda al restaurante de un pedido.
@@ -63,6 +64,11 @@ async function getTimeWindow(
  * @param toStr Formato 'YYYY-MM-DD' opcional; si se omite, igual a fromStr.
  */
 export async function getResumenDelDia(fromStr?: string, toStr?: string) {
+  // Igual que las demás pantallas: la página del dashboard ya está cerrada a
+  // admin/dev, pero un server action es su propio punto de entrada — se
+  // vuelve a exigir acá para no depender solo del filtro de la página.
+  if (!(await sesionConAcceso('/dashboard'))) return null;
+
   const supabase = await createClient();
 
   const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
@@ -246,6 +252,8 @@ export async function getResumenDelDia(fromStr?: string, toStr?: string) {
  * nombre del deudor y los productos, no solo el número del pedido.
  */
 export async function getCarteraPendiente() {
+  if (!(await sesionConAcceso('/dashboard'))) return [];
+
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -283,6 +291,8 @@ export async function getCarteraPendiente() {
  * permite reconstruir una venta que alguien anuló y no volvió a montar.
  */
 export async function getCancelacionesDelDia(fromStr?: string, toStr?: string) {
+  if (!(await sesionConAcceso('/dashboard'))) return [];
+
   const supabase = await createClient();
 
   const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
@@ -339,6 +349,8 @@ function resumirProductos(
  * Retorna los últimos N pedidos con sus detalles para la tabla histórica.
  */
 export async function getPedidosRecientes(limit: number = 20, fromStr?: string, toStr?: string) {
+  if (!(await sesionConAcceso('/dashboard'))) return [];
+
   const supabase = await createClient();
 
   const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
@@ -364,6 +376,8 @@ export async function getPedidosRecientes(limit: number = 20, fromStr?: string, 
  * Solo incluye pedidos con estado 'pagado'.
  */
 export async function getProductosVendidosDelDia(fromStr?: string, toStr?: string) {
+  if (!(await sesionConAcceso('/dashboard'))) return [];
+
   const supabase = await createClient();
 
   const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);

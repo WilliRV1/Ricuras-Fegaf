@@ -3,8 +3,13 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { ESTADOS_PEDIDO } from '@/lib/constants';
+import { sesionConAcceso } from '@/lib/sesionServidor';
 
 export async function abrirCaja(baseInicial: number) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false, error: 'Necesitas una sesión de administración.' };
+  }
+
   const supabase = await createClient();
   
   try {
@@ -34,6 +39,10 @@ export async function abrirCaja(baseInicial: number) {
 }
 
 export async function cerrarCaja(id: number, efectivo: number, transferencias: number) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false, error: 'Necesitas una sesión de administración.' };
+  }
+
   const supabase = await createClient();
   
   try {
@@ -58,6 +67,10 @@ export async function cerrarCaja(id: number, efectivo: number, transferencias: n
 }
 
 export async function obtenerEstadoCaja() {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { isOpen: false, data: null };
+  }
+
   const supabase = await createClient();
   
   try {
