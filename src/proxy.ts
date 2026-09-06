@@ -13,6 +13,24 @@ import { COOKIE_SESION, leerToken, puedeVer, rutaInicial } from '@/lib/session';
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Las rutas /api/* son JSON, no páginas: no tiene sentido "redirigirlas" a
+  // /login o a la pantalla de inicio del rol. Cada una valida su propia
+  // sesión y responde 401 si hace falta (ver /api/supabase-token).
+  //
+  // Bug real que esto corrige: como ninguna ruta de RUTAS_POR_ROL empieza con
+  // '/api', `puedeVer` siempre devolvía false para /api/supabase-token y el
+  // proxy lo redirigía (307) a la pantalla de inicio del rol — el navegador
+  // seguía la redirección y recibía el HTML de esa página en vez del JSON del
+  // token. `obtenerAccessToken()` interpretaba eso como "no hay token" y el
+  // cliente de Supabase se quedaba en el rol 'anon', que ya no puede leer
+  // pedidos — dejando el tablero de cocina y el de liquidación en tiempo real
+  // vacíos para TODOS los roles, no solo cocina, desde que se cerró la
+  // lectura pública (2026-09-04).
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
   const esLogin = pathname.startsWith('/login');
 
   const sesion = await leerToken(request.cookies.get(COOKIE_SESION)?.value);
