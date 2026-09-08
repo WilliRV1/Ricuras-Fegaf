@@ -169,3 +169,135 @@
 .toggleOn .toggleKnob {
   transform: translateX(22px);
 }
+
+/* ── Alta y edición de productos ── */
+
+.nuevoBtn {
+  align-self: flex-start;
+  min-height: 42px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: white;
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.nuevoBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.nuevoBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelarBtn {
+  min-height: 42px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.cancelarBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--color-background);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+}
+
+.formFila {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.formCampo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.formEtiqueta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.formInput {
+  width: 100%;
+  height: 42px;
+  padding: 0 10px;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.formInput:focus {
+  border-color: var(--color-primary);
+}
+
+.cardAcciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.iconBtn:hover:not(:disabled) {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.iconBtnPeligro {
+  composes: iconBtn;
+}
+
+.iconBtnPeligro:hover:not(:disabled) {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.iconBtn:disabled,
+.iconBtnPeligro:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

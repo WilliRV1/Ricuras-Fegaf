@@ -8,6 +8,8 @@ import styles from './DateRangeFilter.module.css';
 interface DateRangeFilterProps {
   from: string; // 'YYYY-MM-DD'
   to: string;   // 'YYYY-MM-DD'
+  /** Ruta a la que navegan los presets/el rango. Por defecto el dashboard principal. */
+  basePath?: string;
 }
 
 /** Hoy en la zona horaria de Colombia, como 'YYYY-MM-DD' */
@@ -46,14 +48,14 @@ function inicioDeMes(fecha: string): string {
  * Cada botón navega a `/dashboard?from=...&to=...` — la página vuelve a
  * pedir los datos en el servidor, no hay estado que sincronizar aquí.
  */
-export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ from, to }) => {
+export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ from, to, basePath = '/dashboard' }) => {
   const router = useRouter();
   const hoy = hoyBogota();
   const [rangoAbierto, setRangoAbierto] = useState(false);
   const [fromInput, setFromInput] = useState(from);
   const [toInput, setToInput] = useState(to);
 
-  const ir = (f: string, t: string) => router.push(`/dashboard?from=${f}&to=${t}`);
+  const ir = (f: string, t: string) => router.push(`${basePath}?from=${f}&to=${t}`);
 
   const presets = [
     { etiqueta: 'Hoy', f: hoy, t: hoy },

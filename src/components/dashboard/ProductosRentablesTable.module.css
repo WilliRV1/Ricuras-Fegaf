@@ -1,0 +1,94 @@
+.contenedor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tabBtn {
+  min-height: 38px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tabBtn:hover {
+  border-color: var(--color-primary-light);
+}
+
+.tabActivo {
+  color: white;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.tablaWrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.th {
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.td {
+  padding: 12px 16px;
+  color: var(--color-text);
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tr:last-child .td {
+  border-bottom: none;
+}
+
+.nombre {
+  font-weight: 700;
+}
+
+.margenPositivo {
+  font-weight: 700;
+  color: var(--color-success);
+}
+
+.margenNegativo {
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+.sinDato {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.vacio {
+  padding: 20px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}

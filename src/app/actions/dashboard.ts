@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { ESTADOS_PEDIDO, METODOS_PAGO, TIPOS_ATENCION } from '@/lib/constants';
 import { sesionConAcceso } from '@/lib/sesionServidor';
+import { getTimeWindow } from '@/lib/rangoFechas';
 
 /**
  * Venta que le queda al restaurante de un pedido.
@@ -13,48 +14,6 @@ import { sesionConAcceso } from '@/lib/sesionServidor';
  */
 function ventaNeta(pedido: { total: number | null; costo_domicilio: number | null }) {
   return (pedido.total ?? 0) - (pedido.costo_domicilio ?? 0);
-}
-
-/**
- * Calcula la ventana de tiempo para las consultas del Dashboard.
- *
- * Si el rango es exactamente "hoy" (un solo día, el de hoy) y hay un turno de
- * caja abierto, usa la hora de apertura del turno en vez de la medianoche —
- * así el corte coincide con el que la dueña usa para cuadrar caja. Para
- * cualquier otro rango (un día pasado, una semana, un mes) se usa el
- * calendario estricto: el turno abierto solo tiene sentido para "hoy".
- */
-async function getTimeWindow(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  fromStr?: string,
-  toStr?: string
-) {
-  const bogotaDateStr = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const from = fromStr || bogotaDateStr;
-  const to = toStr || from;
-  const esSoloHoy = from === to && from === bogotaDateStr;
-
-  if (esSoloHoy) {
-    // Buscar si hay turno abierto
-    const { data: arqueo } = await supabase
-      .from('arqueos_caja')
-      .select('opened_at')
-      .eq('estado', 'abierto')
-      .single();
-
-    if (arqueo) {
-      return {
-        startOfDay: arqueo.opened_at,
-        endOfDay: new Date().toISOString()
-      };
-    }
-  }
-
-  // Fallback a calendario estricto (día único o rango de varios días)
-  return {
-    startOfDay: new Date(`${from}T00:00:00-05:00`).toISOString(),
-    endOfDay: new Date(`${to}T23:59:59.999-05:00`).toISOString()
-  };
 }
 
 /**

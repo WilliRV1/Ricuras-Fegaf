@@ -41,6 +41,91 @@ export interface CartItem {
   notas?: string;
 }
 
+/** Insumo del catálogo de costeo (Fase 2, Módulo 6). Tablas nuevas, sin generar aún en database.types.ts. */
+export interface Insumo {
+  id: number;
+  nombre: string;
+  unidad_base: string;
+  activo: boolean;
+  created_at: string;
+}
+
+/** Un lote de compra de un insumo — equivale a una fila de la hoja PRECIOS del Excel. */
+export interface CompraInsumo {
+  id: number;
+  insumo_id: number;
+  precio_compra: number;
+  rendimiento: number;
+  fecha: string;
+  created_at: string;
+}
+
+/** Insumo con su costo vigente ya calculado (promedio de sus últimos lotes). */
+export interface InsumoConCosto extends Insumo {
+  costo_unitario: number | null;
+}
+
+/** Un renglón de la receta de un producto. */
+export interface RecetaItem {
+  insumo_id: number;
+  nombre: string;
+  unidad_base: string;
+  cantidad_usada: number;
+  costo_unitario: number | null;
+}
+
+/** Costo y margen calculados de un producto, desde vw_producto_costos. */
+export interface ProductoCosto {
+  producto_id: number;
+  nombre: string;
+  precio: number;
+  costo_total: number;
+  margen: number | null;
+}
+
+/** Gasto operativo (Fase 2, Módulo 7). Las compras de insumos van en CompraInsumo, no aquí. */
+export interface Gasto {
+  id: number;
+  descripcion: string;
+  categoria: string;
+  tipo: 'fijo' | 'variable';
+  valor: number;
+  fecha: string;
+  created_at: string;
+}
+
+/** Utilidad neta real de un período: ventas − costo de productos vendidos − gastos (Fase 2, Módulo 8). */
+export interface ReporteUtilidad {
+  from: string;
+  to: string;
+  ventas: number;
+  costoProductos: number;
+  gastos: number;
+  utilidadNeta: number;
+}
+
+/** Un mes dentro del comparativo mensual, con su etiqueta para el eje del gráfico. */
+export interface ReporteUtilidadMensual extends ReporteUtilidad {
+  mes: string; // 'YYYY-MM'
+  etiqueta: string; // Ej: "sept 2026"
+}
+
+export interface ComparativoMensual {
+  mesActual: ReporteUtilidadMensual;
+  mesAnterior: ReporteUtilidadMensual;
+}
+
+/** Un producto con su rentabilidad real del período, no solo cuánto se vendió. */
+export interface ProductoRentable {
+  productoId: number;
+  nombre: string;
+  cantidad: number;
+  ingresos: number;
+  costoTotal: number;
+  margenTotal: number;
+  margenPorcentaje: number | null;
+}
+
 export interface PedidoWithDetalles extends Pedido {
   /** Hora de entrega programada. Puede no estar en el tipo generado automáticamente. */
   hora_entrega?: string | null;

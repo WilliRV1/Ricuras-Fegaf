@@ -8,6 +8,7 @@ import {
   getCarteraPendiente,
   getCancelacionesDelDia,
 } from '@/app/actions/dashboard';
+import { listarCategorias } from '@/app/actions/productos';
 import { ResumenCards } from '@/components/dashboard/ResumenCards';
 import { PedidosTable } from '@/components/dashboard/PedidosTable';
 import { CancelacionesTable } from '@/components/dashboard/CancelacionesTable';
@@ -27,6 +28,8 @@ import {
   IconUtensils,
   IconXCircle,
   IconUser,
+  IconBanknote,
+  IconTrendingUp,
 } from '@/components/ui/Icons';
 import styles from './page.module.css';
 
@@ -59,6 +62,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     cartera,
     cancelaciones,
     { data: productos },
+    categoriasRes,
   ] = await Promise.all([
     getResumenDelDia(from, to),
     getPedidosRecientes(50, from, to),
@@ -67,7 +71,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     getCarteraPendiente(),
     getCancelacionesDelDia(from, to),
     (await import('@/lib/supabase/server')).createClient().then(sb => sb.from('productos').select('*').order('nombre', { ascending: true })),
+    listarCategorias(),
   ]);
+
+  const categorias = categoriasRes.success ? categoriasRes.categorias : [];
 
   const formatoFecha = (f: string) =>
     new Date(`${f}T12:00:00`).toLocaleDateString('es-CO', {
@@ -94,6 +101,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <a href="/dashboard/recetas" className={styles.refreshBtn}>
+            <IconUtensils size={15} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
+            Recetas y Costeo
+          </a>
+          <a href="/dashboard/gastos" className={styles.refreshBtn}>
+            <IconBanknote size={15} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
+            Egresos
+          </a>
+          <a href="/dashboard/reportes" className={styles.refreshBtn}>
+            <IconTrendingUp size={15} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
+            Reportes
+          </a>
           <DateRangeFilter from={from} to={to} />
           {!esHoy && (
             <a href="/dashboard" className={styles.refreshBtn}>
@@ -142,10 +161,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <CarteraTable deudas={cartera} />
           </section>
 
-          {/* Control de Stock */}
+          {/* Gestión del menú: crear/editar/borrar productos y control de stock */}
           {productos && productos.length > 0 && (
             <section className={styles.section}>
-              <StockManager productos={productos} />
+              <StockManager productos={productos} categorias={categorias} />
             </section>
           )}
 
