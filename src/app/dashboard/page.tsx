@@ -100,19 +100,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             {esHoy ? `Hoy — ${fechaLabel}` : fechaLabel}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <a href="/dashboard/recetas" className={styles.refreshBtn}>
-            <IconUtensils size={15} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
-            Recetas y Costeo
-          </a>
-          <a href="/dashboard/gastos" className={styles.refreshBtn}>
-            <IconBanknote size={15} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
-            Egresos
-          </a>
-          <a href="/dashboard/reportes" className={styles.refreshBtn}>
-            <IconTrendingUp size={15} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
-            Reportes
-          </a>
+        <div className={styles.headerAcciones}>
           <DateRangeFilter from={from} to={to} />
           {!esHoy && (
             <a href="/dashboard" className={styles.refreshBtn}>
@@ -128,6 +116,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           )}
         </div>
       </header>
+
+      <nav className={styles.moduleNav} aria-label="Módulos de administración">
+        <a href="/dashboard/recetas" className={styles.moduleNavLink}>
+          <IconUtensils size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
+          Recetas y Costeo
+        </a>
+        <a href="/dashboard/gastos" className={styles.moduleNavLink}>
+          <IconBanknote size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
+          Egresos
+        </a>
+        <a href="/dashboard/reportes" className={styles.moduleNavLink}>
+          <IconTrendingUp size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
+          Reportes
+        </a>
+      </nav>
 
       {!stats ? (
         <div className={styles.errorState}>

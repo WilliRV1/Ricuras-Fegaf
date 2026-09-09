@@ -16,6 +16,51 @@
   gap: 12px;
 }
 
+.headerAcciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Módulos de administración (Recetas, Egresos, Reportes): fila propia,
+   con scroll horizontal en vez de envolver texto — en celular no caben
+   los tres botones completos en el ancho de pantalla. */
+.moduleNav {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.moduleNav::-webkit-scrollbar {
+  display: none;
+}
+
+.moduleNavLink {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.moduleNavLink:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
 .title {
   font-size: 2rem;
   font-weight: 800;
@@ -30,6 +75,8 @@
 }
 
 .refreshBtn {
+  display: inline-flex;
+  align-items: center;
   padding: 8px 16px;
   border-radius: var(--radius-sm);
   background-color: var(--color-surface);
@@ -38,6 +85,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
   transition: all var(--transition-fast);
   cursor: pointer;
 }
