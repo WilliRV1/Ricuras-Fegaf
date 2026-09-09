@@ -238,6 +238,7 @@ export const RecetaBuilder: React.FC<RecetaBuilderProps> = ({
           </div>
         )}
 
+        <p className={styles.scrollHint}>← Desliza para ver más →</p>
         <div className={styles.tablaWrapper}>
           <table className={styles.tabla}>
             <thead>
@@ -443,6 +444,7 @@ export const RecetaBuilder: React.FC<RecetaBuilderProps> = ({
       {/* ── Costeo de todo el menú ── */}
       <div className={styles.bloque}>
         <h3 className={styles.bloqueTitulo}>Costeo del menú</h3>
+        <p className={styles.scrollHint}>← Desliza para ver más →</p>
         <div className={styles.tablaWrapper}>
           <table className={styles.tabla}>
             <thead>

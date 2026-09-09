@@ -40,15 +40,24 @@ export const ComparativoChart: React.FC<ComparativoChartProps> = ({ comparativo 
 
   return (
     <div className={styles.contenedor}>
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+      <div className={styles.chartAspect}>
+        <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-          <XAxis dataKey="concepto" stroke="var(--color-text-muted)" fontSize={12} />
+          <XAxis
+            dataKey="concepto"
+            stroke="var(--color-text-muted)"
+            fontSize={11}
+            interval={0}
+            angle={-20}
+            textAnchor="end"
+            height={50}
+          />
           <YAxis
             stroke="var(--color-text-muted)"
-            fontSize={12}
+            fontSize={11}
             tickFormatter={(v) => formatoCOP.format(Number(v))}
-            width={70}
+            width={56}
           />
           <Tooltip
             formatter={(value) =>
@@ -62,7 +71,8 @@ export const ComparativoChart: React.FC<ComparativoChartProps> = ({ comparativo 
           <Bar dataKey={mesAnterior.etiqueta} fill="var(--color-text-muted)" radius={[4, 4, 0, 0]} />
           <Bar dataKey={mesActual.etiqueta} fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
         </BarChart>
-      </ResponsiveContainer>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };

@@ -243,6 +243,7 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
               <div
                 key={producto.id}
                 className={`${styles.card} ${!producto.activo ? styles.cardInactive : ''}`}
+                style={editandoId === producto.id ? { gridColumn: '1 / -1' } : undefined}
               >
                 {editandoId === producto.id ? (
                   <div className={styles.formulario} style={{ width: '100%' }}>

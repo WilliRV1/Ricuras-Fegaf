@@ -272,8 +272,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   color: var(--color-text-muted);
   background: transparent;
   border: 1px solid var(--color-border);
@@ -300,4 +300,17 @@
 .iconBtnPeligro:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  /* Un campo por fila: con varios inputs de 140px mínimo, dos a la vez
+     quedan apretados en un celular angosto. */
+  .formFila > * {
+    flex-basis: 100%;
+  }
+
+  .card {
+    flex-wrap: wrap;
+    row-gap: 12px;
+  }
 }

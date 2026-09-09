@@ -49,6 +49,7 @@ export const ProductosRentablesTable: React.FC<ProductosRentablesTableProps> = (
         </button>
       </div>
 
+      <p className={styles.scrollHint}>← Desliza para ver más →</p>
       <div className={styles.tablaWrapper}>
         <table className={styles.tabla}>
           <thead>
