@@ -9,20 +9,21 @@ import type { ComparativoMensual, ProductoRentable, ReporteUtilidad, ReporteUtil
 /**
  * Fase 2 / Módulo 8 — Inteligencia Financiera y Reportes.
  *
- * La fórmula es literalmente la que ya escribe la dueña en la hoja Costeo
- * del Excel: `UTILIDAD = INGRESOS - (COSTOS + GASTOS)`.
- *   - INGRESOS: se reutiliza `ventaRealDelDia` de `getResumenDelDia`
+ * Utilidad neta real = ventas − costo de productos vendidos.
+ *   - VENTAS: se reutiliza `ventaRealDelDia` de `getResumenDelDia`
  *     (dashboard.ts) en vez de recalcular la venta — es la misma cifra con
  *     la que ella cuadra caja, no puede haber dos versiones de "cuánto se
  *     vendió" en la app.
  *   - COSTOS: costo de los insumos de cada producto vendido, según su costo
  *     vigente en `vw_producto_costos` (Módulo 6).
- *   - GASTOS: lo registrado en `gastos` (Módulo 7) para el mismo período.
  *
- * `gastos`/`vw_producto_costos` son tablas/vista nuevas sin generar todavía
- * en database.types.ts — mismo motivo que en recetas.ts/gastos.ts para el
- * cliente sin tipar en vez de @ts-expect-error sobre una cadena
- * .from().select()...
+ * El Módulo 7 (gastos operativos) se quitó: mezclaba gastos del negocio con
+ * gastos personales de la dueña en el Excel original, y no correspondía
+ * llevarlo en esta app.
+ *
+ * `vw_producto_costos` es una vista nueva sin generar todavía en
+ * database.types.ts — de ahí el cliente sin tipar en vez de @ts-expect-error
+ * sobre una cadena .from().select()...
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,25 +65,7 @@ async function costoProductosVendidosEnRango(
   }, 0);
 }
 
-/** Suma los gastos registrados entre `from` y `to` (fechas 'YYYY-MM-DD', ambas inclusive). */
-async function gastosEnRango(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  from: string,
-  to: string
-): Promise<number> {
-  const db = supabase as unknown as ClienteSinTipar;
-
-  const { data, error } = await db.from('gastos').select('valor').gte('fecha', from).lte('fecha', to);
-
-  if (error) {
-    console.error('Error sumando gastos del período:', error);
-    return 0;
-  }
-
-  return (data ?? []).reduce((acc: number, g: { valor: number }) => acc + g.valor, 0);
-}
-
-/** Utilidad neta real del período: ventas reales − costo de productos vendidos − gastos. */
+/** Utilidad neta real del período: ventas reales − costo de productos vendidos. */
 export async function getUtilidadNetaReal(fromStr?: string, toStr?: string): Promise<ReporteUtilidad | null> {
   if (!(await sesionConAcceso('/dashboard'))) return null;
 
@@ -96,11 +79,7 @@ export async function getUtilidadNetaReal(fromStr?: string, toStr?: string): Pro
   const from = fromStr || bogotaHoy;
   const to = toStr || from;
 
-  const [costoProductos, gastos] = await Promise.all([
-    costoProductosVendidosEnRango(supabase, startOfDay, endOfDay),
-    gastosEnRango(supabase, from, to),
-  ]);
-
+  const costoProductos = await costoProductosVendidosEnRango(supabase, startOfDay, endOfDay);
   const ventas = resumen.ventaRealDelDia;
 
   return {
@@ -108,8 +87,7 @@ export async function getUtilidadNetaReal(fromStr?: string, toStr?: string): Pro
     to,
     ventas,
     costoProductos,
-    gastos,
-    utilidadNeta: ventas - costoProductos - gastos,
+    utilidadNeta: ventas - costoProductos,
   };
 }
 

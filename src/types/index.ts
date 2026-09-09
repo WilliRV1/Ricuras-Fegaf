@@ -83,24 +83,12 @@ export interface ProductoCosto {
   margen: number | null;
 }
 
-/** Gasto operativo (Fase 2, Módulo 7). Las compras de insumos van en CompraInsumo, no aquí. */
-export interface Gasto {
-  id: number;
-  descripcion: string;
-  categoria: string;
-  tipo: 'fijo' | 'variable';
-  valor: number;
-  fecha: string;
-  created_at: string;
-}
-
-/** Utilidad neta real de un período: ventas − costo de productos vendidos − gastos (Fase 2, Módulo 8). */
+/** Utilidad neta real de un período: ventas − costo de productos vendidos (Fase 2, Módulo 8). */
 export interface ReporteUtilidad {
   from: string;
   to: string;
   ventas: number;
   costoProductos: number;
-  gastos: number;
   utilidadNeta: number;
 }
 

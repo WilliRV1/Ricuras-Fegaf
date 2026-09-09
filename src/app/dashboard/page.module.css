@@ -24,9 +24,9 @@
   justify-content: flex-end;
 }
 
-/* Módulos de administración (Recetas, Egresos, Reportes): fila propia,
+/* Módulos de administración (Recetas, Reportes): fila propia,
    con scroll horizontal en vez de envolver texto — en celular no caben
-   los tres botones completos en el ancho de pantalla. */
+   los botones completos en el ancho de pantalla. */
 .moduleNav {
   display: flex;
   gap: 10px;

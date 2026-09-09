@@ -8,7 +8,7 @@ const formatoCOP = new Intl.NumberFormat('es-CO', {
   minimumFractionDigits: 0,
 });
 
-/** Tarjetas de la fórmula del Módulo 8: Ventas − Costo de productos − Gastos = Utilidad neta. */
+/** Tarjetas de la fórmula del Módulo 8: Ventas − Costo de productos = Utilidad neta. */
 export const UtilidadCards: React.FC<{ utilidad: ReporteUtilidad }> = ({ utilidad }) => {
   return (
     <div className={styles.grid}>
@@ -19,10 +19,6 @@ export const UtilidadCards: React.FC<{ utilidad: ReporteUtilidad }> = ({ utilida
       <div className={styles.card}>
         <span className={styles.etiqueta}>Costo de productos</span>
         <span className={styles.valor}>{formatoCOP.format(utilidad.costoProductos)}</span>
-      </div>
-      <div className={styles.card}>
-        <span className={styles.etiqueta}>Gastos</span>
-        <span className={styles.valor}>{formatoCOP.format(utilidad.gastos)}</span>
       </div>
       <div className={styles.card}>
         <span className={styles.etiqueta}>Utilidad neta</span>

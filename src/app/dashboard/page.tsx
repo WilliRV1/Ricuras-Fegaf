@@ -28,7 +28,6 @@ import {
   IconUtensils,
   IconXCircle,
   IconUser,
-  IconBanknote,
   IconTrendingUp,
 } from '@/components/ui/Icons';
 import styles from './page.module.css';
@@ -121,10 +120,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <a href="/dashboard/recetas" className={styles.moduleNavLink}>
           <IconUtensils size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
           Recetas y Costeo
-        </a>
-        <a href="/dashboard/gastos" className={styles.moduleNavLink}>
-          <IconBanknote size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
-          Egresos
         </a>
         <a href="/dashboard/reportes" className={styles.moduleNavLink}>
           <IconTrendingUp size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />

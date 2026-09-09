@@ -18,7 +18,7 @@ const formatoCOP = new Intl.NumberFormat('es-CO', {
 
 /**
  * Gráfica de barras "Mes actual vs. Mes anterior" del Módulo 8 — Ventas,
- * Costo de productos, Gastos y Utilidad Neta, uno al lado del otro por mes.
+ * Costo de productos y Utilidad Neta, uno al lado del otro por mes.
  */
 export const ComparativoChart: React.FC<ComparativoChartProps> = ({ comparativo }) => {
   const { mesActual, mesAnterior } = comparativo;
@@ -30,7 +30,6 @@ export const ComparativoChart: React.FC<ComparativoChartProps> = ({ comparativo 
       [mesAnterior.etiqueta]: mesAnterior.costoProductos,
       [mesActual.etiqueta]: mesActual.costoProductos,
     },
-    { concepto: 'Gastos', [mesAnterior.etiqueta]: mesAnterior.gastos, [mesActual.etiqueta]: mesActual.gastos },
     {
       concepto: 'Utilidad neta',
       [mesAnterior.etiqueta]: mesAnterior.utilidadNeta,
