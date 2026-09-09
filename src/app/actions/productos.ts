@@ -23,6 +23,78 @@ function mensajeDeErrorProducto(mensaje: string | undefined): string {
   return 'No se pudo completar la operación.';
 }
 
+function mensajeDeErrorCategoria(mensaje: string | undefined): string {
+  if (!mensaje) return 'Error inesperado del servidor.';
+  if (mensaje.includes('NOMBRE_REQUERIDO')) return 'Escribe el nombre de la categoría.';
+  if (mensaje.includes('CATEGORIA_REPETIDA')) return 'Ya existe una categoría con ese nombre.';
+  if (mensaje.includes('CATEGORIA_NO_ENCONTRADA')) return 'Esa categoría ya no existe.';
+  return 'No se pudo completar la operación.';
+}
+
+export async function crearCategoria(nombre: string, orden: number | null) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false as const, error: 'Necesitas una sesión de administración.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - RPC nuevo, sin generar en database.types.ts
+  const { data, error } = await supabase.rpc('crear_categoria', {
+    p_nombre: nombre,
+    p_orden: orden,
+  });
+
+  if (error) {
+    return { success: false as const, error: mensajeDeErrorCategoria(error.message) };
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/pedidos');
+  return { success: true as const, categoriaId: data as number };
+}
+
+export async function actualizarCategoria(categoriaId: number, nombre: string, orden: number | null) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false as const, error: 'Necesitas una sesión de administración.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - RPC nuevo, sin generar en database.types.ts
+  const { error } = await supabase.rpc('actualizar_categoria', {
+    p_categoria_id: categoriaId,
+    p_nombre: nombre,
+    p_orden: orden,
+  });
+
+  if (error) {
+    return { success: false as const, error: mensajeDeErrorCategoria(error.message) };
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/pedidos');
+  return { success: true as const };
+}
+
+export async function eliminarCategoria(categoriaId: number) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false as const, error: 'Necesitas una sesión de administración.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - RPC nuevo, sin generar en database.types.ts
+  const { error } = await supabase.rpc('eliminar_categoria', { p_categoria_id: categoriaId });
+
+  if (error) {
+    return { success: false as const, error: mensajeDeErrorCategoria(error.message) };
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/pedidos');
+  return { success: true as const };
+}
+
 export async function listarCategorias() {
   if (!(await sesionConAcceso('/dashboard'))) {
     return { success: false as const, error: 'Necesitas una sesión de administración.' };

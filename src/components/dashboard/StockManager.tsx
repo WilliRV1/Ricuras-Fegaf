@@ -10,6 +10,7 @@ import {
 } from '@/app/actions/productos';
 import { toast } from '@/components/ui/Toast';
 import { IconClipboard, IconPlus, IconPencil, IconTrash } from '@/components/ui/Icons';
+import { CategoriasManager } from './CategoriasManager';
 import styles from './StockManager.module.css';
 
 interface StockManagerProps {
@@ -28,9 +29,10 @@ interface FormularioProducto {
 
 const formularioVacio: FormularioProducto = { nombre: '', precio: '', categoriaId: '', esAdicion: false };
 
-export const StockManager: React.FC<StockManagerProps> = ({ productos, categorias }) => {
+export const StockManager: React.FC<StockManagerProps> = ({ productos, categorias: categoriasIniciales }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [optimisticProducts, setOptimisticProducts] = useState<Producto[]>(productos);
+  const [categorias, setCategorias] = useState<Categoria[]>(categoriasIniciales);
   const [isPending, startTransition] = useTransition();
 
   const [creando, setCreando] = useState(false);
@@ -172,6 +174,8 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
             Crea, edita o desactiva productos del menú. Apagar un producto lo quita al instante de la
             toma de pedidos; borrarlo solo se puede si nunca se vendió.
           </p>
+
+          <CategoriasManager categorias={categorias} onCategoriasChange={setCategorias} />
 
           <button
             type="button"

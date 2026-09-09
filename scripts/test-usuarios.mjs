@@ -17,9 +17,6 @@ function conexion() {
   return match[1];
 }
 
-const MIGRACION =
-  process.argv[2] ?? './supabase/migrations/20260901000000_usuarios_con_pin.sql';
-
 let fallos = 0;
 let pruebas = 0;
 
@@ -58,19 +55,27 @@ try {
   await client.connect();
   await client.query('BEGIN');
 
-  // ── 1. Migración ─────────────────────────────────────────────────────
-  console.log('\n[1] Migración');
-  const sql = fs.readFileSync(MIGRACION, 'utf8');
-  await client.query(sql);
-  console.log('  ok    se aplica sin errores');
-  await client.query(sql);
-  console.log('  ok    es idempotente');
+  // ── 1. Estado del sistema en vivo ────────────────────────────────────
+  // Ya NO se reaplica la migración original acá: migraciones posteriores
+  // (ej. 20260903000000_rol_dev_tester.sql) reemplazaron algunas de sus
+  // funciones (crear_usuario ahora acepta 'dev', que la versión original no
+  // conocía) — reaplicar el SQL viejo pisaba esas funciones con la versión
+  // vieja DENTRO de esta transacción y hacía fallar todo lo que probara algo
+  // agregado después. Esta prueba corre contra el estado real ya desplegado,
+  // no contra una migración puntual.
+  console.log('\n[1] Estado del sistema en vivo');
 
-  const { rows: admins } = await client.query(
-    `SELECT * FROM usuarios WHERE rol = 'admin' ORDER BY id LIMIT 1`
+  // No se usa el admin real de producción: ya cambió su PIN por el suyo
+  // hace rato, así que probar contra "3136" fallaba con CREDENCIALES_INVALIDAS
+  // sin que hubiera ningún bug real. Se crea un admin desechable propio del
+  // test, con PIN conocido — vive solo dentro de esta transacción (ROLLBACK
+  // al final), nunca toca la cuenta real.
+  const { rows: [admin] } = await client.query(
+    `INSERT INTO usuarios (nombre, pin_hash, rol, activo, debe_cambiar_pin)
+     VALUES ('QA Admin Test', extensions.crypt('3136', extensions.gen_salt('bf')), 'admin', true, true)
+     RETURNING *`
   );
-  check('queda una cuenta de administración para poder entrar', admins.length === 1);
-  const admin = admins[0];
+  check('se puede crear una cuenta de administración de prueba', admin.id != null);
   check('esa cuenta arranca obligada a cambiar el PIN', admin.debe_cambiar_pin === true);
 
   // ── 2. El PIN nunca sale de la base ──────────────────────────────────
@@ -100,7 +105,7 @@ try {
     admin.id,
     '3136',
   ]);
-  check('entra con el PIN correcto', sesion.length === 1 && sesion[0].nombre === 'Administración');
+  check('entra con el PIN correcto', sesion.length === 1 && sesion[0].nombre === 'QA Admin Test');
   check('avisa que todavía debe elegir su PIN', sesion[0].debe_cambiar_pin === true);
 
   await debeFallar(
@@ -219,7 +224,7 @@ try {
 
   const { rows: [nuevoDev] } = await client.query(
     'SELECT crear_usuario($1, $2, $3, $4, $5) AS id',
-    [admin.id, '8462', '  Tester  ', 'dev', '5031']
+    [admin.id, '8462', '  QA Dev Test  ', 'dev', '5031']
   );
   check('la dueña puede crear una cuenta dev/tester', Number.isInteger(nuevoDev.id));
 
@@ -277,6 +282,12 @@ try {
     'y desaparece de la pantalla de entrada',
     !visibles.some((u) => u.id === nuevo.id)
   );
+
+  // Para probar "el último admin" de verdad hay que dejar a admin.id como el
+  // único activo dentro de esta transacción — si no, el admin real de
+  // producción (que sigue activo) hace que la regla nunca se dispare.
+  // Se revierte con ROLLBACK al final, nunca toca la cuenta real.
+  await client.query(`UPDATE usuarios SET activo = false WHERE rol = 'admin' AND id <> $1`, [admin.id]);
 
   await debeFallar(
     client,
