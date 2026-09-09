@@ -283,6 +283,54 @@
   color: var(--color-text-muted);
 }
 
+.catalogoToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.chevron {
+  font-size: 1.125rem;
+  color: var(--color-text-muted);
+  transition: transform 0.2s ease;
+}
+
+.chevronAbierto {
+  transform: rotate(180deg);
+}
+
+.buscador {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px;
+  color: var(--color-text-muted);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.buscador:focus-within {
+  border-color: var(--color-primary);
+}
+
+.buscadorInput {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  outline: none;
+}
+
 @media (max-width: 640px) {
   .fila > *,
   .recetaFila > * {

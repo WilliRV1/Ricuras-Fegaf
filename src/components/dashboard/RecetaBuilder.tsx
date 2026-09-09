@@ -11,7 +11,7 @@ import {
   listarProductoCostos,
 } from '@/app/actions/recetas';
 import { toast } from '@/components/ui/Toast';
-import { IconPlus, IconTrash, IconUtensils } from '@/components/ui/Icons';
+import { IconPlus, IconTrash, IconUtensils, IconSearch } from '@/components/ui/Icons';
 import styles from './RecetaBuilder.module.css';
 
 interface RecetaBuilderProps {
@@ -36,6 +36,10 @@ export const RecetaBuilder: React.FC<RecetaBuilderProps> = ({
   const [insumos, setInsumos] = useState<InsumoConCosto[]>(insumosIniciales);
   const [costos, setCostos] = useState<ProductoCosto[]>(costosIniciales);
   const [cargando, startTransition] = useTransition();
+
+  // ── Catálogo de insumos: colapsado por defecto, con buscador ──
+  const [catalogoAbierto, setCatalogoAbierto] = useState(false);
+  const [busquedaInsumo, setBusquedaInsumo] = useState('');
 
   // ── Alta de insumo ──
   const [creandoInsumo, setCreandoInsumo] = useState(false);
@@ -148,6 +152,12 @@ export const RecetaBuilder: React.FC<RecetaBuilderProps> = ({
     [insumos]
   );
 
+  const insumosFiltrados = useMemo(() => {
+    const q = busquedaInsumo.trim().toLowerCase();
+    if (!q) return insumos;
+    return insumos.filter((i) => i.nombre.toLowerCase().includes(q));
+  }, [insumos, busquedaInsumo]);
+
   const productoActual = productos.find((p) => p.id === productoId);
 
   const costoTotalEnVivo = useMemo(() => {
@@ -186,145 +196,175 @@ export const RecetaBuilder: React.FC<RecetaBuilderProps> = ({
 
   return (
     <div className={styles.contenedor}>
-      {/* ── Catálogo de insumos ── */}
+      {/* ── Catálogo de insumos: colapsado por defecto, con buscador ── */}
       <div className={styles.bloque}>
-        <div className={styles.cabecera}>
-          <h3 className={styles.bloqueTitulo}>Insumos</h3>
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={() => setCreandoInsumo((v) => !v)}
-            disabled={cargando}
-          >
-            {creandoInsumo ? 'Cancelar' : (
-              <><IconPlus size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} />Nuevo insumo</>
-            )}
-          </button>
-        </div>
-        <p className={styles.ayuda}>
-          El precio no se edita aquí: cada compra queda registrada como un lote (precio + cuánto
-          rindió). El costo vigente es el promedio de los últimos 5 lotes.
-        </p>
+        <button
+          type="button"
+          className={styles.catalogoToggle}
+          onClick={() => setCatalogoAbierto((v) => !v)}
+          aria-expanded={catalogoAbierto}
+        >
+          <h3 className={styles.bloqueTitulo}>Insumos ({insumos.length})</h3>
+          <span className={`${styles.chevron} ${catalogoAbierto ? styles.chevronAbierto : ''}`}>▾</span>
+        </button>
 
-        {creandoInsumo && (
-          <div className={styles.formulario}>
-            <div className={styles.fila}>
-              <label className={styles.campo}>
-                <span className={styles.etiqueta}>Nombre</span>
-                <input
-                  className={styles.input}
-                  placeholder="Ej: Carne Res - Ampolleta"
-                  value={nombreInsumo}
-                  onChange={(e) => setNombreInsumo(e.target.value)}
-                  maxLength={200}
-                  disabled={cargando}
-                />
-              </label>
-              <label className={styles.campo}>
-                <span className={styles.etiqueta}>Unidad base</span>
-                <input
-                  className={styles.input}
-                  placeholder="Ej: gramo, unidad, mililitro"
-                  value={unidadInsumo}
-                  onChange={(e) => setUnidadInsumo(e.target.value)}
-                  maxLength={50}
-                  disabled={cargando}
-                />
-              </label>
+        {catalogoAbierto && (
+          <>
+            <div className={styles.cabecera}>
+              <p className={styles.ayuda}>
+                El precio no se edita aquí: cada compra queda registrada como un lote (precio + cuánto
+                rindió). El costo vigente es el promedio de los últimos 5 lotes.
+              </p>
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={() => setCreandoInsumo((v) => !v)}
+                disabled={cargando}
+              >
+                {creandoInsumo ? 'Cancelar' : (
+                  <><IconPlus size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} />Nuevo insumo</>
+                )}
+              </button>
             </div>
-            <button type="button" className={styles.btn} onClick={guardarInsumo} disabled={cargando}>
-              {cargando ? 'Guardando…' : 'Dar de alta'}
-            </button>
-          </div>
-        )}
 
-        <p className={styles.scrollHint}>← Desliza para ver más →</p>
-        <div className={styles.tablaWrapper}>
-          <table className={styles.tabla}>
-            <thead>
-              <tr>
-                <th className={styles.th}>Insumo</th>
-                <th className={styles.th}>Unidad</th>
-                <th className={styles.th}>Costo vigente</th>
-                <th className={styles.th}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {insumos.map((insumo) => (
-                <React.Fragment key={insumo.id}>
-                  <tr className={styles.tr}>
-                    <td className={`${styles.td} ${styles.nombre}`}>{insumo.nombre}</td>
-                    <td className={styles.td}>{insumo.unidad_base}</td>
-                    <td className={`${styles.td} ${styles.costo}`}>
-                      {insumo.costo_unitario != null ? (
-                        `${formatoCOP.format(insumo.costo_unitario)} / ${insumo.unidad_base}`
-                      ) : (
-                        <span className={styles.sinCosto}>sin compras registradas</span>
-                      )}
-                    </td>
-                    <td className={styles.td}>
-                      <button
-                        type="button"
-                        className={styles.accionBtn}
-                        onClick={() => setInsumoConLote(insumoConLote === insumo.id ? null : insumo.id)}
-                        disabled={cargando}
-                      >
-                        {insumoConLote === insumo.id ? 'Cancelar' : 'Registrar compra'}
-                      </button>
-                    </td>
+            {creandoInsumo && (
+              <div className={styles.formulario}>
+                <div className={styles.fila}>
+                  <label className={styles.campo}>
+                    <span className={styles.etiqueta}>Nombre</span>
+                    <input
+                      className={styles.input}
+                      placeholder="Ej: Carne Res - Ampolleta"
+                      value={nombreInsumo}
+                      onChange={(e) => setNombreInsumo(e.target.value)}
+                      maxLength={200}
+                      disabled={cargando}
+                    />
+                  </label>
+                  <label className={styles.campo}>
+                    <span className={styles.etiqueta}>Unidad base</span>
+                    <input
+                      className={styles.input}
+                      placeholder="Ej: gramo, unidad, mililitro"
+                      value={unidadInsumo}
+                      onChange={(e) => setUnidadInsumo(e.target.value)}
+                      maxLength={50}
+                      disabled={cargando}
+                    />
+                  </label>
+                </div>
+                <button type="button" className={styles.btn} onClick={guardarInsumo} disabled={cargando}>
+                  {cargando ? 'Guardando…' : 'Dar de alta'}
+                </button>
+              </div>
+            )}
+
+            <label className={styles.buscador}>
+              <IconSearch size={16} />
+              <input
+                className={styles.buscadorInput}
+                placeholder="Buscar insumo por nombre…"
+                value={busquedaInsumo}
+                onChange={(e) => setBusquedaInsumo(e.target.value)}
+              />
+            </label>
+
+            <p className={styles.scrollHint}>← Desliza para ver más →</p>
+            <div className={styles.tablaWrapper}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th className={styles.th}>Insumo</th>
+                    <th className={styles.th}>Unidad</th>
+                    <th className={styles.th}>Costo vigente</th>
+                    <th className={styles.th}>Acciones</th>
                   </tr>
-                  {insumoConLote === insumo.id && (
-                    <tr>
-                      <td className={styles.td} colSpan={4}>
-                        <div className={styles.fila}>
-                          <label className={styles.campo}>
-                            <span className={styles.etiqueta}>Precio pagado</span>
-                            <input
-                              type="number"
-                              className={styles.input}
-                              placeholder="Ej: 95000"
-                              value={precioLote}
-                              onChange={(e) => setPrecioLote(e.target.value)}
-                              disabled={cargando}
-                            />
-                          </label>
-                          <label className={styles.campo}>
-                            <span className={styles.etiqueta}>
-                              Rindió cuántos {insumo.unidad_base}
-                            </span>
-                            <input
-                              type="number"
-                              className={styles.input}
-                              placeholder="Ej: 125"
-                              value={rendimientoLote}
-                              onChange={(e) => setRendimientoLote(e.target.value)}
-                              disabled={cargando}
-                            />
-                          </label>
+                </thead>
+                <tbody>
+                  {insumosFiltrados.map((insumo) => (
+                    <React.Fragment key={insumo.id}>
+                      <tr className={styles.tr}>
+                        <td className={`${styles.td} ${styles.nombre}`}>{insumo.nombre}</td>
+                        <td className={styles.td}>{insumo.unidad_base}</td>
+                        <td className={`${styles.td} ${styles.costo}`}>
+                          {insumo.costo_unitario != null ? (
+                            `${formatoCOP.format(insumo.costo_unitario)} / ${insumo.unidad_base}`
+                          ) : (
+                            <span className={styles.sinCosto}>sin compras registradas</span>
+                          )}
+                        </td>
+                        <td className={styles.td}>
                           <button
                             type="button"
-                            className={styles.btn}
-                            onClick={() => guardarLote(insumo)}
+                            className={styles.accionBtn}
+                            onClick={() => setInsumoConLote(insumoConLote === insumo.id ? null : insumo.id)}
                             disabled={cargando}
                           >
-                            Guardar compra
+                            {insumoConLote === insumo.id ? 'Cancelar' : 'Registrar compra'}
                           </button>
-                        </div>
+                        </td>
+                      </tr>
+                      {insumoConLote === insumo.id && (
+                        <tr>
+                          <td className={styles.td} colSpan={4}>
+                            <div className={styles.fila}>
+                              <label className={styles.campo}>
+                                <span className={styles.etiqueta}>Precio pagado</span>
+                                <input
+                                  type="number"
+                                  className={styles.input}
+                                  placeholder="Ej: 95000"
+                                  value={precioLote}
+                                  onChange={(e) => setPrecioLote(e.target.value)}
+                                  disabled={cargando}
+                                />
+                              </label>
+                              <label className={styles.campo}>
+                                <span className={styles.etiqueta}>
+                                  Rindió cuántos {insumo.unidad_base}
+                                </span>
+                                <input
+                                  type="number"
+                                  className={styles.input}
+                                  placeholder="Ej: 125"
+                                  value={rendimientoLote}
+                                  onChange={(e) => setRendimientoLote(e.target.value)}
+                                  disabled={cargando}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                className={styles.btn}
+                                onClick={() => guardarLote(insumo)}
+                                disabled={cargando}
+                              >
+                                Guardar compra
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
+                  {insumosFiltrados.length === 0 && insumos.length > 0 && (
+                    <tr>
+                      <td className={styles.vacio} colSpan={4}>
+                        Ningún insumo coincide con &quot;{busquedaInsumo}&quot;.
                       </td>
                     </tr>
                   )}
-                </React.Fragment>
-              ))}
-              {insumos.length === 0 && (
-                <tr>
-                  <td className={styles.vacio} colSpan={4}>
-                    Todavía no hay insumos. Crea el primero arriba.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                  {insumos.length === 0 && (
+                    <tr>
+                      <td className={styles.vacio} colSpan={4}>
+                        Todavía no hay insumos. Crea el primero arriba.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Receta de un producto ── */}
