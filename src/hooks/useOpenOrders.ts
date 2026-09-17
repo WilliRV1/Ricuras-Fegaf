@@ -61,8 +61,15 @@ export function useOpenOrders() {
       })
       .subscribe();
 
+    // Reconciliación periódica: si la conexión se cayó y volvió sola, los
+    // eventos de ese rato se perdieron. Recargar es barato (pocas filas).
+    const reconciliacion = setInterval(() => {
+      if (mounted && document.visibilityState === 'visible') refrescar();
+    }, 60000);
+
     return () => {
       mounted = false;
+      clearInterval(reconciliacion);
       supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

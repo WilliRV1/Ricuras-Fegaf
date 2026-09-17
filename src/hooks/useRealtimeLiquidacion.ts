@@ -145,9 +145,16 @@ export function useRealtimeLiquidacion() {
       }
     }, 15000);
 
+    // Reconciliación periódica (ver useRealtimeOrders): repone lo que se haya
+    // perdido mientras la conexión estuvo caída.
+    const reconciliacion = setInterval(() => {
+      if (mounted && document.visibilityState === 'visible') fetchInitialOrders();
+    }, 60000);
+
     return () => {
       mounted = false;
       clearInterval(heartbeat);
+      clearInterval(reconciliacion);
       supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

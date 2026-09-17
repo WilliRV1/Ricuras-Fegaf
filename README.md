@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ricuras Fegaf — Sistema de gestión operativa
 
-## Getting Started
+App para el local: toma de pedidos, tablero de cocina en tiempo real,
+liquidación/cobro, cartera de deudas y dashboard de administración
+(costeo por recetas, reportes de utilidad, personal).
 
-First, run the development server:
+Next.js 16 (App Router) + Supabase (Postgres, RLS, Realtime). El login es
+propio, por PIN de 4 dígitos, con cookie firmada — no usa Supabase Auth.
+
+## Levantar el proyecto
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # y completar las variables
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variables necesarias (ver `.env.example` para el detalle):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Para qué |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Conexión a Supabase |
+| `SESSION_SECRET` | Firma de la cookie de sesión. **Obligatoria en producción.** |
+| `SUPABASE_JWT_SECRET` | Firma del token que le prueba a Supabase que hay sesión y con qué rol |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Las mismas variables deben existir en Vercel.
 
-## Learn More
+## Cómo está protegida la base
 
-To learn more about Next.js, take a look at the following resources:
+La app se conecta con la clave pública (`anon`), que cualquiera puede ver
+en el navegador. Por eso la base no confía en la app:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Lectura**: las tablas del negocio (`pedidos`, `pagos_pedido`, `insumos`…)
+  solo se leen con un JWT `authenticated` que firma el servidor a partir de
+  la sesión por PIN (`src/lib/session.ts:crearTokenSupabase`). El menú
+  (`productos`, `categorias`) sí es público.
+- **Escritura**: nunca directa a las tablas; siempre por funciones
+  `SECURITY DEFINER` que **exigen el rol** que viaja en ese JWT
+  (`exigir_rol`, migración `20260916000000`). Cocina no puede crear pedidos,
+  caja no puede cambiar precios, y sin sesión no se puede nada.
+- **Acciones delicadas** (anular un pedido, administrar personal) piden el
+  PIN otra vez y la base lo verifica ella misma.
+- **Sesiones**: la cookie lleva la versión de sesión del usuario; desactivar
+  a alguien o resetearle el PIN invalida sus sesiones abiertas en menos de
+  5 minutos.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Base de datos
 
-## Deploy on Vercel
+Las migraciones viven en `supabase/migrations/` y se aplican con:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+node scripts/aplicar-migracion.mjs supabase/migrations/<archivo>.sql
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**No hay entorno de pruebas: la base es la de producción.** Antes de aplicar
+una migración, pruébala con los scripts de `scripts/test-*.mjs`: corren
+contra la base real dentro de una transacción que termina en `ROLLBACK`, así
+que validan el SQL sin dejar rastro.
+
+```bash
+npm run test:db:all        # precios, caja, lectura pública, cobertura RLS, autorización
+npm run test:autorizacion  # roles, PIN en la base, validaciones, versión de sesión
+npm run test:usuarios      # usuarios y PIN
+npm run test:acceso        # control de acceso, contra la app corriendo
+```
+
+Cuando una migración cambia la firma de una función, hay que borrar todas
+las versiones antes de recrearla (`CREATE OR REPLACE` con un parámetro nuevo
+crea una sobrecarga y rompe las llamadas). Ver el bloque `DO` que usan las
+migraciones existentes.
+
+## Estructura
+
+```
+src/app/actions/     server actions (cada una vuelve a exigir sesión y rol)
+src/app/<ruta>/      páginas: /login, /pedidos, /cocina, /liquidacion, /dashboard
+src/components/      UI por pantalla + src/components/ui (piezas comunes)
+src/hooks/           carrito y suscripciones realtime
+src/lib/session.ts   cookie firmada, JWT para Supabase, permisos por rol
+src/proxy.ts         control de acceso por ruta (Next 16)
+supabase/migrations/ esquema, RLS y funciones
+scripts/             pruebas contra la base (ROLLBACK) y aplicar migraciones
+```
+
+## Roles
+
+| Rol | Pantallas |
+| --- | --- |
+| `cocina` | solo `/cocina` |
+| `cajero` | `/pedidos`, `/cocina`, `/liquidacion` |
+| `admin`, `dev` | todo, incluido `/dashboard` |

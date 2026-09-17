@@ -175,7 +175,7 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
             toma de pedidos; borrarlo solo se puede si nunca se vendió.
           </p>
 
-          <CategoriasManager categorias={categorias} onCategoriasChange={setCategorias} />
+          <CategoriasManager categorias={categorias} onCategoriasChange={setCategorias} productos={optimisticProducts} />
 
           <button
             type="button"

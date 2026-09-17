@@ -81,6 +81,10 @@ export interface ProductoCosto {
   precio: number;
   costo_total: number;
   margen: number | null;
+  /** 0 = el producto no tiene receta: su costo no es 0, es desconocido. */
+  insumos_en_receta: number;
+  /** Insumos de la receta sin ninguna compra registrada: el costo está incompleto. */
+  insumos_sin_costo: number;
 }
 
 /** Utilidad neta real de un período: ventas − costo de productos vendidos (Fase 2, Módulo 8). */

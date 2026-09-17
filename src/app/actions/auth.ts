@@ -29,7 +29,7 @@ export async function listarUsuarios() {
 }
 
 /** Deja la cookie de sesión firmada en el navegador */
-async function abrirSesion(datos: Omit<Sesion, 'exp'>) {
+async function abrirSesion(datos: Omit<Sesion, 'exp' | 'chk'>) {
   (await cookies()).set(COOKIE_SESION, await crearToken(datos), {
     httpOnly: true,
     sameSite: 'lax',
@@ -63,7 +63,9 @@ export async function iniciarSesion(usuarioId: number, pin: string) {
     return { success: false as const, error: mensajeDeErrorAuth(error.message) };
   }
 
-  const usuario = (data as (UsuarioLogin & { debe_cambiar_pin: boolean })[] | null)?.[0];
+  const usuario = (
+    data as (UsuarioLogin & { debe_cambiar_pin: boolean; sesion_version: number })[] | null
+  )?.[0];
   if (!usuario) {
     return { success: false as const, error: 'PIN incorrecto.' };
   }
@@ -76,7 +78,12 @@ export async function iniciarSesion(usuarioId: number, pin: string) {
     };
   }
 
-  await abrirSesion({ id: usuario.id, nombre: usuario.nombre, rol: usuario.rol });
+  await abrirSesion({
+    id: usuario.id,
+    nombre: usuario.nombre,
+    rol: usuario.rol,
+    v: usuario.sesion_version ?? 1,
+  });
 
   return {
     success: true as const,
@@ -110,12 +117,17 @@ export async function cambiarPin(usuarioId: number, pinActual: string, pinNuevo:
     p_pin: pinNuevo,
   });
 
-  const usuario = (data as UsuarioLogin[] | null)?.[0];
+  const usuario = (data as (UsuarioLogin & { sesion_version: number })[] | null)?.[0];
   if (!usuario) {
     return { success: false as const, error: 'No se pudo abrir la sesión. Entra de nuevo.' };
   }
 
-  await abrirSesion({ id: usuario.id, nombre: usuario.nombre, rol: usuario.rol });
+  await abrirSesion({
+    id: usuario.id,
+    nombre: usuario.nombre,
+    rol: usuario.rol,
+    v: usuario.sesion_version ?? 1,
+  });
 
   return { success: true as const, destino: rutaInicial(usuario.rol) };
 }

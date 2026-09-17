@@ -14,7 +14,8 @@
     "test:caja": "node scripts/test-arqueos-caja.mjs",
     "test:lectura-publica": "node scripts/test-lectura-publica.mjs",
     "test:rls": "node scripts/test-cobertura-rls.mjs",
-    "test:db:all": "npm run test:precios && npm run test:caja && npm run test:lectura-publica && npm run test:rls"
+    "test:autorizacion": "node scripts/test-autorizacion.mjs",
+    "test:db:all": "npm run test:precios && npm run test:caja && npm run test:lectura-publica && npm run test:rls && npm run test:autorizacion"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

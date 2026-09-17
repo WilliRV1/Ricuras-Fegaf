@@ -23,14 +23,35 @@ export function hoyBogota(): string {
  * `actions/reportes.ts` (Fase 2, Módulo 8) necesita la misma ventana para
  * que sus cifras cuadren con las del dashboard.
  */
+/** 'YYYY-MM-DD' real (no basta el formato: 2026-13-45 lo cumple) */
+export function esFechaValida(valor: string | undefined): valor is string {
+  if (!valor || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
+  const [anio, mes, dia] = valor.split('-').map(Number);
+  const fecha = new Date(Date.UTC(anio, mes - 1, dia));
+  return (
+    fecha.getUTCFullYear() === anio && fecha.getUTCMonth() === mes - 1 && fecha.getUTCDate() === dia
+  );
+}
+
+/**
+ * Deja un rango de fechas usable a partir de lo que llegue por la URL: lo que
+ * no sea una fecha válida cae a hoy, y si el rango viene al revés se ordena.
+ * Antes `/dashboard?from=abc` tumbaba la página con "Invalid time value".
+ */
+export function normalizarRango(fromStr?: string, toStr?: string): { from: string; to: string } {
+  const hoy = hoyBogota();
+  const from = esFechaValida(fromStr) ? fromStr : hoy;
+  const to = esFechaValida(toStr) ? toStr : from;
+  return from <= to ? { from, to } : { from: to, to: from };
+}
+
 export async function getTimeWindow(
   supabase: Awaited<ReturnType<typeof createClient>>,
   fromStr?: string,
   toStr?: string
 ) {
   const bogotaDateStr = hoyBogota();
-  const from = fromStr || bogotaDateStr;
-  const to = toStr || from;
+  const { from, to } = normalizarRango(fromStr, toStr);
   const esSoloHoy = from === to && from === bogotaDateStr;
 
   if (esSoloHoy) {
@@ -38,7 +59,7 @@ export async function getTimeWindow(
       .from('arqueos_caja')
       .select('opened_at')
       .eq('estado', 'abierto')
-      .single();
+      .maybeSingle();
 
     if (arqueo) {
       return {

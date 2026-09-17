@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { sesionConAcceso } from '@/lib/sesionServidor';
 import { revalidatePath } from 'next/cache';
 import type { CompraInsumo, InsumoConCosto, ProductoCosto, RecetaItem } from '@/types';
+import { MENSAJE_ROL_NO_AUTORIZADO } from '@/lib/authErrors';
 
 /**
  * Fase 2 / Módulo 6 — Constructor de Recetas y Costeo.
@@ -24,6 +25,9 @@ import type { CompraInsumo, InsumoConCosto, ProductoCosto, RecetaItem } from '@/
 
 function mensajeDeError(mensaje: string | undefined): string {
   if (!mensaje) return 'Error inesperado del servidor.';
+  if (mensaje.includes('ROL_NO_AUTORIZADO')) return MENSAJE_ROL_NO_AUTORIZADO;
+  if (mensaje.includes('INSUMO_REPETIDO')) return 'Hay un insumo repetido en la receta.';
+  if (mensaje.includes('CANTIDAD_INVALIDA')) return 'Las cantidades de la receta deben ser mayores a cero.';
   if (mensaje.includes('NOMBRE_REQUERIDO')) return 'Escribe el nombre del insumo.';
   if (mensaje.includes('UNIDAD_REQUERIDA')) return 'Escribe la unidad del insumo.';
   if (mensaje.includes('INSUMO_NO_ENCONTRADO')) return 'Ese insumo ya no existe.';
@@ -233,7 +237,7 @@ export async function listarProductoCostos() {
 
   const { data, error } = await db
     .from('vw_producto_costos')
-    .select('producto_id, nombre, precio, costo_total, margen')
+    .select('producto_id, nombre, precio, costo_total, margen, insumos_en_receta, insumos_sin_costo')
     .order('nombre', { ascending: true });
 
   if (error) {

@@ -1,8 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { confirmarPin } from './auth';
 import { sesionConAcceso } from '@/lib/sesionServidor';
+import { MENSAJE_ROL_NO_AUTORIZADO, mensajeDeErrorAuth } from '@/lib/authErrors';
 
 /**
  * Marca un pedido como listo (terminado en cocina).
@@ -33,6 +33,9 @@ export async function markOrderAsReady(pedidoId: number) {
       if (error.message?.includes('PEDIDO_NO_ENCONTRADO')) {
         return { success: false, error: 'El pedido ya no existe.' };
       }
+      if (error.message?.includes('ROL_NO_AUTORIZADO')) {
+        return { success: false, error: MENSAJE_ROL_NO_AUTORIZADO };
+      }
 
       return { success: false, error: 'No se pudo marcar el pedido como listo.' };
     }
@@ -54,7 +57,9 @@ export async function markOrderAsReady(pedidoId: number) {
  *
  * Exige el PIN de quien anula, no basta con la sesión abierta: las tablets
  * quedan encendidas y pasan de mano en mano, así que sin el PIN el nombre
- * registrado no querría decir nada.
+ * registrado no querría decir nada. El PIN se verifica DENTRO de la base
+ * (`cancel_order`, migración 20260916000000) y el nombre que queda registrado
+ * sale de la tabla de usuarios, no de esta petición.
  *
  * @param pedidoId ID numérico del pedido
  * @param motivo Razón de la cancelación
@@ -75,29 +80,42 @@ export async function cancelOrder(
     return { success: false, error: 'Necesitas una sesión con acceso a Cocina o Liquidación.' };
   }
 
-  try {
-    const identidad = await confirmarPin(usuarioId, pin);
-    if (!identidad.success) {
-      return { success: false, error: identidad.error };
-    }
+  if (!/^[0-9]{4}$/.test(pin)) {
+    return { success: false, error: 'El PIN son 4 dígitos.' };
+  }
 
+  try {
     const supabase = await createClient();
 
     // @ts-expect-error - Tipos generados sin los RPC nuevos
     const { error } = await supabase.rpc('cancel_order', {
       p_pedido_id: pedidoId,
       p_motivo: motivo ?? null,
-      p_cancelado_por: identidad.usuario.nombre,
+      p_usuario_id: usuarioId,
+      p_pin: pin,
     });
 
     if (error) {
-      console.error('Error al cancelar pedido:', error);
+      // El PIN equivocado es lo normal acá (un dedazo), no un error del sistema
+      if (!error.message?.includes('CREDENCIALES_INVALIDAS')) {
+        console.error('Error al cancelar pedido:', error);
+      }
 
       if (error.message?.includes('PEDIDO_YA_PAGADO')) {
         return { success: false, error: 'Este pedido ya fue cobrado, no se puede cancelar.' };
       }
+      if (error.message?.includes('PEDIDO_YA_CANCELADO')) {
+        return { success: false, error: 'Este pedido ya estaba anulado.' };
+      }
       if (error.message?.includes('PEDIDO_NO_ENCONTRADO')) {
         return { success: false, error: 'El pedido ya no existe.' };
+      }
+      if (
+        error.message?.includes('CREDENCIALES_INVALIDAS') ||
+        error.message?.includes('USUARIO_BLOQUEADO') ||
+        error.message?.includes('ROL_NO_AUTORIZADO')
+      ) {
+        return { success: false, error: mensajeDeErrorAuth(error.message) };
       }
 
       return { success: false, error: 'No se pudo cancelar el pedido.' };

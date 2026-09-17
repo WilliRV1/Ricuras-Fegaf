@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { sesionConAcceso } from '@/lib/sesionServidor';
 import type { Categoria } from '@/types';
+import { MENSAJE_ROL_NO_AUTORIZADO } from '@/lib/authErrors';
 
 /**
  * Gestión del menú: crear, editar y borrar productos, y listar categorías
@@ -14,6 +15,7 @@ import type { Categoria } from '@/types';
 
 function mensajeDeErrorProducto(mensaje: string | undefined): string {
   if (!mensaje) return 'Error inesperado del servidor.';
+  if (mensaje.includes('ROL_NO_AUTORIZADO')) return MENSAJE_ROL_NO_AUTORIZADO;
   if (mensaje.includes('NOMBRE_REQUERIDO')) return 'Escribe el nombre del producto.';
   if (mensaje.includes('PRECIO_INVALIDO')) return 'El precio debe ser mayor a cero.';
   if (mensaje.includes('CATEGORIA_NO_ENCONTRADA')) return 'Esa categoría ya no existe.';
@@ -25,6 +27,7 @@ function mensajeDeErrorProducto(mensaje: string | undefined): string {
 
 function mensajeDeErrorCategoria(mensaje: string | undefined): string {
   if (!mensaje) return 'Error inesperado del servidor.';
+  if (mensaje.includes('ROL_NO_AUTORIZADO')) return MENSAJE_ROL_NO_AUTORIZADO;
   if (mensaje.includes('NOMBRE_REQUERIDO')) return 'Escribe el nombre de la categoría.';
   if (mensaje.includes('CATEGORIA_REPETIDA')) return 'Ya existe una categoría con ese nombre.';
   if (mensaje.includes('CATEGORIA_NO_ENCONTRADA')) return 'Esa categoría ya no existe.';
@@ -214,11 +217,7 @@ export async function toggleProductStatus(productoId: number, isActive: boolean)
     if (error) {
       console.error('Error toggling product status:', error);
 
-      if (error.message?.includes('PRODUCTO_NO_ENCONTRADO')) {
-        return { success: false, error: 'Ese producto ya no existe.' };
-      }
-
-      return { success: false, error: 'No se pudo actualizar el estado del producto.' };
+      return { success: false, error: mensajeDeErrorProducto(error.message) };
     }
 
     // Revalidate the paths where products are shown so they update

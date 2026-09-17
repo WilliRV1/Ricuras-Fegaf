@@ -15,6 +15,7 @@ import React, { useMemo, useState } from 'react';
 import { useCart } from '@/hooks/useCart';
 import { CartItem as CartItemComponent } from './CartItem';
 import { Button } from '../ui/Button';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { toast } from '../ui/Toast';
 import { METODOS_PAGO } from '@/lib/constants';
 import { calcularRecargoDatafono } from '@/lib/utils';
@@ -35,7 +36,11 @@ import styles from './Cart.module.css';
 
 interface CartProps {
   orderType: OrderType;
-  onEnviarCocina?: (metodoPago: MetodoPago, pagaCon: number | null) => Promise<void>;
+  onEnviarCocina?: (
+    metodoPago: MetodoPago,
+    pagaCon: number | null,
+    totalMostrado: number
+  ) => Promise<{ aviso?: string } | void>;
   isValidOrder?: boolean;
   /** Cobro por domicilio fuera del sector (0 si no aplica) */
   costoDomicilio?: number;
@@ -75,6 +80,7 @@ export const Cart: React.FC<CartProps> = ({
 }) => {
   const { items, subtotal, totalItems, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmarLimpiar, setConfirmarLimpiar] = useState(false);
   const [metodoPago, setMetodoPago] = useState<MetodoPago>(null);
   /** Monto con el que el cliente va a pagar en efectivo (string para el input) */
   const [pagaConInput, setPagaConInput] = useState('');
@@ -143,14 +149,18 @@ export const Cart: React.FC<CartProps> = ({
 
     setIsSubmitting(true);
     try {
+      let aviso: string | undefined;
       if (onEnviarCocina) {
-        await onEnviarCocina(
+        const resultado = await onEnviarCocina(
           orderType === 'domicilio' ? metodoPago : null,
-          esEfectivoDomicilio ? pagaCon : null
+          esEfectivoDomicilio ? pagaCon : null,
+          total
         );
+        aviso = resultado?.aviso;
       } else {
         await new Promise((res) => setTimeout(res, 800));
       }
+      if (aviso) toast.error(aviso);
       toast.success(
         esEdicion ? (
           <>
@@ -399,7 +409,7 @@ export const Cart: React.FC<CartProps> = ({
         <div className={styles.actions}>
           <button
             className={styles.clearBtn}
-            onClick={clearCart}
+            onClick={() => setConfirmarLimpiar(true)}
             disabled={isSubmitting}
             type="button"
           >
@@ -419,6 +429,22 @@ export const Cart: React.FC<CartProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* "Limpiar" está al lado de "Enviar": un toque de más no puede borrar el pedido */}
+      <ConfirmDialog
+        isOpen={confirmarLimpiar}
+        title="¿Vaciar el carrito?"
+        message={`Se quitan los ${totalItems} ítem${totalItems !== 1 ? 's' : ''} del pedido que estás armando.`}
+        confirmLabel="Sí, vaciar"
+        cancelLabel="Volver"
+        variant="danger"
+        onConfirm={() => {
+          clearCart();
+          resetPago();
+          setConfirmarLimpiar(false);
+        }}
+        onCancel={() => setConfirmarLimpiar(false)}
+      />
     </div>
   );
 };

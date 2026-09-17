@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PersonaAdmin, Rol } from '@/lib/session';
 import {
   listarPersonal,
@@ -29,12 +29,17 @@ function pinTemporalSugerido() {
   return pin;
 }
 
+/** Sin actividad este tiempo, el panel se vuelve a bloquear y pide el PIN */
+const INACTIVIDAD_BLOQUEO_MS = 5 * 60 * 1000;
+
 /**
  * Administración del personal: dar de alta, resetear PIN y activar o
  * desactivar a alguien.
  *
  * Todo exige el PIN de administración, no basta con tener el dashboard
- * abierto. Se pide una vez y se conserva mientras dure la pantalla.
+ * abierto. Se pide una vez y se conserva mientras se esté usando el panel:
+ * a los cinco minutos sin tocarlo se olvida, porque el dashboard se queda
+ * abierto en una tablet compartida y esto es lo que crea cuentas.
  */
 export const PersonalManager: React.FC = () => {
   const [adminPin, setAdminPin] = useState('');
@@ -48,6 +53,28 @@ export const PersonalManager: React.FC = () => {
   const [nombre, setNombre] = useState('');
   const [rol, setRol] = useState<Rol>('cajero');
   const [pinTemporal, setPinTemporal] = useState(pinTemporalSugerido);
+
+  // Cada acción reinicia el temporizador; al vencer se olvida el PIN.
+  const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reiniciarInactividad = () => {
+    if (temporizador.current) clearTimeout(temporizador.current);
+    temporizador.current = setTimeout(() => {
+      setAdminPin('');
+      setPinIngresado('');
+      setPersonal([]);
+      setCreando(false);
+      setError('Se bloqueó por inactividad. Marca tu PIN otra vez.');
+    }, INACTIVIDAD_BLOQUEO_MS);
+  };
+
+  useEffect(() => {
+    if (!adminPin) return;
+    reiniciarInactividad();
+    return () => {
+      if (temporizador.current) clearTimeout(temporizador.current);
+    };
+    // Solo al desbloquear/bloquear; las acciones lo reinician a mano.
+  }, [adminPin]);
 
   const desbloquear = async (pin: string) => {
     setCargando(true);
@@ -66,6 +93,7 @@ export const PersonalManager: React.FC = () => {
   };
 
   const recargar = async () => {
+    reiniciarInactividad();
     const res = await listarPersonal(adminPin);
     if (res.success) setPersonal(res.personal);
   };
@@ -76,6 +104,7 @@ export const PersonalManager: React.FC = () => {
       return;
     }
 
+    reiniciarInactividad();
     setCargando(true);
     const res = await crearPersona(adminPin, nombre.trim(), rol, pinTemporal);
     setCargando(false);
@@ -97,6 +126,7 @@ export const PersonalManager: React.FC = () => {
 
   const resetear = async (persona: PersonaAdmin) => {
     const temporal = pinTemporalSugerido();
+    reiniciarInactividad();
     setCargando(true);
     const res = await resetearPinDePersona(adminPin, persona.id, temporal);
     setCargando(false);
@@ -111,6 +141,7 @@ export const PersonalManager: React.FC = () => {
   };
 
   const alternarEstado = async (persona: PersonaAdmin) => {
+    reiniciarInactividad();
     setCargando(true);
     const res = await cambiarEstadoDePersona(adminPin, persona.id, !persona.activo);
     setCargando(false);
@@ -151,7 +182,7 @@ export const PersonalManager: React.FC = () => {
   }
 
   return (
-    <div className={styles.contenedor}>
+    <div className={styles.contenedor} onPointerDown={reiniciarInactividad} onKeyDown={reiniciarInactividad}>
       <div className={styles.cabecera}>
         <p className={styles.ayuda}>
           Cada persona elige su propio PIN la primera vez que entra. Tú nunca lo ves: si

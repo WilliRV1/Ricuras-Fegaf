@@ -53,6 +53,8 @@ interface OrderContainerProps {
 import { useCart, cartStore } from '@/hooks/useCart';
 import { submitOrder, updateOrder, getOrderById } from '@/app/actions/pedidos';
 import { Cart } from './Cart';
+import { createClient } from '@/lib/supabase/client';
+import { formatCurrency } from '@/lib/utils';
 
 export const OrderContainer: React.FC<OrderContainerProps> = ({
   initialCategorias,
@@ -101,17 +103,23 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
    */
   const [rehaciendoPedidoId, setRehaciendoPedidoId] = useState<number | null>(null);
 
-  /** Vuelca los productos y los datos de un pedido en el carrito y el formulario */
-  const volcarEnFormulario = useCallback((order: PedidoWithDetalles) => {
+  /**
+   * Vuelca los productos y los datos de un pedido en el carrito y el formulario.
+   *
+   * @param modo 'editar' conserva el precio con el que se tomó cada línea (el
+   *   pedido sigue siendo el mismo y la base valida contra ese precio).
+   *   'rehacer' usa el precio ACTUAL del catálogo: el resultado es un pedido
+   *   nuevo y la base lo va a cobrar al precio de hoy — mostrar el viejo
+   *   dejaría el ticket en pantalla distinto al que se guarda.
+   */
+  const volcarEnFormulario = useCallback((order: PedidoWithDetalles, modo: 'editar' | 'rehacer') => {
     cartStore.clearCart();
 
     // Cada detalle es una línea independiente, con sus propias observaciones.
-    // Se conserva el precio con el que se tomó el pedido para no alterar el
-    // total si el precio del producto cambió después.
     (order.detalle_pedidos ?? []).forEach((detalle) => {
       const producto = initialProductos.find((p) => p.id === detalle.producto_id);
       const productoLinea: Producto = producto
-        ? { ...producto, precio: detalle.precio_unitario }
+        ? { ...producto, precio: modo === 'editar' ? detalle.precio_unitario : producto.precio }
         : ({
             id: detalle.producto_id,
             nombre: detalle.productos?.nombre ?? 'Producto',
@@ -152,7 +160,7 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
 
   /** Abre un pedido existente para modificarlo */
   const cargarPedidoEnCarrito = useCallback((order: PedidoWithDetalles) => {
-    volcarEnFormulario(order);
+    volcarEnFormulario(order, 'editar');
     setEditingOrder(order);
     setRehaciendoPedidoId(null);
     // Si cocina ya lo despachó, por defecto se le avisa del cambio
@@ -165,11 +173,22 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
    * digitarlo otra vez. El pedido resultante es nuevo: el cancelado no revive.
    */
   const cargarPedidoParaRehacer = useCallback((order: PedidoWithDetalles) => {
-    volcarEnFormulario(order);
+    volcarEnFormulario(order, 'rehacer');
     setEditingOrder(null);
     setRehaciendoPedidoId(order.id);
+
+    // Si algo del pedido viejo ya está agotado, se avisa de una: la base no
+    // lo va a aceptar y es mejor saberlo antes de intentar enviar.
+    const agotados = (order.detalle_pedidos ?? [])
+      .map((d) => initialProductos.find((p) => p.id === d.producto_id))
+      .filter((p) => p && !p.activo)
+      .map((p) => p!.nombre);
+    if (agotados.length > 0) {
+      toast.error(`Agotado ahora: ${agotados.join(', ')}. Quítalo antes de enviar.`);
+    }
+
     toast.success(`Pedido #${order.id} cargado — revísalo y envíalo a cocina`);
-  }, [volcarEnFormulario]);
+  }, [volcarEnFormulario, initialProductos]);
 
   /** Entra a modo edición, avisando si se va a perder un carrito a medias */
   const handleEditarPedido = useCallback((order: PedidoWithDetalles) => {
@@ -241,6 +260,34 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
       cancelado = true;
     };
   }, [editarId, rehacerId, cargarPedidoEnCarrito, cargarPedidoParaRehacer, router]);
+
+  /* ----------------------------------------------------------------
+     El menú se mantiene al día solo: si desde el dashboard marcan algo
+     como agotado o cambian un precio, esta pantalla se entera sin que
+     nadie tenga que recargarla. `router.refresh()` vuelve a pedir los
+     productos al servidor sin tocar el carrito ni el formulario.
+     ---------------------------------------------------------------- */
+  useEffect(() => {
+    const supabase = createClient();
+    let temporizador: ReturnType<typeof setTimeout> | null = null;
+
+    const channel = supabase
+      .channel('menu-productos')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'productos' }, () => {
+        // Varios cambios seguidos (p. ej. marcar 3 agotados) → un solo refresco
+        if (temporizador) clearTimeout(temporizador);
+        temporizador = setTimeout(() => {
+          router.refresh();
+          toast.success('El menú se actualizó');
+        }, 400);
+      })
+      .subscribe();
+
+    return () => {
+      if (temporizador) clearTimeout(temporizador);
+      supabase.removeChannel(channel);
+    };
+  }, [router]);
 
   /* ----------------------------------------------------------------
      Productos filtrados por categoría
@@ -332,10 +379,13 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
    * Cambia el tipo de atención y resetea el formulario de datos.
    */
   const handleTypeSelect = useCallback((type: OrderType) => {
+    // Con un pedido abierto para modificar, el tipo no se cambia: la base
+    // conserva el tipo original y aquí solo se perderían la mesa o la dirección.
+    if (editingOrder) return;
     setOrderType(type);
     setOrderDetails({});
     setFormErrors({});
-  }, []);
+  }, [editingOrder]);
 
   /**
    * isFormValid: true si se seleccionó un tipo de atención y,
@@ -362,16 +412,19 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
   /**
    * Envía el pedido completo a Supabase.
    */
-  const handleEnviarCocina = async (metodoPago: MetodoPago, pagaCon: number | null) => {
+  const handleEnviarCocina = async (
+    metodoPago: MetodoPago,
+    pagaCon: number | null,
+    /** Total que mostraba el carrito, para compararlo con el que guardó la base */
+    totalMostrado: number
+  ): Promise<{ aviso?: string }> => {
     if (!orderType || !isFormValid) {
-      toast.error('Completa los datos obligatorios del pedido.');
-      return;
+      throw new Error('Completa los datos obligatorios del pedido.');
     }
 
     const { items } = cartStore.getSnapshot();
     if (items.length === 0) {
-      toast.error('El carrito está vacío.');
-      return;
+      throw new Error('El carrito está vacío.');
     }
 
     const res = editingOrder
@@ -404,6 +457,18 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
     setOrderType(null);
     setOrderDetails({});
     setFormErrors({});
+
+    // La base cobra al precio del catálogo. Si difiere de lo que se mostró
+    // (cambió un precio mientras se armaba el pedido), hay que decirlo: el
+    // cliente ya oyó otra cifra.
+    const totalGuardado = res.total != null ? Number(res.total) : null;
+    if (totalGuardado != null && Math.round(totalGuardado) !== Math.round(totalMostrado)) {
+      return {
+        aviso: `Ojo: el pedido #${res.pedidoId} quedó en ${formatCurrency(totalGuardado)} (el carrito mostraba ${formatCurrency(totalMostrado)}) porque cambió un precio del menú.`,
+      };
+    }
+
+    return {};
   };
 
   /* ----------------------------------------------------------------
@@ -514,7 +579,12 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
             </span>
           </div>
 
-          <OrderTypeSelector selectedType={orderType} onSelectType={handleTypeSelect} />
+          <OrderTypeSelector
+            selectedType={orderType}
+            onSelectType={handleTypeSelect}
+            disabled={editingOrder !== null}
+            disabledHint="El tipo de atención no se cambia al modificar un pedido. Si hay que cambiarlo, anúlalo y vuelve a montarlo."
+          />
 
           {/* Indicador de paso 2 (visible cuando ya se seleccionó tipo) */}
           {orderType && (
@@ -613,9 +683,10 @@ export const OrderContainer: React.FC<OrderContainerProps> = ({
           editingOrderId={editingOrder?.id ?? null}
           initialMetodoPago={(editingOrder?.metodo_pago as MetodoPago) ?? null}
           initialPagaCon={editingOrder?.paga_con ?? null}
-          onEnviarCocina={async (pago, pagaCon) => {
-            await handleEnviarCocina(pago, pagaCon);
+          onEnviarCocina={async (pago, pagaCon, totalMostrado) => {
+            const resultado = await handleEnviarCocina(pago, pagaCon, totalMostrado);
             setIsMobileCartOpen(false);
+            return resultado;
           }}
         />
       </div>

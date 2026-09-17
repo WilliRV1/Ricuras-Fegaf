@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { COOKIE_SESION, leerToken, puedeVer, rutaInicial } from '@/lib/session';
+import {
+  COOKIE_SESION,
+  DURACION_SESION_SEGUNDOS,
+  leerToken,
+  puedeVer,
+  renovarToken,
+  rutaInicial,
+  sesionNecesitaRevalidar,
+} from '@/lib/session';
+import { sesionSigueVigente } from '@/lib/sesionVigente';
 
 /**
  * Control de acceso por sesión firmada (Next.js 16).
@@ -33,7 +42,20 @@ export async function proxy(request: NextRequest) {
 
   const esLogin = pathname.startsWith('/login');
 
-  const sesion = await leerToken(request.cookies.get(COOKIE_SESION)?.value);
+  let sesion = await leerToken(request.cookies.get(COOKIE_SESION)?.value);
+
+  // Cada pocos minutos se le pregunta a la base si la persona sigue activa y
+  // con la misma versión de sesión: así desactivarla o resetearle el PIN la
+  // saca de verdad, en vez de dejarla entrar hasta que venza la cookie.
+  let cookieRenovada: string | null = null;
+  if (sesion && sesionNecesitaRevalidar(sesion)) {
+    if (await sesionSigueVigente(sesion)) {
+      sesion = { ...sesion, chk: Math.floor(Date.now() / 1000) };
+      cookieRenovada = await renovarToken(sesion);
+    } else {
+      sesion = null;
+    }
+  }
 
   // Sin sesión válida: solo se puede estar en la pantalla de entrada
   if (!sesion) {
@@ -41,22 +63,36 @@ export async function proxy(request: NextRequest) {
 
     const destino = new URL('/login', request.url);
     const respuesta = NextResponse.redirect(destino);
-    // Si la cookie venía vencida o alterada, se limpia para no reintentar
+    // Si la cookie venía vencida, alterada o ya no vale, se limpia para no reintentar
     respuesta.cookies.delete(COOKIE_SESION);
     return respuesta;
   }
 
-  // Con sesión abierta, el login sobra
+  let respuesta: NextResponse;
+
   if (esLogin) {
-    return NextResponse.redirect(new URL(rutaInicial(sesion.rol), request.url));
+    // Con sesión abierta, el login sobra
+    respuesta = NextResponse.redirect(new URL(rutaInicial(sesion.rol), request.url));
+  } else if (!puedeVer(sesion.rol, pathname)) {
+    // Cada rol a lo suyo
+    respuesta = NextResponse.redirect(new URL(rutaInicial(sesion.rol), request.url));
+  } else {
+    respuesta = NextResponse.next();
   }
 
-  // Cada rol a lo suyo
-  if (!puedeVer(sesion.rol, pathname)) {
-    return NextResponse.redirect(new URL(rutaInicial(sesion.rol), request.url));
+  if (cookieRenovada) {
+    respuesta.cookies.set(COOKIE_SESION, cookieRenovada, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      // La cookie conserva su vencimiento original (va dentro del token); el
+      // maxAge solo evita que el navegador la trate como de sesión.
+      maxAge: Math.max(sesion.exp - Math.floor(Date.now() / 1000), 0) || DURACION_SESION_SEGUNDOS,
+      path: '/',
+    });
   }
 
-  return NextResponse.next();
+  return respuesta;
 }
 
 export default proxy;

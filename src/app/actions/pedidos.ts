@@ -5,6 +5,32 @@ import { CartItem, OrderType, OrderDetails, MetodoPago, PedidoWithDetalles } fro
 import { ESTADOS_PEDIDO, TIPOS_ATENCION, METODOS_PAGO } from '@/lib/constants';
 import { calcularRecargoDatafono } from '@/lib/utils';
 import { nombreDeSesion, sesionConAcceso } from '@/lib/sesionServidor';
+import { MENSAJE_ROL_NO_AUTORIZADO } from '@/lib/authErrors';
+
+/**
+ * Traduce los errores que lanzan los RPC de pedidos. Los comparten crear y
+ * modificar porque validan lo mismo (cantidades, agotados, rol).
+ */
+function mensajeDeErrorPedido(mensaje: string | undefined): string | null {
+  if (!mensaje) return null;
+  if (mensaje.includes('ROL_NO_AUTORIZADO')) return MENSAJE_ROL_NO_AUTORIZADO;
+  if (mensaje.includes('PRODUCTO_AGOTADO')) {
+    return 'Uno de los productos se marcó como agotado. Quítalo del pedido y vuelve a intentar.';
+  }
+  if (mensaje.includes('PRODUCTO_NO_ENCONTRADO')) {
+    return 'Uno de los productos ya no existe en el menú. Quítalo del pedido y vuelve a intentar.';
+  }
+  if (mensaje.includes('CANTIDAD_INVALIDA')) return 'Las cantidades deben ser mayores a cero.';
+  if (mensaje.includes('CARRITO_VACIO')) return 'El carrito está vacío.';
+  if (mensaje.includes('PRECIO_INVALIDO')) {
+    return 'El precio de un producto cambió mientras editabas. Sal de la edición y vuelve a abrir el pedido.';
+  }
+  if (mensaje.includes('PEDIDO_NO_EDITABLE')) {
+    return 'Este pedido ya se cobró, se anuló o quedó como deuda, así que no se puede modificar.';
+  }
+  if (mensaje.includes('PEDIDO_NO_ENCONTRADO')) return 'El pedido ya no existe.';
+  return null;
+}
 
 /**
  * Calcula los montos y arma el payload que espera el RPC.
@@ -126,7 +152,10 @@ export async function submitOrder(
 
   if (rpcError || !pedidoId) {
     console.error('Error insertando pedido via RPC:', rpcError);
-    return { success: false, error: 'No se pudo crear el pedido de forma segura.' };
+    return {
+      success: false,
+      error: mensajeDeErrorPedido(rpcError?.message) ?? 'No se pudo crear el pedido de forma segura.',
+    };
   }
 
   // El enlace con el pedido cancelado es informativo: si falla, el pedido
@@ -142,7 +171,16 @@ export async function submitOrder(
     }
   }
 
-  return { success: true, pedidoId: pedidoId };
+  // El total lo calcula la base desde el catálogo. Se devuelve para que la
+  // pantalla pueda avisar si difiere de lo que mostraba el carrito (un precio
+  // que cambió mientras se armaba el pedido).
+  const { data: guardado } = await supabase
+    .from('pedidos')
+    .select('total')
+    .eq('id', pedidoId as number)
+    .maybeSingle();
+
+  return { success: true, pedidoId: pedidoId as number, total: guardado?.total ?? null };
 }
 
 /**
@@ -197,21 +235,19 @@ export async function updateOrder(
 
   if (rpcError) {
     console.error('Error modificando pedido via RPC:', rpcError);
-
-    if (rpcError.message?.includes('PEDIDO_NO_EDITABLE')) {
-      return {
-        success: false,
-        error: 'Este pedido ya se cobró, se anuló o quedó como deuda, así que no se puede modificar.',
-      };
-    }
-    if (rpcError.message?.includes('PEDIDO_NO_ENCONTRADO')) {
-      return { success: false, error: 'El pedido ya no existe.' };
-    }
-
-    return { success: false, error: 'No se pudo modificar el pedido.' };
+    return {
+      success: false,
+      error: mensajeDeErrorPedido(rpcError.message) ?? 'No se pudo modificar el pedido.',
+    };
   }
 
-  return { success: true, pedidoId };
+  const { data: guardado } = await supabase
+    .from('pedidos')
+    .select('total')
+    .eq('id', pedidoId)
+    .maybeSingle();
+
+  return { success: true, pedidoId, total: guardado?.total ?? null };
 }
 
 /**

@@ -6,8 +6,17 @@
  * está mal" a propósito: decirlo sería regalar la mitad del trabajo a quien
  * esté probando.
  */
+/**
+ * La base rechazó la acción porque el rol de la sesión no alcanza. Llega si
+ * alguien invoca la API por fuera de la app o si la sesión cambió de rol.
+ */
+export const MENSAJE_ROL_NO_AUTORIZADO =
+  'Tu sesión no tiene permiso para esta acción. Cierra sesión y vuelve a entrar.';
+
 export function mensajeDeErrorAuth(mensaje: string | undefined): string {
   if (!mensaje) return 'No se pudo completar la operación.';
+
+  if (mensaje.includes('ROL_NO_AUTORIZADO')) return MENSAJE_ROL_NO_AUTORIZADO;
 
   if (mensaje.includes('USUARIO_BLOQUEADO')) {
     return 'Demasiados intentos fallidos. Espera 5 minutos e inténtalo de nuevo.';

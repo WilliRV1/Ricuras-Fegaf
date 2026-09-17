@@ -125,6 +125,13 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
       const res = await closeOrderWithPayments(order.id, pagos);
       if (res.success) {
         toast.success(`Pedido #${order.id} liquidado correctamente`);
+        // Normalmente realtime saca este ticket del tablero enseguida. Si la
+        // conexión está caída y sigue aquí, se libera el botón para que no
+        // quede girando sin explicación.
+        setTimeout(() => {
+          setIsSubmitting(false);
+          setShowCobrarConfirm(false);
+        }, 8000);
       } else {
         toast.error(res.error || 'Error al liquidar pedido');
         setIsSubmitting(false);
@@ -160,6 +167,10 @@ export const LiquidacionTicket: React.FC<LiquidacionTicketProps> = ({ order, isD
       const res = await markOrderAsDebe(order.id, nombre, telefono);
       if (res.success) {
         toast.success(`${nombre} queda debiendo ${formatCurrency(base)} (pedido #${order.id})`);
+        setTimeout(() => {
+          setIsMarkingDebe(false);
+          setShowDebeDialog(false);
+        }, 8000);
       } else {
         toast.error(res.error || 'Error al registrar la deuda');
         setIsMarkingDebe(false);

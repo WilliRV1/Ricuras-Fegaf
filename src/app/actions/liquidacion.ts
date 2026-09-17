@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { nombreDeSesion, sesionConAcceso } from '@/lib/sesionServidor';
+import { MENSAJE_ROL_NO_AUTORIZADO } from '@/lib/authErrors';
 
 export interface PagoParcial {
   metodo: string;
@@ -52,6 +53,12 @@ export async function closeOrderWithPayments(pedidoId: number, pagos: PagoParcia
       }
       if (error.message?.includes('PEDIDO_NO_ENCONTRADO')) {
         return { success: false, error: 'El pedido ya no existe.' };
+      }
+      if (error.message?.includes('METODO_INVALIDO') || error.message?.includes('SIN_PAGOS')) {
+        return { success: false, error: 'Revisa los métodos y montos del cobro.' };
+      }
+      if (error.message?.includes('ROL_NO_AUTORIZADO')) {
+        return { success: false, error: MENSAJE_ROL_NO_AUTORIZADO };
       }
 
       return { success: false, error: 'No se pudo registrar el cobro.' };
@@ -113,6 +120,9 @@ export async function markOrderAsDebe(
       }
       if (error.message?.includes('PEDIDO_NO_ENCONTRADO')) {
         return { success: false, error: 'El pedido ya no existe.' };
+      }
+      if (error.message?.includes('ROL_NO_AUTORIZADO')) {
+        return { success: false, error: MENSAJE_ROL_NO_AUTORIZADO };
       }
 
       return { success: false, error: 'No se pudo registrar la deuda.' };

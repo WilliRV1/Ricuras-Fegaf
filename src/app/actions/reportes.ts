@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { sesionConAcceso } from '@/lib/sesionServidor';
-import { getTimeWindow, hoyBogota } from '@/lib/rangoFechas';
+import { getTimeWindow, hoyBogota, normalizarRango } from '@/lib/rangoFechas';
 import { getResumenDelDia } from '@/app/actions/dashboard';
 import type { ComparativoMensual, ProductoRentable, ReporteUtilidad, ReporteUtilidadMensual } from '@/types';
 
@@ -29,7 +29,12 @@ import type { ComparativoMensual, ProductoRentable, ReporteUtilidad, ReporteUtil
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ClienteSinTipar = { from: (table: string) => any };
 
-/** Suma el costo (según receta vigente) de todo lo vendido y pagado en la ventana [startOfDay, endOfDay). */
+/**
+ * Suma el costo (según receta vigente) de todo lo vendido en la ventana
+ * [startOfDay, endOfDay). Cuenta lo pagado Y lo fiado: `ventaRealDelDia`
+ * (la cifra de ventas contra la que se resta) incluye el fiado del día, así
+ * que dejar su costo por fuera inflaba la utilidad cada día con deudas.
+ */
 async function costoProductosVendidosEnRango(
   supabase: Awaited<ReturnType<typeof createClient>>,
   startOfDay: string,
@@ -41,7 +46,7 @@ async function costoProductosVendidosEnRango(
     supabase
       .from('detalle_pedidos')
       .select('producto_id, cantidad, pedidos!inner(estado, created_at)')
-      .eq('pedidos.estado', 'pagado')
+      .in('pedidos.estado', ['pagado', 'debe'])
       .gte('pedidos.created_at', startOfDay)
       .lt('pedidos.created_at', endOfDay),
     db.from('vw_producto_costos').select('producto_id, costo_total'),
@@ -75,9 +80,7 @@ export async function getUtilidadNetaReal(fromStr?: string, toStr?: string): Pro
   const supabase = await createClient();
   const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
 
-  const bogotaHoy = hoyBogota();
-  const from = fromStr || bogotaHoy;
-  const to = toStr || from;
+  const { from, to } = normalizarRango(fromStr, toStr);
 
   const costoProductos = await costoProductosVendidosEnRango(supabase, startOfDay, endOfDay);
   const ventas = resumen.ventaRealDelDia;

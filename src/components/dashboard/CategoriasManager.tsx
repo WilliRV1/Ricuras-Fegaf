@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { Categoria } from '@/types';
+import { Categoria, Producto } from '@/types';
 import { crearCategoria, actualizarCategoria, eliminarCategoria } from '@/app/actions/productos';
 import { toast } from '@/components/ui/Toast';
 import { IconPlus, IconPencil, IconTrash } from '@/components/ui/Icons';
@@ -10,6 +10,8 @@ import styles from './StockManager.module.css';
 interface CategoriasManagerProps {
   categorias: Categoria[];
   onCategoriasChange: (categorias: Categoria[]) => void;
+  /** Para avisar cuántos productos quedarían sin categoría al borrarla */
+  productos?: Producto[];
 }
 
 /**
@@ -17,7 +19,7 @@ interface CategoriasManagerProps {
  * vive en el mismo bloque colapsable de StockManager porque las categorías
  * solo tienen sentido en función de los productos que las usan.
  */
-export const CategoriasManager: React.FC<CategoriasManagerProps> = ({ categorias, onCategoriasChange }) => {
+export const CategoriasManager: React.FC<CategoriasManagerProps> = ({ categorias, onCategoriasChange, productos = [] }) => {
   const [abierto, setAbierto] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -74,9 +76,14 @@ export const CategoriasManager: React.FC<CategoriasManagerProps> = ({ categorias
   };
 
   const borrar = (categoria: Categoria) => {
-    const confirmado = window.confirm(
-      `¿Borrar la categoría "${categoria.nombre}"?\n\nLos productos que la tenían quedan sin categoría — no se borran ni se bloquean.`
-    );
+    // Un producto sin categoría solo aparece en "Todos" en la toma de
+    // pedidos: conviene saber cuántos se van a "esconder" antes de borrar.
+    const afectados = productos.filter((p) => Number(p.categoria_id) === Number(categoria.id)).length;
+    const detalle =
+      afectados > 0
+        ? `${afectados} producto${afectados !== 1 ? 's' : ''} quedará${afectados !== 1 ? 'n' : ''} sin categoría y solo se verá${afectados !== 1 ? 'n' : ''} en "Todos" al tomar pedidos. No se borran ni se bloquean.`
+        : 'No tiene productos asignados.';
+    const confirmado = window.confirm(`¿Borrar la categoría "${categoria.nombre}"?\n\n${detalle}`);
     if (!confirmado) return;
 
     startTransition(async () => {

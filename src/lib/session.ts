@@ -17,6 +17,25 @@ export interface Sesion {
   rol: Rol;
   /** Vencimiento en segundos desde epoch */
   exp: number;
+  /**
+   * Versión de sesión del usuario en el momento de entrar
+   * (`usuarios.sesion_version`). Si administración lo desactiva o le resetea
+   * el PIN, la versión sube y esta cookie deja de valer aunque no haya vencido.
+   */
+  v: number;
+  /**
+   * Última vez (segundos desde epoch) que se comprobó contra la base que la
+   * sesión sigue vigente. Se revisa cada pocos minutos, no en cada petición.
+   */
+  chk: number;
+}
+
+/** Cada cuánto se vuelve a preguntar a la base si la sesión sigue vigente */
+export const INTERVALO_REVALIDACION_SEGUNDOS = 5 * 60;
+
+/** ¿Toca volver a comprobar la sesión contra la base? */
+export function sesionNecesitaRevalidar(sesion: Sesion, ahora = Math.floor(Date.now() / 1000)): boolean {
+  return ahora - sesion.chk >= INTERVALO_REVALIDACION_SEGUNDOS;
 }
 
 /** Persona tal como se muestra en la pantalla de entrada (sin datos sensibles) */
@@ -43,9 +62,13 @@ export const COOKIE_SESION = 'sesion_fgaf';
 export const DURACION_SESION_SEGUNDOS = 60 * 60 * 16;
 
 /**
- * Clave para firmar. En producción DEBE venir de la variable de entorno
- * SESSION_SECRET; sin ella la firma es previsible y la sesión se podría
- * falsificar. Se avisa una sola vez para no llenar los registros.
+ * Clave para firmar. DEBE venir de la variable de entorno SESSION_SECRET.
+ *
+ * En producción, sin ella la app no arranca sesiones: antes caía a una clave
+ * escrita en este archivo (y por tanto en el repositorio), con la que
+ * cualquiera podía fabricarse una cookie de administración. Un aviso en los
+ * registros no alcanza para algo así. En desarrollo se tolera, con aviso,
+ * para no trabar a quien acaba de clonar el proyecto.
  */
 let yaAvisado = false;
 
@@ -53,15 +76,21 @@ function secreto(): string {
   const desdeEntorno = process.env.SESSION_SECRET;
   if (desdeEntorno && desdeEntorno.length >= 16) return desdeEntorno;
 
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      '[sesion] Falta SESSION_SECRET (mínimo 16 caracteres). Sin ella las ' +
+        'sesiones se podrían falsificar; defínela en las variables de entorno.'
+    );
+  }
+
   if (!yaAvisado) {
     yaAvisado = true;
     console.warn(
-      '[sesion] Falta SESSION_SECRET (o es muy corta). Las sesiones se firman ' +
-        'con una clave por defecto y se podrían falsificar. Define SESSION_SECRET ' +
-        'en las variables de entorno.'
+      '[sesion] Falta SESSION_SECRET (o es muy corta). Solo en desarrollo se ' +
+        'usa una clave por defecto; en producción la app se niega a arrancar sin ella.'
     );
   }
-  return 'ricuras-fegaf-clave-por-defecto-cambiar';
+  return 'ricuras-fegaf-clave-solo-desarrollo';
 }
 
 /* ------------------------------------------------------------------
@@ -112,17 +141,30 @@ function igualesEnTiempoConstante(a: string, b: string): boolean {
    API
    ------------------------------------------------------------------ */
 
-/** Arma el valor firmado que va en la cookie */
-export async function crearToken(
-  datos: Omit<Sesion, 'exp'>,
-  duracionSegundos = DURACION_SESION_SEGUNDOS
-): Promise<string> {
-  const sesion: Sesion = {
-    ...datos,
-    exp: Math.floor(Date.now() / 1000) + duracionSegundos,
-  };
+async function firmarSesion(sesion: Sesion): Promise<string> {
   const cuerpo = aBase64Url(new TextEncoder().encode(JSON.stringify(sesion)));
   return `${cuerpo}.${await firmar(cuerpo)}`;
+}
+
+/** Arma el valor firmado que va en la cookie */
+export async function crearToken(
+  datos: Omit<Sesion, 'exp' | 'chk'>,
+  duracionSegundos = DURACION_SESION_SEGUNDOS
+): Promise<string> {
+  const ahora = Math.floor(Date.now() / 1000);
+  return firmarSesion({
+    ...datos,
+    exp: ahora + duracionSegundos,
+    chk: ahora,
+  });
+}
+
+/**
+ * Vuelve a firmar una sesión ya válida marcando que se acaba de comprobar
+ * contra la base. Conserva el vencimiento original: revalidar no alarga el turno.
+ */
+export async function renovarToken(sesion: Sesion): Promise<string> {
+  return firmarSesion({ ...sesion, chk: Math.floor(Date.now() / 1000) });
 }
 
 /**
@@ -142,7 +184,13 @@ export async function leerToken(token: string | undefined): Promise<Sesion | nul
 
     if (typeof sesion.id !== 'number' || typeof sesion.nombre !== 'string') return null;
     if (!['cajero', 'cocina', 'admin', 'dev'].includes(sesion.rol)) return null;
-    if (sesion.exp < Math.floor(Date.now() / 1000)) return null;
+    if (typeof sesion.exp !== 'number' || sesion.exp < Math.floor(Date.now() / 1000)) return null;
+
+    // Cookies de antes de la versión de sesión: se toman como versión 1 (la
+    // que tiene todo el mundo al crearse la columna) y sin comprobar todavía,
+    // así la primera petición las revalida contra la base en vez de echarlas.
+    if (typeof sesion.v !== 'number') sesion.v = 1;
+    if (typeof sesion.chk !== 'number') sesion.chk = 0;
 
     return sesion;
   } catch {

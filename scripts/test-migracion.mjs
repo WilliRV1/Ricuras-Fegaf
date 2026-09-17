@@ -1,7 +1,15 @@
 /**
- * Prueba de la migración y de los flujos nuevos contra la base de datos real,
- * SIN dejar rastro: todo corre dentro de una transacción que termina en
- * ROLLBACK, así que la base queda exactamente como estaba.
+ * Prueba de los flujos de cartera, edición y anulación contra la base de
+ * datos real, SIN dejar rastro: todo corre dentro de una transacción que
+ * termina en ROLLBACK, así que la base queda exactamente como estaba.
+ *
+ * Nació como prueba de 20260831000000_deudas_control_y_edicion.sql. Ya no
+ * reaplica esa migración: migraciones posteriores reemplazaron sus funciones
+ * (precios desde el catálogo, rol exigido, PIN verificado en la base) y
+ * reaplicar el SQL viejo dentro de la transacción las pisaba con la versión
+ * vieja. Ahora aplica la migración MÁS RECIENTE que toca estas funciones
+ * (idempotente, revertida al final) y prueba contra ese estado — así sirve
+ * igual antes y después de desplegarla.
  *
  *   node scripts/test-migracion.mjs [ruta-de-la-migracion.sql]
  *
@@ -22,7 +30,7 @@ function conexion() {
 }
 
 const MIGRACION =
-  process.argv[2] ?? './supabase/migrations/20260831000000_deudas_control_y_edicion.sql';
+  process.argv[2] ?? './supabase/migrations/20260916000000_autorizacion_en_la_base.sql';
 
 let fallos = 0;
 let pruebas = 0;
@@ -80,14 +88,23 @@ try {
     WHERE table_name = 'pedidos'
       AND column_name IN ('deudor_nombre','deudor_telefono','cancelado_por','rehecho_en')
   `);
-  check('las 4 columnas nuevas existen', cols.rowCount === 4, `(${cols.rowCount})`);
+  check('las 4 columnas de cartera/anulación existen', cols.rowCount === 4, `(${cols.rowCount})`);
 
   await client.query(sql);
   console.log('  ok    es idempotente (se puede correr dos veces)');
 
   // ── Datos de prueba ──────────────────────────────────────────────────
+  // Solo productos activos: un agotado ya no se puede vender.
   const { rows: prods } = await client.query(
-    'SELECT id, precio FROM productos ORDER BY id LIMIT 2'
+    'SELECT id, precio FROM productos WHERE activo ORDER BY id LIMIT 2'
+  );
+
+  // Quien anula tiene que existir y demostrar su PIN: usuario desechable,
+  // vive solo dentro de esta transacción.
+  const { rows: [simon] } = await client.query(
+    `INSERT INTO usuarios (nombre, pin_hash, rol, activo, debe_cambiar_pin)
+     VALUES ('QA Simón', extensions.crypt('2580', extensions.gen_salt('bf')), 'cajero', true, false)
+     RETURNING id, nombre`
   );
   if (prods.length < 2) throw new Error('Se necesitan al menos 2 productos en la base');
   const [comida, bebida] = prods;
@@ -234,15 +251,26 @@ try {
   // ── 5. Cancelar dejando constancia + rehacer ─────────────────────────
   console.log('\n[5] Cancelación con responsable y pedido rehecho');
   const pedidoCancelado = await crearPedido(total1, linea1);
-  await client.query('SELECT cancel_order($1, $2, $3)', [
+  await debeFallar(
+    client,
+    'sin el PIN correcto no se anula',
+    () => client.query('SELECT cancel_order($1, $2, $3, $4)', [pedidoCancelado, 'x', simon.id, '0000']),
+    'CREDENCIALES_INVALIDAS'
+  );
+  await client.query('SELECT cancel_order($1, $2, $3, $4)', [
     pedidoCancelado,
     'El cliente cambió el pedido',
-    ' Simón ',
+    simon.id,
+    '2580',
   ]);
   p = await estadoDe(pedidoCancelado);
   check('queda cancelado', p.estado === 'cancelado', `(${p.estado})`);
   check('guarda el motivo', p.motivo_cancelacion === 'El cliente cambió el pedido');
-  check('guarda quién lo canceló', p.cancelado_por === 'Simón', `(${JSON.stringify(p.cancelado_por)})`);
+  check(
+    'guarda quién lo canceló (nombre tomado de la tabla de usuarios)',
+    p.cancelado_por === simon.nombre,
+    `(${JSON.stringify(p.cancelado_por)})`
+  );
   check(
     'conserva los productos del pedido anulado',
     (await client.query('SELECT 1 FROM detalle_pedidos WHERE pedido_id = $1', [pedidoCancelado]))
@@ -258,7 +286,7 @@ try {
   await debeFallar(
     client,
     'un pedido pagado no se puede cancelar',
-    () => client.query('SELECT cancel_order($1, $2, $3)', [pedidoPagado, 'x', 'y']),
+    () => client.query('SELECT cancel_order($1, $2, $3, $4)', [pedidoPagado, 'x', simon.id, '2580']),
     'PEDIDO_YA_PAGADO'
   );
 

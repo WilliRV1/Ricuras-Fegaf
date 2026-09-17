@@ -244,9 +244,18 @@ export function useRealtimeOrders() {
       }
     }, 15000);
 
+    // Reconciliación: el tablero se arma con eventos incrementales, y si la
+    // conexión se cae y vuelve sola (supabase-js reintenta por su cuenta) los
+    // eventos de ese hueco se pierden — una comanda podía no aparecer nunca.
+    // Cada minuto se recarga completo; no suena nada, solo se corrige la lista.
+    const reconciliacion = setInterval(() => {
+      if (mounted && document.visibilityState === 'visible') fetchInitialOrders();
+    }, 60000);
+
     return () => {
       mounted = false;
       clearInterval(heartbeat);
+      clearInterval(reconciliacion);
       supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

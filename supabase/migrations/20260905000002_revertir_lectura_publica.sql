@@ -1,6 +1,6 @@
--- Migration: Revertir 20260905000000 — esa migración estaba equivocada
+-- Migration: Revertir 20260905000001 — esa migración estaba equivocada
 --
--- La migración anterior (20260905000000_restaurar_lectura_publica.sql)
+-- La migración anterior (20260905000001_restaurar_lectura_publica.sql)
 -- reabrió el rol `anon` en pedidos/detalle_pedidos/pagos_pedido/arqueos_caja
 -- porque una lectura vía API con la clave pública devolvía cero filas y se
 -- interpretó como una regresión accidental.

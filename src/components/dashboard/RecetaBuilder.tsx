@@ -501,14 +501,21 @@ export const RecetaBuilder: React.FC<RecetaBuilderProps> = ({
                   <td className={`${styles.td} ${styles.nombre}`}>{c.nombre}</td>
                   <td className={styles.td}>{formatoCOP.format(c.precio)}</td>
                   <td className={styles.td}>
-                    {c.costo_total > 0 ? (
-                      formatoCOP.format(c.costo_total)
-                    ) : (
+                    {c.insumos_en_receta === 0 ? (
                       <span className={styles.sinCosto}>sin receta</span>
+                    ) : c.insumos_sin_costo > 0 ? (
+                      // El costo que hay es parcial: falta registrar compras de
+                      // algún insumo. Mostrarlo como si estuviera completo
+                      // infla el margen sin que se note.
+                      <span className={styles.sinCosto} title="Falta registrar la compra de algún insumo de la receta">
+                        {formatoCOP.format(c.costo_total)} · incompleto ({c.insumos_sin_costo} sin precio)
+                      </span>
+                    ) : (
+                      formatoCOP.format(c.costo_total)
                     )}
                   </td>
                   <td className={styles.td}>
-                    {c.margen != null && c.costo_total > 0 ? (
+                    {c.margen != null && c.insumos_en_receta > 0 && c.insumos_sin_costo === 0 ? (
                       <span className={c.margen >= 0 ? styles.margenPositivo : styles.margenNegativo}>
                         {(c.margen * 100).toFixed(1)}%
                       </span>

@@ -9,6 +9,7 @@ import {
   getCancelacionesDelDia,
 } from '@/app/actions/dashboard';
 import { listarCategorias } from '@/app/actions/productos';
+import { normalizarRango } from '@/lib/rangoFechas';
 import { ResumenCards } from '@/components/dashboard/ResumenCards';
 import { PedidosTable } from '@/components/dashboard/PedidosTable';
 import { CancelacionesTable } from '@/components/dashboard/CancelacionesTable';
@@ -51,8 +52,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   // Calcular la fecha en la zona horaria de Colombia (America/Bogota)
   const todayISO = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const from = fromParam || date || todayISO;
-  const to = toParam || date || from;
+  // Lo que llega por la URL se sanea: una fecha inválida cae a hoy en vez de
+  // tumbar la página.
+  const { from, to } = normalizarRango(fromParam || date, toParam || date || fromParam);
 
   const [
     stats,

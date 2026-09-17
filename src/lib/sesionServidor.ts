@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
-import { COOKIE_SESION, Sesion, leerToken, puedeVer } from '@/lib/session';
+import { COOKIE_SESION, Sesion, leerToken, puedeVer, sesionNecesitaRevalidar } from '@/lib/session';
+import { sesionSigueVigente } from '@/lib/sesionVigente';
 
 /**
  * Lee la sesión desde la cookie, en el servidor.
@@ -33,5 +34,14 @@ export async function nombreDeSesion(): Promise<string | null> {
 export async function sesionConAcceso(ruta: string): Promise<Sesion | null> {
   const sesion = await sesionActual();
   if (!sesion || !puedeVer(sesion.rol, ruta)) return null;
+
+  // Si hace rato que no se comprueba contra la base (la persona pudo haber
+  // sido desactivada), se comprueba ahora. La cookie no se reescribe desde
+  // aquí —un server component no puede—; el proxy la renueva en la siguiente
+  // navegación, así que en la práctica esto casi nunca llega a consultar.
+  if (sesionNecesitaRevalidar(sesion) && !(await sesionSigueVigente(sesion))) {
+    return null;
+  }
+
   return sesion;
 }
