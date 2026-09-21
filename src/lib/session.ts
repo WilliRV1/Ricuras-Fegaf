@@ -54,6 +54,8 @@ export interface PersonaAdmin {
   debe_cambiar_pin: boolean;
   bloqueado: boolean;
   ultimo_ingreso: string | null;
+  /** Última vez que eligió su PIN. null = nunca (tiene el temporal). */
+  pin_cambiado_at: string | null;
 }
 
 export const COOKIE_SESION = 'sesion_fgaf';

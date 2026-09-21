@@ -12,6 +12,7 @@ import {
   IconScooter,
   IconUser,
   IconClock,
+  IconCalendar,
   IconMapPin,
   IconPhoneCall,
   IconBanknote,
@@ -103,6 +104,15 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
 
   const isMesa = order.tipo === 'mesa';
   const HeaderIcon = isMesa ? IconUtensils : IconScooter;
+
+  // Programado: en vez de "hace N min" importa la hora a la que se entrega
+  const horaEntregaLabel = order.hora_entrega
+    ? new Date(order.hora_entrega).toLocaleTimeString('es-CO', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/Bogota',
+      })
+    : null;
   const headerText = isMesa
     ? `Mesa #${order.numero_mesa}`
     : `Domicilio`;
@@ -153,9 +163,15 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
             <span className={styles.clientName}><IconUser size={13} /> {order.cliente_nombre}</span>
           )}
         </div>
-        <div className={`${styles.timer} ${timerClass}`}>
-          <IconClock size={14} /> {elapsedMinutes} min
-        </div>
+        {horaEntregaLabel ? (
+          <div className={`${styles.timer} ${styles.timerProgramado}`} title="Pedido programado">
+            <IconCalendar size={14} /> Para las {horaEntregaLabel}
+          </div>
+        ) : (
+          <div className={`${styles.timer} ${timerClass}`}>
+            <IconClock size={14} /> {elapsedMinutes} min
+          </div>
+        )}
       </div>
 
       {/* Datos de entrega — lo que el domiciliario necesita para salir */}

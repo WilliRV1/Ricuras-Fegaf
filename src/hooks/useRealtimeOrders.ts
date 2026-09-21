@@ -36,8 +36,10 @@ function playOrderChime() {
 
 /**
  * Reproduce un chime especial (triple) para pedidos programados — más llamativo.
+ * Se exporta porque el tablero también lo usa cuando un programado entra en
+ * su ventana de preparación.
  */
-function playScheduledChime() {
+export function playScheduledChime() {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();

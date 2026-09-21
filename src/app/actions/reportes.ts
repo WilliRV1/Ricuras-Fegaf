@@ -3,13 +3,15 @@
 import { createClient } from '@/lib/supabase/server';
 import { sesionConAcceso } from '@/lib/sesionServidor';
 import { getTimeWindow, hoyBogota, normalizarRango } from '@/lib/rangoFechas';
-import { getResumenDelDia } from '@/app/actions/dashboard';
+import { getLiquidacionDomiciliario, getResumenDelDia } from '@/app/actions/dashboard';
 import type { ComparativoMensual, ProductoRentable, ReporteUtilidad, ReporteUtilidadMensual } from '@/types';
 
 /**
  * Fase 2 / Módulo 8 — Inteligencia Financiera y Reportes.
  *
- * Utilidad neta real = ventas − costo de productos vendidos.
+ * Utilidad neta real = ventas − costo de productos vendidos − aporte del
+ * negocio al pago del domiciliario (lo que pone el fondo aparte NO se resta:
+ * no sale de la venta).
  *   - VENTAS: se reutiliza `ventaRealDelDia` de `getResumenDelDia`
  *     (dashboard.ts) en vez de recalcular la venta — es la misma cifra con
  *     la que ella cuadra caja, no puede haber dos versiones de "cuánto se
@@ -82,15 +84,20 @@ export async function getUtilidadNetaReal(fromStr?: string, toStr?: string): Pro
 
   const { from, to } = normalizarRango(fromStr, toStr);
 
-  const costoProductos = await costoProductosVendidosEnRango(supabase, startOfDay, endOfDay);
+  const [costoProductos, domiciliario] = await Promise.all([
+    costoProductosVendidosEnRango(supabase, startOfDay, endOfDay),
+    getLiquidacionDomiciliario(fromStr, toStr),
+  ]);
   const ventas = resumen.ventaRealDelDia;
+  const pagoDomiciliario = domiciliario?.delNegocio ?? 0;
 
   return {
     from,
     to,
     ventas,
     costoProductos,
-    utilidadNeta: ventas - costoProductos,
+    pagoDomiciliario,
+    utilidadNeta: ventas - costoProductos - pagoDomiciliario,
   };
 }
 

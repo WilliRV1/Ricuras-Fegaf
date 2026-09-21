@@ -7,6 +7,7 @@ import {
   crearPersona,
   resetearPinDePersona,
   cambiarEstadoDePersona,
+  forzarCambioDePersona,
 } from '@/app/actions/personal';
 import { toast } from '@/components/ui/Toast';
 import { PinPad } from '@/components/ui/PinPad';
@@ -140,6 +141,25 @@ export const PersonalManager: React.FC = () => {
     await recargar();
   };
 
+  /**
+   * Obliga a elegir PIN nuevo sin conocer ni tocar el actual. Para cuando
+   * alguien pudo ver un PIN: no hay que repartir temporales de viva voz.
+   */
+  const forzarCambio = async (persona: PersonaAdmin) => {
+    reiniciarInactividad();
+    setCargando(true);
+    const res = await forzarCambioDePersona(adminPin, persona.id);
+    setCargando(false);
+
+    if (!res.success) {
+      toast.error(res.error);
+      return;
+    }
+
+    toast.success(`${persona.nombre} tendrá que elegir un PIN nuevo la próxima vez que entre.`);
+    await recargar();
+  };
+
   const alternarEstado = async (persona: PersonaAdmin) => {
     reiniciarInactividad();
     setCargando(true);
@@ -269,6 +289,7 @@ export const PersonalManager: React.FC = () => {
               <th className={styles.th}>Rol</th>
               <th className={styles.th}>Estado</th>
               <th className={styles.th}>Último ingreso</th>
+              <th className={styles.th}>PIN cambiado</th>
               <th className={styles.th}>Acciones</th>
             </tr>
           </thead>
@@ -306,7 +327,26 @@ export const PersonalManager: React.FC = () => {
                     : 'Nunca'}
                 </td>
                 <td className={styles.td}>
+                  {persona.pin_cambiado_at
+                    ? new Date(persona.pin_cambiado_at).toLocaleDateString('es-CO', {
+                        timeZone: 'America/Bogota',
+                        day: 'numeric',
+                        month: 'short',
+                        year: '2-digit',
+                      })
+                    : 'Nunca'}
+                </td>
+                <td className={styles.td}>
                   <div className={styles.acciones}>
+                    <button
+                      type="button"
+                      className={styles.accionBtn}
+                      onClick={() => forzarCambio(persona)}
+                      disabled={cargando || persona.debe_cambiar_pin || !persona.activo}
+                      title="Al próximo ingreso tendrá que elegir un PIN nuevo. No cambia el actual ni lo muestra."
+                    >
+                      Forzar cambio
+                    </button>
                     <button
                       type="button"
                       className={styles.accionBtn}

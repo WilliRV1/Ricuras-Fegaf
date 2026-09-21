@@ -351,3 +351,9 @@
   letter-spacing: 0.5px;
   border-radius: var(--radius-sm);
 }
+
+/* Pedido programado que ya entró en su ventana de preparación */
+.timerProgramado {
+  background-color: rgba(99, 102, 241, 0.18);
+  color: #A5B4FC;
+}

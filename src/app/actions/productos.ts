@@ -114,11 +114,17 @@ export async function listarCategorias() {
   return { success: true as const, categorias: (data ?? []) as Categoria[] };
 }
 
+/**
+ * @param seCompraHecho true para gaseosas, aguas, jugos: el producto no lleva
+ *   receta, se compra hecho. La base le crea un insumo propio (receta de 1
+ *   unidad) y el costo sale de las compras que se le registren.
+ */
 export async function crearProducto(
   nombre: string,
   precio: number,
   categoriaId: number | null,
-  esAdicion: boolean
+  esAdicion: boolean,
+  seCompraHecho: boolean = false
 ) {
   if (!(await sesionConAcceso('/dashboard'))) {
     return { success: false as const, error: 'Necesitas una sesión de administración.' };
@@ -132,15 +138,29 @@ export async function crearProducto(
     p_precio: precio,
     p_categoria_id: categoriaId,
     p_es_adicion: esAdicion,
+    p_se_compra_hecho: seCompraHecho,
   });
 
   if (error) {
     return { success: false as const, error: mensajeDeErrorProducto(error.message) };
   }
 
+  const productoId = data as number;
+
+  // Si se compra hecho, la pantalla necesita el insumo para registrar la
+  // primera compra de una vez.
+  let insumoId: number | null = null;
+  if (seCompraHecho) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = supabase as unknown as { from: (table: string) => any };
+    const { data: fila } = await db.from('productos').select('insumo_id').eq('id', productoId).maybeSingle();
+    insumoId = (fila?.insumo_id as number | null) ?? null;
+  }
+
   revalidatePath('/dashboard');
   revalidatePath('/pedidos');
-  return { success: true as const, productoId: data as number };
+  revalidatePath('/dashboard/recetas');
+  return { success: true as const, productoId, insumoId };
 }
 
 export async function actualizarProducto(

@@ -63,6 +63,37 @@ export interface CompraInsumo {
 /** Insumo con su costo vigente ya calculado (promedio de sus últimos lotes). */
 export interface InsumoConCosto extends Insumo {
   costo_unitario: number | null;
+  /** true = es el insumo propio de un producto que se compra hecho (gaseosa, agua, jugo). */
+  se_compra_hecho?: boolean;
+}
+
+/** Cifra del negocio editable desde el dashboard (tabla `parametros`). */
+export interface Parametro {
+  clave: string;
+  valor: number;
+  descripcion: string;
+}
+
+/**
+ * Pago al domiciliario en un período: tarifa × unidades de comida entregadas a
+ * domicilio, con mínimo diario. Lo que falte para el mínimo lo pone el fondo
+ * aparte, no el negocio.
+ */
+export interface LiquidacionDomiciliario {
+  /** Unidades de comida (sin bebidas) en pedidos a domicilio del período */
+  unidades: number;
+  tarifa: number;
+  minimoDia: number;
+  /** unidades × tarifa */
+  porProductos: number;
+  /** Lo que pone el negocio (= porProductos) */
+  delNegocio: number;
+  /** Lo que pone el fondo aparte para completar el mínimo */
+  delFondo: number;
+  /** Lo que recibe el domiciliario (porProductos o el mínimo, lo mayor), sumado por día */
+  recibe: number;
+  /** Días del período en que se aplicó el mínimo */
+  diasConMinimo: number;
 }
 
 /** Un renglón de la receta de un producto. */
@@ -93,6 +124,8 @@ export interface ReporteUtilidad {
   to: string;
   ventas: number;
   costoProductos: number;
+  /** Aporte del negocio al pago del domiciliario en el período */
+  pagoDomiciliario: number;
   utilidadNeta: number;
 }
 

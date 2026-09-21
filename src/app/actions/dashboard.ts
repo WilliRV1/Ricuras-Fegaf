@@ -3,7 +3,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { ESTADOS_PEDIDO, METODOS_PAGO, TIPOS_ATENCION } from '@/lib/constants';
 import { sesionConAcceso } from '@/lib/sesionServidor';
-import { getTimeWindow } from '@/lib/rangoFechas';
+import { getTimeWindow, normalizarRango } from '@/lib/rangoFechas';
+import { leerParametros } from '@/app/actions/parametros';
+import type { LiquidacionDomiciliario } from '@/types';
 
 /**
  * Venta que le queda al restaurante de un pedido.
@@ -200,6 +202,99 @@ export async function getResumenDelDia(fromStr?: string, toStr?: string) {
     totalCobrosDeudasViejas,
     cantidadCobrosDeudasViejas,
     tiempoPromedioMinutos
+  };
+}
+
+/**
+ * Pago al domiciliario del período (regla de la dueña, 19-21/9/2026):
+ * se le paga la tarifa por cada unidad de COMIDA (las bebidas no cuentan)
+ * entregada a domicilio, con un mínimo por día. Si la tarifa por productos
+ * no alcanza el mínimo, el negocio paga solo lo calculado y el faltante sale
+ * de un fondo aparte "porque el negocio no lo generó". El cobro por
+ * "fuera del sector" es aparte y no entra aquí.
+ *
+ * Con un rango de varios días el mínimo se aplica por día, solo en los días
+ * que tuvieron algún domicilio. Para un solo día (hoy, ayer) se aplica
+ * siempre: es un día trabajado aunque todavía no haya salido nada.
+ */
+export async function getLiquidacionDomiciliario(
+  fromStr?: string,
+  toStr?: string
+): Promise<LiquidacionDomiciliario | null> {
+  if (!(await sesionConAcceso('/dashboard'))) return null;
+
+  const supabase = await createClient();
+  const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
+  const { from, to } = normalizarRango(fromStr, toStr);
+  const esUnSoloDia = from === to;
+
+  const parametros = await leerParametros();
+  const tarifa = parametros.domiciliario_tarifa_producto ?? 1500;
+  const minimoDia = parametros.domiciliario_minimo_dia ?? 40000;
+  const categoriaBebidas = parametros.categoria_bebidas_id ?? 0;
+
+  // Pagados y fiados: ambos se entregaron. Cancelados no.
+  const { data, error } = await supabase
+    .from('detalle_pedidos')
+    .select('cantidad, productos(categoria_id), pedidos!inner(tipo, estado, created_at)')
+    .eq('pedidos.tipo', TIPOS_ATENCION.DOMICILIO)
+    .in('pedidos.estado', [ESTADOS_PEDIDO.PAGADO, ESTADOS_PEDIDO.DEBE])
+    .gte('pedidos.created_at', startOfDay)
+    .lt('pedidos.created_at', endOfDay);
+
+  if (error) {
+    console.error('Error calculando el pago al domiciliario:', error);
+    return null;
+  }
+
+  const fechaBogota = new Intl.DateTimeFormat('fr-CA', {
+    timeZone: 'America/Bogota',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
+  // Unidades de comida por día
+  const unidadesPorDia = new Map<string, number>();
+  for (const linea of data ?? []) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const categoriaId = (linea.productos as any)?.categoria_id as number | null;
+    if (categoriaBebidas && categoriaId === categoriaBebidas) continue;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dia = fechaBogota.format(new Date((linea.pedidos as any).created_at));
+    unidadesPorDia.set(dia, (unidadesPorDia.get(dia) ?? 0) + linea.cantidad);
+  }
+
+  if (esUnSoloDia && !unidadesPorDia.has(from)) unidadesPorDia.set(from, 0);
+
+  let unidades = 0;
+  let porProductos = 0;
+  let delFondo = 0;
+  let recibe = 0;
+  let diasConMinimo = 0;
+
+  for (const cantidad of unidadesPorDia.values()) {
+    const pagoDia = cantidad * tarifa;
+    unidades += cantidad;
+    porProductos += pagoDia;
+    if (pagoDia < minimoDia) {
+      delFondo += minimoDia - pagoDia;
+      diasConMinimo += 1;
+      recibe += minimoDia;
+    } else {
+      recibe += pagoDia;
+    }
+  }
+
+  return {
+    unidades,
+    tarifa,
+    minimoDia,
+    porProductos,
+    delNegocio: porProductos,
+    delFondo,
+    recibe,
+    diasConMinimo,
   };
 }
 

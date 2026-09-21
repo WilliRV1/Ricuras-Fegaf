@@ -213,7 +213,9 @@ export const RecetaBuilder: React.FC<RecetaBuilderProps> = ({
             <div className={styles.cabecera}>
               <p className={styles.ayuda}>
                 El precio no se edita aquí: cada compra queda registrada como un lote (precio + cuánto
-                rindió). El costo vigente es el promedio de los últimos 5 lotes.
+                rindió). El costo vigente es el promedio de los últimos 5 lotes. Las bebidas que se
+                compran hechas (gaseosas, aguas, jugos) aparecen como insumos de 1 unidad: regístrales
+                la compra igual (precio de la paca y cuántas trajo).
               </p>
               <button
                 type="button"
@@ -284,7 +286,14 @@ export const RecetaBuilder: React.FC<RecetaBuilderProps> = ({
                   {insumosFiltrados.map((insumo) => (
                     <React.Fragment key={insumo.id}>
                       <tr className={styles.tr}>
-                        <td className={`${styles.td} ${styles.nombre}`}>{insumo.nombre}</td>
+                        <td className={`${styles.td} ${styles.nombre}`}>
+                          {insumo.nombre}
+                          {insumo.se_compra_hecho && (
+                            <span className={styles.tagBebida} title="Es un producto del menú que se compra hecho: su costo es lo que pagas por él">
+                              se compra hecho
+                            </span>
+                          )}
+                        </td>
                         <td className={styles.td}>{insumo.unidad_base}</td>
                         <td className={`${styles.td} ${styles.costo}`}>
                           {insumo.costo_unitario != null ? (

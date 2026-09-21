@@ -7,8 +7,12 @@ import {
   getProductosVendidosDelDia,
   getCarteraPendiente,
   getCancelacionesDelDia,
+  getLiquidacionDomiciliario,
 } from '@/app/actions/dashboard';
 import { listarCategorias } from '@/app/actions/productos';
+import { listarParametros } from '@/app/actions/parametros';
+import { getDiasSinCambiarPin } from '@/app/actions/auth';
+import { ParametrosManager } from '@/components/dashboard/ParametrosManager';
 import { normalizarRango } from '@/lib/rangoFechas';
 import { ResumenCards } from '@/components/dashboard/ResumenCards';
 import { PedidosTable } from '@/components/dashboard/PedidosTable';
@@ -30,7 +34,11 @@ import {
   IconXCircle,
   IconUser,
   IconTrendingUp,
+  IconKey,
 } from '@/components/ui/Icons';
+
+/** Más de esto sin cambiar el PIN de administración, y se avisa */
+const DIAS_PIN_VIEJO = 90;
 import styles from './page.module.css';
 
 export const dynamic = 'force-dynamic'; // Siempre renderizar en el servidor (sin caché)
@@ -64,6 +72,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     cancelaciones,
     { data: productos },
     categoriasRes,
+    domiciliario,
+    parametrosRes,
+    diasSinCambiarPin,
   ] = await Promise.all([
     getResumenDelDia(from, to),
     getPedidosRecientes(50, from, to),
@@ -73,9 +84,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     getCancelacionesDelDia(from, to),
     (await import('@/lib/supabase/server')).createClient().then(sb => sb.from('productos').select('*').order('nombre', { ascending: true })),
     listarCategorias(),
+    getLiquidacionDomiciliario(from, to),
+    listarParametros(),
+    getDiasSinCambiarPin(),
   ]);
 
   const categorias = categoriasRes.success ? categoriasRes.categorias : [];
+  const parametros = parametrosRes.success ? parametrosRes.parametros : [];
+
+  // El PIN de admin se marca en una tablet compartida: si lleva meses igual
+  // (o nunca se cambió), vale la pena recordarlo. Se cambia desde el nombre
+  // arriba a la derecha.
+  const pinViejo = diasSinCambiarPin === null || diasSinCambiarPin >= DIAS_PIN_VIEJO;
 
   const formatoFecha = (f: string) =>
     new Date(`${f}T12:00:00`).toLocaleDateString('es-CO', {
@@ -129,6 +149,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </a>
       </nav>
 
+      {pinViejo && (
+        <div className={styles.avisoPin} role="status">
+          <IconKey size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
+          {diasSinCambiarPin === null
+            ? 'Tu PIN de administración nunca se ha cambiado desde aquí.'
+            : `Tu PIN de administración lleva ${diasSinCambiarPin} días sin cambiar.`}{' '}
+          Se marca en una tablet compartida: cámbialo tocando tu nombre arriba a la derecha → <strong>Cambiar mi PIN</strong>.
+        </div>
+      )}
+
       {!stats ? (
         <div className={styles.errorState}>
           <IconAlertTriangle size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
@@ -148,7 +178,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Resumen del Día</h2>
-            <ResumenCards {...stats} />
+            <ResumenCards {...stats} domiciliario={domiciliario} />
           </section>
 
           {/* Cartera por cobrar — arrastra deudas de todos los días */}
@@ -193,6 +223,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </h2>
             <PedidosTable pedidos={pedidosRecientes} mostrarFecha={!esUnSoloDia} />
           </section>
+
+          {/* Cifras del negocio: tarifa del domiciliario, mínimo, programados */}
+          {parametros.length > 0 && (
+            <section className={styles.section}>
+              <ParametrosManager parametros={parametros} categorias={categorias} />
+            </section>
+          )}
 
           {/* Personal: quién puede entrar y con qué permisos */}
           <section className={styles.section}>

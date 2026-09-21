@@ -41,8 +41,25 @@ en el navegador. Por eso la base no confía en la app:
 - **Acciones delicadas** (anular un pedido, administrar personal) piden el
   PIN otra vez y la base lo verifica ella misma.
 - **Sesiones**: la cookie lleva la versión de sesión del usuario; desactivar
-  a alguien o resetearle el PIN invalida sus sesiones abiertas en menos de
-  5 minutos.
+  a alguien, resetearle el PIN, forzarle el cambio o que él mismo cambie su
+  PIN invalida sus sesiones abiertas en menos de 5 minutos.
+- **PIN**: cada quien lo cambia cuando quiera desde su nombre (arriba a la
+  derecha → "Cambiar mi PIN"). Administración puede resetear (temporal) o
+  forzar el cambio, nunca ver ni fijar el PIN definitivo de otro.
+
+## Cifras del negocio (tabla `parametros`)
+
+Tarifa y mínimo del domiciliario, minutos de anticipación de los programados
+en cocina y categoría de bebidas viven en la base y se editan desde el
+dashboard ("Parámetros del Negocio"), no en el código.
+
+Las bebidas (gaseosas, aguas, jugos) se crean como productos "que se compran
+hechos": la base les crea un insumo propio con receta de 1 unidad y su costo
+sale de las compras registradas, igual que la hoja PRECIOS del Excel. Seed
+inicial con los sabores del Excel: `supabase/seed_bebidas_2026.sql`.
+
+Guía para la dueña sobre los rangos de fechas:
+`docs/Guia - Rangos de fechas en el dashboard.pdf`.
 
 ## Base de datos
 
@@ -58,8 +75,9 @@ contra la base real dentro de una transacción que termina en `ROLLBACK`, así
 que validan el SQL sin dejar rastro.
 
 ```bash
-npm run test:db:all        # precios, caja, lectura pública, cobertura RLS, autorización
+npm run test:db:all        # precios, caja, lectura pública, cobertura RLS, autorización, PIN/bebidas
 npm run test:autorizacion  # roles, PIN en la base, validaciones, versión de sesión
+npm run test:pin-bebidas   # cambio de PIN, forzar cambio, productos que se compran hechos, parámetros
 npm run test:usuarios      # usuarios y PIN
 npm run test:acceso        # control de acceso, contra la app corriendo
 ```

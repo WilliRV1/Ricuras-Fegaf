@@ -101,6 +101,33 @@ export async function resetearPinDePersona(
   return { success: true as const };
 }
 
+/**
+ * Obliga a alguien a elegir PIN nuevo la próxima vez que entre, sin conocer
+ * ni tocar su PIN actual. Para "todos cambien el PIN" tras un incidente.
+ * También le cierra las sesiones abiertas.
+ */
+export async function forzarCambioDePersona(adminPin: string, usuarioId: number) {
+  const sesion = await adminDeLaSesion();
+  if (!sesion) {
+    return { success: false as const, error: 'Necesitas entrar como administración.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - Tipos generados sin los RPC de usuarios
+  const { error } = await supabase.rpc('forzar_cambio_pin', {
+    p_admin_id: sesion.id,
+    p_admin_pin: adminPin,
+    p_usuario_id: usuarioId,
+  });
+
+  if (error) {
+    return { success: false as const, error: mensajeDeErrorAuth(error.message) };
+  }
+
+  return { success: true as const };
+}
+
 export async function cambiarEstadoDePersona(
   adminPin: string,
   usuarioId: number,

@@ -314,3 +314,28 @@
     row-gap: 12px;
   }
 }
+
+/* Casilla "se compra hecho" del alta de producto */
+.formCheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.formCheck input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+}
+
+.formCheckHint {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}

@@ -8,6 +8,7 @@ import {
   actualizarProducto,
   eliminarProducto,
 } from '@/app/actions/productos';
+import { registrarCompraInsumo } from '@/app/actions/recetas';
 import { toast } from '@/components/ui/Toast';
 import { IconClipboard, IconPlus, IconPencil, IconTrash } from '@/components/ui/Icons';
 import { CategoriasManager } from './CategoriasManager';
@@ -25,9 +26,17 @@ interface FormularioProducto {
   precio: string;
   categoriaId: string;
   esAdicion: boolean;
+  /** Gaseosas, aguas, jugos: no llevan receta, se compran hechas */
+  seCompraHecho: boolean;
 }
 
-const formularioVacio: FormularioProducto = { nombre: '', precio: '', categoriaId: '', esAdicion: false };
+const formularioVacio: FormularioProducto = {
+  nombre: '',
+  precio: '',
+  categoriaId: '',
+  esAdicion: false,
+  seCompraHecho: false,
+};
 
 export const StockManager: React.FC<StockManagerProps> = ({ productos, categorias: categoriasIniciales }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,6 +49,12 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
 
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [formEdicion, setFormEdicion] = useState<FormularioProducto>(formularioVacio);
+
+  // Tras crear una bebida: registrar de una vez cuánto costó (precio de la
+  // compra y cuántas unidades trajo), para que salga con costo y margen.
+  const [compraPendiente, setCompraPendiente] = useState<{ insumoId: number; nombre: string } | null>(null);
+  const [precioCompra, setPrecioCompra] = useState('');
+  const [unidadesCompra, setUnidadesCompra] = useState('1');
 
   const handleToggle = (producto: Producto) => {
     const newStatus = !producto.activo;
@@ -73,16 +88,50 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
         formNuevo.nombre.trim(),
         precio,
         formNuevo.categoriaId ? Number(formNuevo.categoriaId) : null,
-        formNuevo.esAdicion
+        formNuevo.esAdicion,
+        formNuevo.seCompraHecho
       );
       if (!res.success) {
         toast.error(res.error);
         return;
       }
-      toast.success(`${formNuevo.nombre.trim()} agregado al menú.`);
+      const nombre = formNuevo.nombre.trim();
+      toast.success(`${nombre} agregado al menú.`);
       setFormNuevo(formularioVacio);
       setCreando(false);
+
+      if (formNuevo.seCompraHecho && res.insumoId) {
+        // No se recarga todavía: primero la compra, si la quiere registrar
+        setCompraPendiente({ insumoId: res.insumoId, nombre });
+        setPrecioCompra('');
+        setUnidadesCompra('1');
+        return;
+      }
       window.location.reload(); // Recarga para traer el producto nuevo (viene del servidor)
+    });
+  };
+
+  const guardarCompraInicial = () => {
+    if (!compraPendiente) return;
+    const precio = Number(precioCompra);
+    const unidades = Number(unidadesCompra);
+    if (!precio || precio <= 0) {
+      toast.error('Escribe cuánto pagaste.');
+      return;
+    }
+    if (!unidades || unidades <= 0) {
+      toast.error('Escribe cuántas unidades trajo la compra.');
+      return;
+    }
+    startTransition(async () => {
+      const res = await registrarCompraInsumo(compraPendiente.insumoId, precio, unidades);
+      if (!res.success) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(`${compraPendiente.nombre}: costo ${formatoCOP.format(precio / unidades)} por unidad.`);
+      setCompraPendiente(null);
+      window.location.reload();
     });
   };
 
@@ -93,6 +142,7 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
       precio: String(producto.precio),
       categoriaId: producto.categoria_id != null ? String(producto.categoria_id) : '',
       esAdicion: false,
+      seCompraHecho: false,
     });
   };
 
@@ -236,9 +286,75 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
                   </select>
                 </label>
               </div>
+              <label className={styles.formCheck}>
+                <input
+                  type="checkbox"
+                  checked={formNuevo.seCompraHecho}
+                  onChange={(e) => setFormNuevo((f) => ({ ...f, seCompraHecho: e.target.checked }))}
+                  disabled={isPending}
+                />
+                <span>
+                  <strong>Se compra hecho</strong> (gaseosas, aguas, jugos en botella)
+                  <span className={styles.formCheckHint}>
+                    No lleva receta: el costo sale de lo que pagas al comprarlo. Al crearlo te pido
+                    la primera compra.
+                  </span>
+                </span>
+              </label>
               <button type="button" className={styles.nuevoBtn} onClick={guardarNuevo} disabled={isPending}>
                 {isPending ? 'Guardando…' : 'Crear producto'}
               </button>
+            </div>
+          )}
+
+          {compraPendiente && (
+            <div className={styles.formulario}>
+              <span className={styles.formEtiqueta}>
+                ¿Cuánto costó <strong>{compraPendiente.nombre}</strong>? (puedes registrarlo después en Recetas)
+              </span>
+              <div className={styles.formFila}>
+                <label className={styles.formCampo} style={{ maxWidth: '200px' }}>
+                  <span className={styles.formEtiqueta}>Precio pagado</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    className={styles.formInput}
+                    placeholder="Ej: 30500"
+                    value={precioCompra}
+                    onChange={(e) => setPrecioCompra(e.target.value)}
+                    disabled={isPending}
+                    autoFocus
+                  />
+                </label>
+                <label className={styles.formCampo} style={{ maxWidth: '200px' }}>
+                  <span className={styles.formEtiqueta}>Unidades que trajo</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    className={styles.formInput}
+                    placeholder="Ej: 12 (una paca)"
+                    value={unidadesCompra}
+                    onChange={(e) => setUnidadesCompra(e.target.value)}
+                    disabled={isPending}
+                  />
+                </label>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button type="button" className={styles.nuevoBtn} onClick={guardarCompraInicial} disabled={isPending}>
+                  {isPending ? 'Guardando…' : 'Guardar compra'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.cancelarBtn}
+                  onClick={() => {
+                    setCompraPendiente(null);
+                    window.location.reload();
+                  }}
+                  disabled={isPending}
+                >
+                  Después
+                </button>
+              </div>
             </div>
           )}
 

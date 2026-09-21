@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './ResumenCards.module.css';
 import { formatCurrency } from '@/lib/utils';
+import type { LiquidacionDomiciliario } from '@/types';
 import {
   IconBanknote,
   IconTrendingUp,
@@ -47,6 +48,8 @@ interface ResumenCardsProps {
     mesa: number;
     domicilio: number;
   };
+  /** Pago al domiciliario del período (tarifa × comida a domicilio, mínimo diario) */
+  domiciliario?: LiquidacionDomiciliario | null;
 }
 
 export const ResumenCards: React.FC<ResumenCardsProps> = ({
@@ -68,6 +71,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
   cantidadCobrosDeudasViejas,
   porMetodoPago,
   porTipo,
+  domiciliario = null,
 }) => {
   return (
     <div className={styles.grid}>
@@ -162,6 +166,34 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
         </p>
         <p className={styles.cardSub}>Desde inicio hasta cobro</p>
       </div>
+
+      {/*
+        Pago al domiciliario: tarifa por cada comida entregada a domicilio
+        (las bebidas no cuentan), con mínimo diario. Lo que falte para el
+        mínimo lo pone el fondo aparte, no la venta del negocio.
+      */}
+      {domiciliario && (
+        <div className={`${styles.card} ${styles.accentOrange} ${styles.cardDestacada}`}>
+          <div className={styles.cardIcon} style={{ color: '#FB923C' }}><IconScooter size={22} /></div>
+          <p className={styles.cardLabel}>Pago al Domiciliario</p>
+          <p className={styles.cardValue}>{formatCurrency(domiciliario.recibe)}</p>
+          <p className={styles.cardSub}>
+            {domiciliario.unidades} producto{domiciliario.unidades !== 1 ? 's' : ''} ×{' '}
+            {formatCurrency(domiciliario.tarifa)} = {formatCurrency(domiciliario.porProductos)}
+            {domiciliario.delFondo > 0 && (
+              <>
+                {' '}· mínimo {formatCurrency(domiciliario.minimoDia)}
+                {domiciliario.diasConMinimo > 1 ? ` × ${domiciliario.diasConMinimo} días` : ''}
+              </>
+            )}
+          </p>
+          <p className={styles.cardSub}>
+            <strong>Del negocio: {formatCurrency(domiciliario.delNegocio)}</strong>
+            {domiciliario.delFondo > 0 && <> · del fondo aparte: {formatCurrency(domiciliario.delFondo)}</>}
+            {totalDomicilios > 0 && <> · + {formatCurrency(totalDomicilios)} fuera del sector</>}
+          </p>
+        </div>
+      )}
 
       {/* Domicilios fuera del sector */}
       <div className={`${styles.card} ${styles.accentOrange}`}>

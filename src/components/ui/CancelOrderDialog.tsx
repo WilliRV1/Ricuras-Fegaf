@@ -222,8 +222,8 @@ export const CancelOrderDialog: React.FC<CancelOrderDialogProps> = ({
           <>
             <h3 className={styles.title}>¿Quién está cancelando?</h3>
             <p className={styles.subtitle}>
-              Toca tu nombre y marca tu PIN. Queda registrado para poder saber qué pasó con
-              esta venta.
+              Toca <strong>tu</strong> nombre. Después vas a marcar <strong>tu PIN, el mismo con el que
+              entras a la app</strong> — no una clave cualquiera. Queda registrado quién anuló esta venta.
             </p>
 
             {usuarios.length === 0 ? (
@@ -263,7 +263,7 @@ export const CancelOrderDialog: React.FC<CancelOrderDialogProps> = ({
           <>
             <h3 className={styles.title}>{quien.nombre}, marca tu PIN</h3>
             <p className={styles.subtitle}>
-              Anulando el pedido #{orderId} — {motivoFinal}
+              El mismo PIN con el que entras a la app. Anulando el pedido #{orderId} — {motivoFinal}
             </p>
 
             {errorServidor && <div className={styles.errorPin}>{errorServidor}</div>}

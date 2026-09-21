@@ -51,13 +51,15 @@ export async function listarInsumos() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as unknown as { from: (table: string) => any };
 
-  const [insumosRes, costosRes] = await Promise.all([
+  const [insumosRes, costosRes, enlazadosRes] = await Promise.all([
     db
       .from('insumos')
       .select('id, nombre, unidad_base, activo, created_at')
       .eq('activo', true)
       .order('nombre', { ascending: true }),
     db.from('vw_insumo_costo_actual').select('insumo_id, costo_unitario'),
+    // Insumos que son "el producto mismo" (bebidas que se compran hechas)
+    db.from('productos').select('insumo_id').not('insumo_id', 'is', null),
   ]);
 
   if (insumosRes.error) {
@@ -72,6 +74,10 @@ export async function listarInsumos() {
     ])
   );
 
+  const seCompranHechos = new Set<number>(
+    (enlazadosRes.data ?? []).map((p: { insumo_id: number }) => p.insumo_id)
+  );
+
   const insumos: InsumoConCosto[] = (insumosRes.data ?? []).map((fila: Record<string, unknown>) => ({
     id: fila.id as number,
     nombre: fila.nombre as string,
@@ -79,6 +85,7 @@ export async function listarInsumos() {
     activo: fila.activo as boolean,
     created_at: fila.created_at as string,
     costo_unitario: costoPorInsumo.get(fila.id as number) ?? null,
+    se_compra_hecho: seCompranHechos.has(fila.id as number),
   }));
 
   return { success: true as const, insumos };

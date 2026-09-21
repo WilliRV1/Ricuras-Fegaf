@@ -133,6 +133,76 @@ export async function cambiarPin(usuarioId: number, pinActual: string, pinNuevo:
 }
 
 /**
+ * Cambiar el PIN propio en cualquier momento, con la sesión abierta.
+ *
+ * Exige el PIN actual (lo verifica la base). Al terminar, la base sube la
+ * versión de sesión —las otras tablets donde esta persona tuviera sesión
+ * quedan fuera— y aquí se vuelve a emitir la cookie de ESTA tablet con la
+ * versión nueva, para que quien cambió el PIN no tenga que volver a entrar.
+ */
+export async function cambiarPinPropio(pinActual: string, pinNuevo: string) {
+  const sesion = await leerToken((await cookies()).get(COOKIE_SESION)?.value);
+  if (!sesion) {
+    return { success: false as const, error: 'Tu sesión venció. Entra de nuevo.' };
+  }
+  if (!/^[0-9]{4}$/.test(pinActual) || !/^[0-9]{4}$/.test(pinNuevo)) {
+    return { success: false as const, error: 'El PIN son 4 dígitos.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - Tipos generados sin los RPC de usuarios
+  const { error } = await supabase.rpc('cambiar_pin', {
+    p_usuario_id: sesion.id,
+    p_pin_actual: pinActual,
+    p_pin_nuevo: pinNuevo,
+  });
+
+  if (error) {
+    return { success: false as const, error: mensajeDeErrorAuth(error.message) };
+  }
+
+  // @ts-expect-error - Tipos generados sin los RPC de usuarios
+  const { data } = await supabase.rpc('confirmar_pin', {
+    p_usuario_id: sesion.id,
+    p_pin: pinNuevo,
+  });
+
+  const usuario = (data as (UsuarioLogin & { sesion_version: number })[] | null)?.[0];
+  if (!usuario) {
+    // El PIN ya cambió; solo falló renovar la cookie. Que entre de nuevo.
+    (await cookies()).delete(COOKIE_SESION);
+    return { success: true as const, reingresar: true as const };
+  }
+
+  await abrirSesion({
+    id: usuario.id,
+    nombre: usuario.nombre,
+    rol: usuario.rol,
+    v: usuario.sesion_version ?? 1,
+  });
+
+  return { success: true as const, reingresar: false as const };
+}
+
+/**
+ * Cuántos días lleva la persona de la sesión sin cambiar su PIN.
+ * null = nunca lo ha cambiado (o no hay sesión).
+ */
+export async function getDiasSinCambiarPin(): Promise<number | null> {
+  const sesion = await leerToken((await cookies()).get(COOKIE_SESION)?.value);
+  if (!sesion) return null;
+
+  const supabase = await createClient();
+  // @ts-expect-error - Tipos generados sin los RPC de usuarios
+  const { data } = await supabase.rpc('pin_cambiado_at_de', { p_usuario_id: sesion.id });
+  const fecha = data as string | null;
+  if (!fecha) return null;
+
+  return Math.floor((Date.now() - new Date(fecha).getTime()) / 86400000);
+}
+
+/**
  * Confirma el PIN sin abrir sesión, para las acciones delicadas.
  *
  * En una tablet compartida la sesión abierta no prueba quién está parado ahí

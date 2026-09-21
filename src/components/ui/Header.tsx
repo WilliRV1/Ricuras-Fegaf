@@ -1,14 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Rol, puedeVer } from '@/lib/session';
 import { cerrarSesion } from '@/app/actions/auth';
 import { cartStore } from '@/hooks/useCart';
-import { IconHome, IconOrder, IconChefHat, IconCreditCard, IconBarChart } from './Icons';
+import { IconHome, IconOrder, IconChefHat, IconCreditCard, IconBarChart, IconKey, IconChevronDown } from './Icons';
+import { CambiarPinDialog } from './CambiarPinDialog';
 import styles from './Header.module.css';
+
+const ETIQUETA_ROL: Record<Rol, string> = {
+  admin: 'Administración',
+  cajero: 'Caja y pedidos',
+  cocina: 'Cocina',
+  dev: 'Dev / Tester',
+};
 
 interface HeaderProps {
   /** Quién tiene la sesión abierta. null = nadie (pantalla de entrada) */
@@ -27,6 +35,19 @@ export const Header: React.FC<HeaderProps> = ({ sesion }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [saliendo, setSaliendo] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [cambiandoPin, setCambiandoPin] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // El menú se cierra tocando fuera (en tablet no hay "blur" confiable)
+  useEffect(() => {
+    if (!menuAbierto) return;
+    const cerrar = (e: PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuAbierto(false);
+    };
+    document.addEventListener('pointerdown', cerrar);
+    return () => document.removeEventListener('pointerdown', cerrar);
+  }, [menuAbierto]);
 
   // En la pantalla de entrada no hay nada que navegar
   if (!sesion || pathname === '/login') return null;
@@ -72,21 +93,56 @@ export const Header: React.FC<HeaderProps> = ({ sesion }) => {
           ))}
         </nav>
 
-        {/* Quién está usando esta terminal — importa cuando se comparten */}
-        <div className={styles.sesion}>
-          <span className={styles.sesionNombre} title={`Sesión de ${sesion.nombre}`}>
-            {sesion.nombre}
-          </span>
+        {/*
+          Quién está usando esta terminal — importa cuando se comparten.
+          El nombre abre un menú: desde ahí cualquiera cambia su PIN en el
+          momento (si alguien se lo vio) sin pasar por administración.
+        */}
+        <div className={styles.sesion} ref={menuRef}>
           <button
             type="button"
-            className={styles.salirBtn}
-            onClick={salir}
-            disabled={saliendo}
+            className={styles.sesionBtn}
+            onClick={() => setMenuAbierto((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={menuAbierto}
+            title={`Sesión de ${sesion.nombre}`}
           >
-            {saliendo ? '…' : 'Salir'}
+            <span className={styles.sesionNombre}>{sesion.nombre}</span>
+            <IconChevronDown size={14} className={`${styles.sesionChevron} ${menuAbierto ? styles.sesionChevronAbierto : ''}`} />
           </button>
+
+          {menuAbierto && (
+            <div className={styles.menu} role="menu">
+              <div className={styles.menuCabecera}>
+                <strong>{sesion.nombre}</strong>
+                <span>{ETIQUETA_ROL[sesion.rol]}</span>
+              </div>
+              <button
+                type="button"
+                className={styles.menuItem}
+                role="menuitem"
+                onClick={() => {
+                  setMenuAbierto(false);
+                  setCambiandoPin(true);
+                }}
+              >
+                <IconKey size={16} /> Cambiar mi PIN
+              </button>
+              <button
+                type="button"
+                className={`${styles.menuItem} ${styles.menuItemSalir}`}
+                role="menuitem"
+                onClick={salir}
+                disabled={saliendo}
+              >
+                {saliendo ? 'Saliendo…' : 'Salir'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      <CambiarPinDialog isOpen={cambiandoPin} nombre={sesion.nombre} onClose={() => setCambiandoPin(false)} />
     </header>
   );
 };
