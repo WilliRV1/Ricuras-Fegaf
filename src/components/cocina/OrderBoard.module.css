@@ -209,3 +209,70 @@
   to { transform: rotate(360deg); }
 }
 
+/* ============================================================
+   Franja de programados: una línea arriba, sin tapar la grilla
+   (reemplaza la sección sticky que se sobreponía a las comandas)
+   ============================================================ */
+.franja {
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.franjaToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.franjaTitulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  color: #A5B4FC;
+  flex-shrink: 0;
+}
+
+.franjaLista {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.franjaHint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.franja .scheduledList {
+  padding: 0 12px 12px;
+}
+
+@media (max-width: 640px) {
+  .franjaToggle {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+  }
+  .franjaLista {
+    flex-basis: 100%;
+    white-space: normal;
+    order: 3;
+  }
+}
