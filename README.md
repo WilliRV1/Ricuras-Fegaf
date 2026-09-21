@@ -58,8 +58,8 @@ hechos": la base les crea un insumo propio con receta de 1 unidad y su costo
 sale de las compras registradas, igual que la hoja PRECIOS del Excel. Seed
 inicial con los sabores del Excel: `supabase/seed_bebidas_2026.sql`.
 
-Guía para la dueña sobre los rangos de fechas:
-`docs/Guia - Rangos de fechas en el dashboard.pdf`.
+Guía para la dueña (rangos de fechas, PIN, bebidas, domiciliario, programados):
+`docs/Guia - Dashboard, fechas y novedades.pdf` (con capturas).
 
 ## Base de datos
 
