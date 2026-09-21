@@ -213,9 +213,13 @@ export async function getResumenDelDia(fromStr?: string, toStr?: string) {
  * de un fondo aparte "porque el negocio no lo generó". El cobro por
  * "fuera del sector" es aparte y no entra aquí.
  *
- * Con un rango de varios días el mínimo se aplica por día, solo en los días
- * que tuvieron algún domicilio. Para un solo día (hoy, ayer) se aplica
- * siempre: es un día trabajado aunque todavía no haya salido nada.
+ * También puede haber un MÁXIMO por día (parámetro, 0 = sin tope): si la
+ * tarifa por productos lo supera, el domiciliario recibe el tope y el
+ * negocio paga solo el tope.
+ *
+ * Con un rango de varios días, mínimo y máximo se aplican por día, solo en
+ * los días que tuvieron algún domicilio. Para un solo día (hoy, ayer) el
+ * mínimo se aplica siempre: es un día trabajado aunque no haya salido nada.
  */
 export async function getLiquidacionDomiciliario(
   fromStr?: string,
@@ -231,6 +235,7 @@ export async function getLiquidacionDomiciliario(
   const parametros = await leerParametros();
   const tarifa = parametros.domiciliario_tarifa_producto ?? 1500;
   const minimoDia = parametros.domiciliario_minimo_dia ?? 40000;
+  const maximoDia = parametros.domiciliario_maximo_dia ?? 0;
   const categoriaBebidas = parametros.categoria_bebidas_id ?? 0;
 
   // Pagados y fiados: ambos se entregaron. Cancelados no.
@@ -269,19 +274,30 @@ export async function getLiquidacionDomiciliario(
 
   let unidades = 0;
   let porProductos = 0;
+  let delNegocio = 0;
   let delFondo = 0;
   let recibe = 0;
   let diasConMinimo = 0;
+  let diasConMaximo = 0;
 
   for (const cantidad of unidadesPorDia.values()) {
     const pagoDia = cantidad * tarifa;
     unidades += cantidad;
     porProductos += pagoDia;
+
     if (pagoDia < minimoDia) {
+      // No alcanzó: el negocio pone lo calculado, el fondo completa
+      delNegocio += pagoDia;
       delFondo += minimoDia - pagoDia;
-      diasConMinimo += 1;
       recibe += minimoDia;
+      diasConMinimo += 1;
+    } else if (maximoDia > 0 && pagoDia > maximoDia) {
+      // Pasó el tope: se paga el tope y nada más
+      delNegocio += maximoDia;
+      recibe += maximoDia;
+      diasConMaximo += 1;
     } else {
+      delNegocio += pagoDia;
       recibe += pagoDia;
     }
   }
@@ -290,11 +306,13 @@ export async function getLiquidacionDomiciliario(
     unidades,
     tarifa,
     minimoDia,
+    maximoDia,
     porProductos,
-    delNegocio: porProductos,
+    delNegocio,
     delFondo,
     recibe,
     diasConMinimo,
+    diasConMaximo,
   };
 }
 

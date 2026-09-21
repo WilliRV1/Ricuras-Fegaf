@@ -16,6 +16,7 @@ function conexion() {
 }
 
 const MIGRACION = './supabase/migrations/20260921000000_pin_bebidas_parametros.sql';
+const MIGRACION_MAXIMO = './supabase/migrations/20260921000001_domiciliario_maximo_dia.sql';
 const SEED = './supabase/seed_bebidas_2026.sql';
 
 let fallos = 0;
@@ -68,6 +69,10 @@ try {
   console.log('  ok    se aplica sin errores');
   await client.query(sql);
   console.log('  ok    es idempotente');
+  const sqlMax = fs.readFileSync(MIGRACION_MAXIMO, 'utf8');
+  await client.query(sqlMax);
+  await client.query(sqlMax);
+  console.log('  ok    tope del domiciliario: se aplica y es idempotente');
 
   // ── Usuarios de prueba ───────────────────────────────────────────────
   const crearUsuario = async (nombre, rol) => {
@@ -184,6 +189,7 @@ try {
   check('tarifa del domiciliario = 1500', valor('domiciliario_tarifa_producto') === 1500);
   check('mínimo del día = 40000', valor('domiciliario_minimo_dia') === 40000);
   check('programados 15 min antes', valor('programados_minutos_antes') === 15);
+  check('máximo del domiciliario existe (0 = sin tope)', valor('domiciliario_maximo_dia') === 0);
   check('categoría de bebidas detectada', valor('categoria_bebidas_id') > 0, `(${valor('categoria_bebidas_id')})`);
 
   await como(client, 'cajero');

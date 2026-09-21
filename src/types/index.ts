@@ -84,16 +84,20 @@ export interface LiquidacionDomiciliario {
   unidades: number;
   tarifa: number;
   minimoDia: number;
+  /** Tope por día. 0 = sin tope. */
+  maximoDia: number;
   /** unidades × tarifa */
   porProductos: number;
-  /** Lo que pone el negocio (= porProductos) */
+  /** Lo que pone el negocio (porProductos, recortado al tope si lo hay) */
   delNegocio: number;
   /** Lo que pone el fondo aparte para completar el mínimo */
   delFondo: number;
-  /** Lo que recibe el domiciliario (porProductos o el mínimo, lo mayor), sumado por día */
+  /** Lo que recibe el domiciliario: entre el mínimo y el máximo, sumado por día */
   recibe: number;
   /** Días del período en que se aplicó el mínimo */
   diasConMinimo: number;
+  /** Días del período en que se aplicó el tope */
+  diasConMaximo: number;
 }
 
 /** Un renglón de la receta de un producto. */

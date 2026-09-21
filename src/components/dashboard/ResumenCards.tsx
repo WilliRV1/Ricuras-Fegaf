@@ -186,6 +186,12 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
                 {domiciliario.diasConMinimo > 1 ? ` × ${domiciliario.diasConMinimo} días` : ''}
               </>
             )}
+            {domiciliario.diasConMaximo > 0 && (
+              <>
+                {' '}· tope {formatCurrency(domiciliario.maximoDia)}
+                {domiciliario.diasConMaximo > 1 ? ` × ${domiciliario.diasConMaximo} días` : ''}
+              </>
+            )}
           </p>
           <p className={styles.cardSub}>
             <strong>Del negocio: {formatCurrency(domiciliario.delNegocio)}</strong>

@@ -297,6 +297,8 @@ INSERT INTO public.parametros (clave, valor, descripcion) VALUES
    'Lo que se le paga al domiciliario por cada producto de comida (no bebidas) entregado a domicilio.'),
   ('domiciliario_minimo_dia', 40000,
    'Mínimo que recibe el domiciliario por día. Si la tarifa por productos no lo alcanza, el faltante sale del fondo aparte, no del negocio.'),
+  ('domiciliario_maximo_dia', 0,
+   'Máximo que recibe el domiciliario por día. Si la tarifa por productos lo supera, se paga el tope. 0 = sin tope.'),
   ('programados_minutos_antes', 15,
    'Minutos antes de la hora de entrega en que un pedido programado entra al tablero de cocina.'),
   ('categoria_bebidas_id',
