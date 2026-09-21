@@ -81,7 +81,12 @@ export const ParametrosManager: React.FC<ParametrosManagerProps> = ({ parametros
 
           <div className={styles.grid}>
             {parametros.map((p) => {
-              const pres = PRESENTACION[p.clave] ?? { etiqueta: p.clave, tipo: 'pesos' as const };
+              // Un parámetro nuevo en la base que la app aún no conoce se
+              // muestra legible ("Domiciliario maximo dia"), no como clave cruda.
+              const pres = PRESENTACION[p.clave] ?? {
+                etiqueta: p.clave.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()),
+                tipo: 'pesos' as const,
+              };
               const enEdicion = editando === p.clave;
               return (
                 <div key={p.clave} className={styles.card} style={enEdicion ? { gridColumn: '1 / -1' } : undefined}>

@@ -64,6 +64,11 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ from, to, base
     { etiqueta: 'Este mes', f: inicioDeMes(hoy), t: hoy },
   ];
 
+  // Un lunes "Esta semana" es del lunes al lunes, o sea el mismo rango que
+  // "Hoy" (y el día 1 pasa igual con "Este mes"): se marcaban los dos. Se
+  // resalta solo el primero que coincida, que es el más específico.
+  const presetActivo = presets.findIndex((p) => from === p.f && to === p.t);
+
   const aplicarRango = () => {
     if (fromInput && toInput && fromInput <= toInput && toInput <= hoy) {
       ir(fromInput, toInput);
@@ -74,11 +79,11 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ from, to, base
   return (
     <div className={styles.contenedor}>
       <div className={styles.presets}>
-        {presets.map((p) => (
+        {presets.map((p, i) => (
           <button
             key={p.etiqueta}
             type="button"
-            className={`${styles.presetBtn} ${from === p.f && to === p.t ? styles.activo : ''}`}
+            className={`${styles.presetBtn} ${i === presetActivo ? styles.activo : ''}`}
             onClick={() => ir(p.f, p.t)}
           >
             {p.etiqueta}
