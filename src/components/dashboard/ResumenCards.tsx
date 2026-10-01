@@ -170,7 +170,8 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
       {/*
         Pago al domiciliario: tarifa por cada comida entregada a domicilio
         (las bebidas no cuentan), con mínimo diario. Lo que falte para el
-        mínimo lo pone el fondo aparte, no la venta del negocio.
+        mínimo sale de un fondo aparte, pero igual se resta de la utilidad
+        (Reportes): es plata que se le paga al muchacho ese día.
       */}
       {domiciliario && (
         <div className={`${styles.card} ${styles.accentOrange} ${styles.cardDestacada}`}>
@@ -178,7 +179,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
           <p className={styles.cardLabel}>Pago al Domiciliario</p>
           <p className={styles.cardValue}>{formatCurrency(domiciliario.recibe)}</p>
           <p className={styles.cardSub}>
-            {domiciliario.unidades} producto{domiciliario.unidades !== 1 ? 's' : ''} ×{' '}
+            {domiciliario.unidades} producto{domiciliario.unidades !== 1 ? 's' : ''} a domicilio (sin bebidas) ×{' '}
             {formatCurrency(domiciliario.tarifa)} = {formatCurrency(domiciliario.porProductos)}
             {domiciliario.delFondo > 0 && (
               <>
@@ -194,8 +195,8 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
             )}
           </p>
           <p className={styles.cardSub}>
-            <strong>Del negocio: {formatCurrency(domiciliario.delNegocio)}</strong>
-            {domiciliario.delFondo > 0 && <> · del fondo aparte: {formatCurrency(domiciliario.delFondo)}</>}
+            <strong>Por productos: {formatCurrency(domiciliario.delNegocio)}</strong>
+            {domiciliario.delFondo > 0 && <> · completa el mínimo: {formatCurrency(domiciliario.delFondo)}</>}
             {totalDomicilios > 0 && <> · + {formatCurrency(totalDomicilios)} fuera del sector</>}
           </p>
         </div>

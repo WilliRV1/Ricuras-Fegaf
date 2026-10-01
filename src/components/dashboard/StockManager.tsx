@@ -7,6 +7,7 @@ import {
   crearProducto,
   actualizarProducto,
   eliminarProducto,
+  fijarCostoManual,
 } from '@/app/actions/productos';
 import { registrarCompraInsumo } from '@/app/actions/recetas';
 import { toast } from '@/components/ui/Toast';
@@ -24,6 +25,8 @@ const formatoCOP = new Intl.NumberFormat('es-CO', { style: 'currency', currency:
 interface FormularioProducto {
   nombre: string;
   precio: string;
+  /** Costo escrito a mano; vacío = sale de la receta. Solo se usa al editar. */
+  costo: string;
   categoriaId: string;
   esAdicion: boolean;
   /** Gaseosas, aguas, jugos: no llevan receta, se compran hechas */
@@ -33,6 +36,7 @@ interface FormularioProducto {
 const formularioVacio: FormularioProducto = {
   nombre: '',
   precio: '',
+  costo: '',
   categoriaId: '',
   esAdicion: false,
   seCompraHecho: false,
@@ -140,6 +144,7 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
     setFormEdicion({
       nombre: producto.nombre,
       precio: String(producto.precio),
+      costo: producto.costo_manual != null ? String(producto.costo_manual) : '',
       categoriaId: producto.categoria_id != null ? String(producto.categoria_id) : '',
       esAdicion: false,
       seCompraHecho: false,
@@ -156,6 +161,11 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
       toast.error('El precio debe ser mayor a cero.');
       return;
     }
+    const costo = formEdicion.costo.trim() === '' ? null : Math.round(Number(formEdicion.costo));
+    if (costo !== null && (Number.isNaN(costo) || costo < 0)) {
+      toast.error('El costo no puede ser negativo.');
+      return;
+    }
 
     startTransition(async () => {
       const res = await actualizarProducto(
@@ -168,11 +178,24 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
         toast.error(res.error);
         return;
       }
+      if (costo !== (producto.costo_manual ?? null)) {
+        const resCosto = await fijarCostoManual(producto.id, costo);
+        if (!resCosto.success) {
+          toast.error(resCosto.error);
+          return;
+        }
+      }
       toast.success(`${formEdicion.nombre.trim()} actualizado.`);
       setOptimisticProducts((prev) =>
         prev.map((p) =>
           p.id === producto.id
-            ? { ...p, nombre: formEdicion.nombre.trim(), precio, categoria_id: formEdicion.categoriaId ? Number(formEdicion.categoriaId) : null }
+            ? {
+                ...p,
+                nombre: formEdicion.nombre.trim(),
+                precio,
+                costo_manual: costo,
+                categoria_id: formEdicion.categoriaId ? Number(formEdicion.categoriaId) : null,
+              }
             : p
         )
       );
@@ -382,6 +405,19 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
                         value={formEdicion.precio}
                         onChange={(e) => setFormEdicion((f) => ({ ...f, precio: e.target.value }))}
                         disabled={isPending}
+                        aria-label="Precio de venta"
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        className={styles.formInput}
+                        style={{ maxWidth: '140px' }}
+                        value={formEdicion.costo}
+                        onChange={(e) => setFormEdicion((f) => ({ ...f, costo: e.target.value }))}
+                        placeholder="Costo (opcional)"
+                        title="Costo sin el pago al domiciliario por producto. Vacío = el de la receta."
+                        disabled={isPending}
+                        aria-label="Costo"
                       />
                       <select
                         className={styles.formInput}
@@ -397,6 +433,10 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
                         ))}
                       </select>
                     </div>
+                    <p className={styles.costo}>
+                      Nombre · precio de venta · costo (opcional). El costo va sin el pago al
+                      domiciliario por producto, que la app ya resta aparte; vacío = el de la receta.
+                    </p>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
                         type="button"
@@ -421,6 +461,9 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
                     <div className={styles.info}>
                       <span className={styles.name}>{producto.nombre}</span>
                       <span className={styles.price}>{formatoCOP.format(producto.precio)}</span>
+                      {producto.costo_manual != null && (
+                        <span className={styles.costo}>Costo {formatoCOP.format(producto.costo_manual)}</span>
+                      )}
                     </div>
 
                     <div className={styles.cardAcciones}>

@@ -16,7 +16,8 @@
     "test:rls": "node scripts/test-cobertura-rls.mjs",
     "test:autorizacion": "node scripts/test-autorizacion.mjs",
     "test:pin-bebidas": "node scripts/test-pin-bebidas.mjs",
-    "test:db:all": "npm run test:precios && npm run test:caja && npm run test:lectura-publica && npm run test:rls && npm run test:autorizacion && npm run test:pin-bebidas"
+    "test:costo-manual": "node scripts/test-costo-manual.mjs",
+    "test:db:all": "npm run test:precios && npm run test:caja && npm run test:lectura-publica && npm run test:rls && npm run test:autorizacion && npm run test:pin-bebidas && npm run test:costo-manual"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

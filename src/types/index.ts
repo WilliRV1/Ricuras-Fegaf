@@ -120,6 +120,10 @@ export interface ProductoCosto {
   insumos_en_receta: number;
   /** Insumos de la receta sin ninguna compra registrada: el costo está incompleto. */
   insumos_sin_costo: number;
+  /** Costo escrito a mano: si no es null, costo_total es este y no el de la receta. */
+  costo_manual: number | null;
+  /** Lo que daría la receta, haya o no costo manual. */
+  costo_receta: number;
 }
 
 /** Utilidad neta real de un período: ventas − costo de productos vendidos (Fase 2, Módulo 8). */
@@ -128,7 +132,7 @@ export interface ReporteUtilidad {
   to: string;
   ventas: number;
   costoProductos: number;
-  /** Aporte del negocio al pago del domiciliario en el período */
+  /** Todo lo que recibe el domiciliario en el período, incluido lo que completa el mínimo */
   pagoDomiciliario: number;
   utilidadNeta: number;
 }

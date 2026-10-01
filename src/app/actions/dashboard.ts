@@ -444,8 +444,10 @@ export async function getPedidosRecientes(limit: number = 20, fromStr?: string, 
 }
 
 /**
- * Retorna un resumen de los productos vendidos en el día, agrupados por nombre.
- * Solo incluye pedidos con estado 'pagado'.
+ * Retorna un resumen de los productos vendidos en el día, agrupados por nombre,
+ * con las UNIDADES vendidas (suma de `cantidad`, no número de líneas).
+ * Incluye pagados y fiados: ambos se vendieron y salieron de cocina, y es como
+ * la dueña los cuenta en su Excel. Cancelados no.
  */
 export async function getProductosVendidosDelDia(fromStr?: string, toStr?: string) {
   if (!(await sesionConAcceso('/dashboard'))) return [];
@@ -454,11 +456,11 @@ export async function getProductosVendidosDelDia(fromStr?: string, toStr?: strin
 
   const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
 
-  // Traer todos los detalle_pedidos de pedidos pagados en el día
+  // Traer todos los detalle_pedidos de pedidos pagados o fiados en el día
   const { data, error } = await supabase
     .from('detalle_pedidos')
     .select('cantidad, precio_unitario, productos(nombre), pedidos!inner(estado, created_at)')
-    .eq('pedidos.estado', 'pagado')
+    .in('pedidos.estado', [ESTADOS_PEDIDO.PAGADO, ESTADOS_PEDIDO.DEBE])
     .gte('pedidos.created_at', startOfDay)
     .lt('pedidos.created_at', endOfDay);
 

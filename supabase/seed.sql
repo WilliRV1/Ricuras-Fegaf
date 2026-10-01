@@ -63,8 +63,8 @@ BEGIN
     ('BROCHETA CERDO', 18000, cat_asados, true, false),
     ('BROCHETA RES', 20000, cat_asados, true, false),
     ('CHORIZO DE CERDO', 15000, cat_asados, true, false),
-    ('CHURRASCO 200 gr', 27000, cat_asados, true, false),
-    ('CHURRASCO 250 gr', 30000, cat_asados, true, false),
+    ('CHURRASCO 200 gr', 30000, cat_asados, true, false),
+    ('CHURRASCO 250 gr', 33000, cat_asados, true, false),
     ('FILETE DE POLLO', 25000, cat_asados, true, false);
 
     -- PERROS CALIENTES

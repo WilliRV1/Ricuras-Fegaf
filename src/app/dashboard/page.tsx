@@ -91,6 +91,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const categorias = categoriasRes.success ? categoriasRes.categorias : [];
   const parametros = parametrosRes.success ? parametrosRes.parametros : [];
+  // Unidades, no líneas ni nombres: 7 salchipapas son 7, como en el Excel.
+  const unidadesVendidas = productosVendidos.reduce((sum, p) => sum + p.cantidad, 0);
 
   // El PIN de admin se marca en una tablet compartida: si lleva meses igual
   // (o nunca se cambió), vale la pena recordarlo. Se cambia desde el nombre
@@ -202,7 +204,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
               <IconUtensils size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
-              Productos Vendidos{productosVendidos.length > 0 ? ` (${productosVendidos.length} distintos)` : ''}
+              Productos Vendidos
+              {productosVendidos.length > 0
+                ? ` (${unidadesVendidas} uds · ${productosVendidos.length} distintos)`
+                : ''}
             </h2>
             <ProductosVendidosTable productos={productosVendidos} />
           </section>

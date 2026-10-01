@@ -9,15 +9,19 @@ import type { ComparativoMensual, ProductoRentable, ReporteUtilidad, ReporteUtil
 /**
  * Fase 2 / Módulo 8 — Inteligencia Financiera y Reportes.
  *
- * Utilidad neta real = ventas − costo de productos vendidos − aporte del
- * negocio al pago del domiciliario (lo que pone el fondo aparte NO se resta:
- * no sale de la venta).
+ * Utilidad neta real = ventas − costo de productos vendidos − TODO lo que
+ * recibe el domiciliario, incluido lo que se completa para llegar al mínimo
+ * del día. Así lo lleva la dueña en su Excel (fila AYUDANTE restada de la
+ * utilidad): aunque esa plata salga de un fondo aparte, es un costo real del
+ * día y la utilidad sin restarla salía inflada (pedido del 1/10/2026).
  *   - VENTAS: se reutiliza `ventaRealDelDia` de `getResumenDelDia`
  *     (dashboard.ts) en vez de recalcular la venta — es la misma cifra con
  *     la que ella cuadra caja, no puede haber dos versiones de "cuánto se
  *     vendió" en la app.
- *   - COSTOS: costo de los insumos de cada producto vendido, según su costo
- *     vigente en `vw_producto_costos` (Módulo 6).
+ *   - COSTOS: costo de cada producto vendido según `vw_producto_costos`
+ *     (Módulo 6): el costo manual si lo tiene, si no el de su receta. Ese
+ *     costo NO incluye el pago al domiciliario por producto, que se resta
+ *     aparte aquí.
  *
  * El Módulo 7 (gastos operativos) se quitó: mezclaba gastos del negocio con
  * gastos personales de la dueña en el Excel original, y no correspondía
@@ -89,7 +93,7 @@ export async function getUtilidadNetaReal(fromStr?: string, toStr?: string): Pro
     getLiquidacionDomiciliario(fromStr, toStr),
   ]);
   const ventas = resumen.ventaRealDelDia;
-  const pagoDomiciliario = domiciliario?.delNegocio ?? 0;
+  const pagoDomiciliario = domiciliario?.recibe ?? 0;
 
   return {
     from,
@@ -151,7 +155,10 @@ export async function getComparativoMensual(mesStr?: string): Promise<Comparativ
   };
 }
 
-/** Productos vendidos y pagados en el período, ordenados por rentabilidad real (no solo cantidad). */
+/**
+ * Productos vendidos (pagados y fiados) en el período, ordenados por
+ * rentabilidad real (no solo cantidad). Cuenta lo mismo que la utilidad.
+ */
 export async function getProductosMasRentables(fromStr?: string, toStr?: string): Promise<ProductoRentable[]> {
   if (!(await sesionConAcceso('/dashboard'))) return [];
 
@@ -163,7 +170,7 @@ export async function getProductosMasRentables(fromStr?: string, toStr?: string)
     supabase
       .from('detalle_pedidos')
       .select('producto_id, cantidad, precio_unitario, productos(nombre), pedidos!inner(estado, created_at)')
-      .eq('pedidos.estado', 'pagado')
+      .in('pedidos.estado', ['pagado', 'debe'])
       .gte('pedidos.created_at', startOfDay)
       .lt('pedidos.created_at', endOfDay),
     db.from('vw_producto_costos').select('producto_id, costo_total'),

@@ -52,9 +52,9 @@
 
 ### **Cortes Especiales**
 
-* **CHURRASCO 200 gr** \- $27.000  
+* **CHURRASCO 200 gr** \- $30.000  
   * *Descripción:* Delicioso lomo caracho de 200 gr, acompañado de papa francesa y ensalada.  
-* **CHURRASCO 250 gr** \- $30.000  
+* **CHURRASCO 250 gr** \- $33.000  
   * *Descripción:* Delicioso lomo caracho de 250 gr, acompañado de papa francesa y ensalada.  
 * **FILETE DE POLLO** \- $25.000  
   * *Descripción:* Delicioda pechuga de pollo de 300 gr, acompañado de papa francesa y ensalada.

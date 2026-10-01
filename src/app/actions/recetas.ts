@@ -244,7 +244,7 @@ export async function listarProductoCostos() {
 
   const { data, error } = await db
     .from('vw_producto_costos')
-    .select('producto_id, nombre, precio, costo_total, margen, insumos_en_receta, insumos_sin_costo')
+    .select('producto_id, nombre, precio, costo_total, margen, insumos_en_receta, insumos_sin_costo, costo_manual, costo_receta')
     .order('nombre', { ascending: true });
 
   if (error) {

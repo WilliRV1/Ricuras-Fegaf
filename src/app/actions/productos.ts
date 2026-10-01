@@ -18,6 +18,7 @@ function mensajeDeErrorProducto(mensaje: string | undefined): string {
   if (mensaje.includes('ROL_NO_AUTORIZADO')) return MENSAJE_ROL_NO_AUTORIZADO;
   if (mensaje.includes('NOMBRE_REQUERIDO')) return 'Escribe el nombre del producto.';
   if (mensaje.includes('PRECIO_INVALIDO')) return 'El precio debe ser mayor a cero.';
+  if (mensaje.includes('COSTO_INVALIDO')) return 'El costo no puede ser negativo.';
   if (mensaje.includes('CATEGORIA_NO_ENCONTRADA')) return 'Esa categoría ya no existe.';
   if (mensaje.includes('PRODUCTO_NO_ENCONTRADO')) return 'Ese producto ya no existe.';
   if (mensaje.includes('PRODUCTO_CON_HISTORIAL'))
@@ -189,6 +190,33 @@ export async function actualizarProducto(
 
   revalidatePath('/dashboard');
   revalidatePath('/pedidos');
+  return { success: true as const };
+}
+
+/**
+ * Costo escrito a mano: manda sobre el de la receta en utilidad y márgenes.
+ * `null` lo quita y el costo vuelve a salir de la receta.
+ */
+export async function fijarCostoManual(productoId: number, costo: number | null) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false as const, error: 'Necesitas una sesión de administración.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - RPC nuevo, sin generar en database.types.ts
+  const { error } = await supabase.rpc('fijar_costo_manual', {
+    p_producto_id: productoId,
+    p_costo: costo,
+  });
+
+  if (error) {
+    return { success: false as const, error: mensajeDeErrorProducto(error.message) };
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/recetas');
+  revalidatePath('/dashboard/reportes');
   return { success: true as const };
 }
 

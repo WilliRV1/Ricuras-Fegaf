@@ -38,3 +38,8 @@
   composes: valor;
   color: var(--color-danger);
 }
+
+.nota {
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+}

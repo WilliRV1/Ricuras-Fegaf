@@ -21,8 +21,9 @@ export const UtilidadCards: React.FC<{ utilidad: ReporteUtilidad }> = ({ utilida
         <span className={styles.valor}>{formatoCOP.format(utilidad.costoProductos)}</span>
       </div>
       <div className={styles.card}>
-        <span className={styles.etiqueta}>Domiciliario (aporte del negocio)</span>
+        <span className={styles.etiqueta}>Pago al domiciliario</span>
         <span className={styles.valor}>{formatoCOP.format(utilidad.pagoDomiciliario)}</span>
+        <span className={styles.nota}>Incluye lo que se completa para el mínimo</span>
       </div>
       <div className={styles.card}>
         <span className={styles.etiqueta}>Utilidad neta</span>

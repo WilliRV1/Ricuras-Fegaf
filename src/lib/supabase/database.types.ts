@@ -39,6 +39,7 @@ export interface Database {
           activo: boolean
           es_adicion: boolean
           created_at: string
+          costo_manual: number | null
         }
         Insert: {
           id?: number
