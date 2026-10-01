@@ -391,51 +391,58 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
                 {editandoId === producto.id ? (
                   <div className={styles.formulario} style={{ width: '100%' }}>
                     <div className={styles.formFila}>
-                      <input
-                        className={styles.formInput}
-                        value={formEdicion.nombre}
-                        onChange={(e) => setFormEdicion((f) => ({ ...f, nombre: e.target.value }))}
-                        maxLength={200}
-                        disabled={isPending}
-                      />
-                      <input
-                        type="number"
-                        className={styles.formInput}
-                        style={{ maxWidth: '140px' }}
-                        value={formEdicion.precio}
-                        onChange={(e) => setFormEdicion((f) => ({ ...f, precio: e.target.value }))}
-                        disabled={isPending}
-                        aria-label="Precio de venta"
-                      />
-                      <input
-                        type="number"
-                        min={0}
-                        className={styles.formInput}
-                        style={{ maxWidth: '140px' }}
-                        value={formEdicion.costo}
-                        onChange={(e) => setFormEdicion((f) => ({ ...f, costo: e.target.value }))}
-                        placeholder="Costo (opcional)"
-                        title="Costo sin el pago al domiciliario por producto. Vacío = el de la receta."
-                        disabled={isPending}
-                        aria-label="Costo"
-                      />
-                      <select
-                        className={styles.formInput}
-                        value={formEdicion.categoriaId}
-                        onChange={(e) => setFormEdicion((f) => ({ ...f, categoriaId: e.target.value }))}
-                        disabled={isPending}
-                      >
-                        <option value="">Sin categoría</option>
-                        {categorias.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.nombre}
-                          </option>
-                        ))}
-                      </select>
+                      <label className={styles.formCampo}>
+                        <span className={styles.formEtiqueta}>Nombre</span>
+                        <input
+                          className={styles.formInput}
+                          value={formEdicion.nombre}
+                          onChange={(e) => setFormEdicion((f) => ({ ...f, nombre: e.target.value }))}
+                          maxLength={200}
+                          disabled={isPending}
+                        />
+                      </label>
+                      <label className={styles.formCampo} style={{ maxWidth: '160px' }}>
+                        <span className={styles.formEtiqueta}>Precio de venta</span>
+                        <input
+                          type="number"
+                          className={styles.formInput}
+                          value={formEdicion.precio}
+                          onChange={(e) => setFormEdicion((f) => ({ ...f, precio: e.target.value }))}
+                          disabled={isPending}
+                        />
+                      </label>
+                      <label className={styles.formCampo} style={{ maxWidth: '160px' }}>
+                        <span className={styles.formEtiqueta}>Costo (opcional)</span>
+                        <input
+                          type="number"
+                          min={0}
+                          className={styles.formInput}
+                          value={formEdicion.costo}
+                          onChange={(e) => setFormEdicion((f) => ({ ...f, costo: e.target.value }))}
+                          placeholder="De la receta"
+                          disabled={isPending}
+                        />
+                      </label>
+                      <label className={styles.formCampo}>
+                        <span className={styles.formEtiqueta}>Categoría</span>
+                        <select
+                          className={styles.formInput}
+                          value={formEdicion.categoriaId}
+                          onChange={(e) => setFormEdicion((f) => ({ ...f, categoriaId: e.target.value }))}
+                          disabled={isPending}
+                        >
+                          <option value="">Sin categoría</option>
+                          {categorias.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                     </div>
                     <p className={styles.costo}>
-                      Nombre · precio de venta · costo (opcional). El costo va sin el pago al
-                      domiciliario por producto, que la app ya resta aparte; vacío = el de la receta.
+                      El costo va sin el pago al domiciliario por producto, que la app ya resta
+                      aparte. Si lo dejas vacío, sale de la receta.
                     </p>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button

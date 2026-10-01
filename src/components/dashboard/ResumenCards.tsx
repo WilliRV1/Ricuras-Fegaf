@@ -50,7 +50,42 @@ interface ResumenCardsProps {
   };
   /** Pago al domiciliario del período (tarifa × comida a domicilio, mínimo diario) */
   domiciliario?: LiquidacionDomiciliario | null;
+  /** Qué se está mirando: cambia "hoy" por "ese día" o "el período" en los textos */
+  periodo?: Periodo;
 }
+
+export type Periodo = 'hoy' | 'dia' | 'rango';
+
+/** Los textos que dependen de si se mira hoy, otro día o un rango de fechas */
+const TEXTOS: Record<Periodo, {
+  cobrado: string;
+  seDebe: string;
+  ventaReal: string;
+  deudasViejas: string;
+  entroACaja: string;
+}> = {
+  hoy: {
+    cobrado: 'Cobrado hoy',
+    seDebe: 'Se Debe de Hoy',
+    ventaReal: 'Venta Real del Día',
+    deudasViejas: 'Deudas Viejas Cobradas Hoy',
+    entroACaja: 'entró hoy a la caja, pero es venta de otro día',
+  },
+  dia: {
+    cobrado: 'Cobrado ese día',
+    seDebe: 'Se Debe de Ese Día',
+    ventaReal: 'Venta Real del Día',
+    deudasViejas: 'Deudas Viejas Cobradas Ese Día',
+    entroACaja: 'entró ese día a la caja, pero es venta de otro día',
+  },
+  rango: {
+    cobrado: 'Cobrado en el período',
+    seDebe: 'Se Debe del Período',
+    ventaReal: 'Venta Real del Período',
+    deudasViejas: 'Deudas Viejas Cobradas',
+    entroACaja: 'entró a la caja en el período, pero es venta de antes',
+  },
+};
 
 export const ResumenCards: React.FC<ResumenCardsProps> = ({
   totalPedidos,
@@ -72,7 +107,9 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
   porMetodoPago,
   porTipo,
   domiciliario = null,
+  periodo = 'hoy',
 }) => {
+  const t = TEXTOS[periodo];
   return (
     <div className={styles.grid}>
       {/* ============================================================
@@ -86,14 +123,14 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
         <p className={styles.cardLabel}>Total Facturado</p>
         <p className={styles.cardValue}>{formatCurrency(totalFacturado)}</p>
         <p className={styles.cardSub}>
-          Cobrado hoy · incl. {formatCurrency(totalRecargos)} en recargos · sin domicilios
+          {t.cobrado} · incl. {formatCurrency(totalRecargos)} en recargos · sin domicilios
         </p>
       </div>
 
       {/* Fiado del día — lo que se vendió pero no se ha cobrado */}
       <div className={`${styles.card} ${styles.accentWarning}`}>
         <div className={styles.cardIcon} style={{ color: 'var(--color-warning)' }}><IconBanknote size={22} /></div>
-        <p className={styles.cardLabel}>Se Debe de Hoy</p>
+        <p className={styles.cardLabel}>{t.seDebe}</p>
         <p className={styles.cardValue}>{formatCurrency(totalFiadoHoy)}</p>
         <p className={styles.cardSub}>
           {cantidadFiadoHoy} pedido{cantidadFiadoHoy !== 1 ? 's' : ''} fiado
@@ -104,7 +141,7 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
       {/* La cifra con la que se cuadra al cerrar */}
       <div className={`${styles.card} ${styles.accentSuccess} ${styles.cardDestacada}`}>
         <div className={styles.cardIcon} style={{ color: 'var(--color-success)' }}><IconTrendingUp size={22} /></div>
-        <p className={styles.cardLabel}>Venta Real del Día</p>
+        <p className={styles.cardLabel}>{t.ventaReal}</p>
         <p className={styles.cardValue}>{formatCurrency(ventaRealDelDia)}</p>
         <p className={styles.cardSub}>
           {formatCurrency(totalFacturado)} cobrado + {formatCurrency(totalFiadoHoy)} fiado
@@ -130,11 +167,10 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
       {totalCobrosDeudasViejas > 0 && (
         <div className={`${styles.card} ${styles.accentTeal}`}>
           <div className={styles.cardIcon} style={{ color: '#2DD4BF' }}><IconHandshake size={22} /></div>
-          <p className={styles.cardLabel}>Deudas Viejas Cobradas Hoy</p>
+          <p className={styles.cardLabel}>{t.deudasViejas}</p>
           <p className={styles.cardValue}>{formatCurrency(totalCobrosDeudasViejas)}</p>
           <p className={styles.cardSub}>
-            {cantidadCobrosDeudasViejas} pago{cantidadCobrosDeudasViejas !== 1 ? 's' : ''} · entró
-            hoy a la caja, pero es venta de otro día
+            {cantidadCobrosDeudasViejas} pago{cantidadCobrosDeudasViejas !== 1 ? 's' : ''} · {t.entroACaja}
           </p>
         </div>
       )}

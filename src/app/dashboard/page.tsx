@@ -179,8 +179,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           */}
 
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Resumen del Día</h2>
-            <ResumenCards {...stats} domiciliario={domiciliario} />
+            <h2 className={styles.sectionTitle}>{esUnSoloDia ? 'Resumen del Día' : 'Resumen del Período'}</h2>
+            <ResumenCards
+              {...stats}
+              domiciliario={domiciliario}
+              periodo={esHoy ? 'hoy' : esUnSoloDia ? 'dia' : 'rango'}
+            />
           </section>
 
           {/* Cartera por cobrar — arrastra deudas de todos los días */}

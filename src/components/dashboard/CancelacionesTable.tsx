@@ -45,10 +45,9 @@ export const CancelacionesTable: React.FC<CancelacionesTableProps> = ({ cancelad
       {sinRehacer.length > 0 && (
         <div className={styles.alerta}>
           <IconAlertTriangle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} />
-          {sinRehacer.length} pedido{sinRehacer.length !== 1 ? 's' : ''} anulado
-          {sinRehacer.length !== 1 ? 's' : ''} no se volvió a montar
-          {sinRehacer.length !== 1 ? 'n' : ''}. Si el cliente sí se llevó la comida, esa venta
-          no está registrada en ninguna parte.
+          {sinRehacer.length === 1
+            ? '1 pedido anulado no se volvió a montar. Si el cliente sí se llevó la comida, esa venta no está registrada en ninguna parte.'
+            : `${sinRehacer.length} pedidos anulados no se volvieron a montar. Si el cliente sí se llevó la comida, esas ventas no están registradas en ninguna parte.`}
         </div>
       )}
 
