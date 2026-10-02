@@ -14,6 +14,7 @@ import { listarParametros } from '@/app/actions/parametros';
 import { getDiasSinCambiarPin } from '@/app/actions/auth';
 import { ParametrosManager } from '@/components/dashboard/ParametrosManager';
 import { normalizarRango } from '@/lib/rangoFechas';
+import { describirRango, semanaExacta } from '@/lib/semanas';
 import { ResumenCards } from '@/components/dashboard/ResumenCards';
 import { PedidosTable } from '@/components/dashboard/PedidosTable';
 import { CancelacionesTable } from '@/components/dashboard/CancelacionesTable';
@@ -105,9 +106,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     });
 
   const esUnSoloDia = from === to;
+  // Una semana de lunes a domingo se nombra por su número, como en el Excel.
+  const semanaVista = esUnSoloDia ? null : semanaExacta(from, to, todayISO);
   const fechaLabel = esUnSoloDia
     ? formatoFecha(from)
-    : `Del ${new Date(`${from}T12:00:00`).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })} al ${formatoFecha(to)}`;
+    : semanaVista
+      ? `Semana ${semanaVista.semana} de ${semanaVista.anio}, del ${describirRango(from, to, 'long')}`
+      : `Del ${new Date(`${from}T12:00:00`).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })} al ${formatoFecha(to)}`;
 
   const esHoy = from === todayISO && to === todayISO;
 
@@ -149,6 +154,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <IconTrendingUp size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
           Reportes
         </a>
+        <a href="/dashboard/eventos" className={styles.moduleNavLink}>
+          <IconClipboard size={16} style={{ marginRight: '6px', verticalAlign: '-3px' }} />
+          Eventos
+        </a>
       </nav>
 
       {pinViejo && (
@@ -179,11 +188,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           */}
 
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>{esUnSoloDia ? 'Resumen del Día' : 'Resumen del Período'}</h2>
+            <h2 className={styles.sectionTitle}>
+              {esUnSoloDia ? 'Resumen del Día' : semanaVista ? `Resumen de la Semana ${semanaVista.semana}` : 'Resumen del Período'}
+            </h2>
             <ResumenCards
               {...stats}
               domiciliario={domiciliario}
               periodo={esHoy ? 'hoy' : esUnSoloDia ? 'dia' : 'rango'}
+              dia={esUnSoloDia ? from : undefined}
             />
           </section>
 

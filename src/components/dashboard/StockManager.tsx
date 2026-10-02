@@ -8,6 +8,7 @@ import {
   actualizarProducto,
   eliminarProducto,
   fijarCostoManual,
+  fijarAportaDomiciliario,
 } from '@/app/actions/productos';
 import { registrarCompraInsumo } from '@/app/actions/recetas';
 import { toast } from '@/components/ui/Toast';
@@ -31,6 +32,8 @@ interface FormularioProducto {
   esAdicion: boolean;
   /** Gaseosas, aguas, jugos: no llevan receta, se compran hechas */
   seCompraHecho: boolean;
+  /** Cada unidad vendida deja la tarifa del domiciliario */
+  aportaDomiciliario: boolean;
 }
 
 const formularioVacio: FormularioProducto = {
@@ -40,6 +43,7 @@ const formularioVacio: FormularioProducto = {
   categoriaId: '',
   esAdicion: false,
   seCompraHecho: false,
+  aportaDomiciliario: true,
 };
 
 export const StockManager: React.FC<StockManagerProps> = ({ productos, categorias: categoriasIniciales }) => {
@@ -100,6 +104,11 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
         return;
       }
       const nombre = formNuevo.nombre.trim();
+      // Lo que se compra hecho es bebida: no deja nada para el domiciliario.
+      if (formNuevo.aportaDomiciliario && !formNuevo.seCompraHecho) {
+        const resAporta = await fijarAportaDomiciliario(res.productoId, true);
+        if (!resAporta.success) toast.error(resAporta.error);
+      }
       toast.success(`${nombre} agregado al menú.`);
       setFormNuevo(formularioVacio);
       setCreando(false);
@@ -148,6 +157,7 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
       categoriaId: producto.categoria_id != null ? String(producto.categoria_id) : '',
       esAdicion: false,
       seCompraHecho: false,
+      aportaDomiciliario: producto.aporta_domiciliario,
     });
   };
 
@@ -185,6 +195,13 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
           return;
         }
       }
+      if (formEdicion.aportaDomiciliario !== producto.aporta_domiciliario) {
+        const resAporta = await fijarAportaDomiciliario(producto.id, formEdicion.aportaDomiciliario);
+        if (!resAporta.success) {
+          toast.error(resAporta.error);
+          return;
+        }
+      }
       toast.success(`${formEdicion.nombre.trim()} actualizado.`);
       setOptimisticProducts((prev) =>
         prev.map((p) =>
@@ -194,6 +211,7 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
                 nombre: formEdicion.nombre.trim(),
                 precio,
                 costo_manual: costo,
+                aporta_domiciliario: formEdicion.aportaDomiciliario,
                 categoria_id: formEdicion.categoriaId ? Number(formEdicion.categoriaId) : null,
               }
             : p
@@ -282,7 +300,7 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
                   />
                 </label>
                 <label className={styles.formCampo} style={{ maxWidth: '160px' }}>
-                  <span className={styles.formEtiqueta}>Precio</span>
+                  <span className={styles.formEtiqueta}>Precio de venta</span>
                   <input
                     type="number"
                     className={styles.formInput}
@@ -324,6 +342,22 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
                   </span>
                 </span>
               </label>
+              {!formNuevo.seCompraHecho && (
+                <label className={styles.formCheck}>
+                  <input
+                    type="checkbox"
+                    checked={formNuevo.aportaDomiciliario}
+                    onChange={(e) => setFormNuevo((f) => ({ ...f, aportaDomiciliario: e.target.checked }))}
+                    disabled={isPending}
+                  />
+                  <span>
+                    <strong>Deja plata para el domiciliario</strong>
+                    <span className={styles.formCheckHint}>
+                      Quítalo si es un adicional (tocineta, queso, carne). Las papas francesas sí la dejan.
+                    </span>
+                  </span>
+                </label>
+              )}
               <button type="button" className={styles.nuevoBtn} onClick={guardarNuevo} disabled={isPending}>
                 {isPending ? 'Guardando…' : 'Crear producto'}
               </button>
@@ -350,7 +384,7 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
                   />
                 </label>
                 <label className={styles.formCampo} style={{ maxWidth: '200px' }}>
-                  <span className={styles.formEtiqueta}>Unidades que trajo</span>
+                  <span className={styles.formEtiqueta}>Para cuántas unidades</span>
                   <input
                     type="number"
                     inputMode="numeric"
@@ -441,9 +475,24 @@ export const StockManager: React.FC<StockManagerProps> = ({ productos, categoria
                       </label>
                     </div>
                     <p className={styles.costo}>
-                      El costo va sin el pago al domiciliario por producto, que la app ya resta
-                      aparte. Si lo dejas vacío, sale de la receta.
+                      El costo se escribe igual que en el Excel, con la línea «Pago auxiliares»
+                      incluida. Si lo dejas vacío, sale de la receta.
                     </p>
+                    <label className={styles.formCheck}>
+                      <input
+                        type="checkbox"
+                        checked={formEdicion.aportaDomiciliario}
+                        onChange={(e) => setFormEdicion((f) => ({ ...f, aportaDomiciliario: e.target.checked }))}
+                        disabled={isPending}
+                      />
+                      <span>
+                        <strong>Deja plata para el domiciliario</strong>
+                        <span className={styles.formCheckHint}>
+                          Cada unidad vendida, en mesa o a domicilio, suma la tarifa al pago del
+                          domiciliario. Bebidas y adicionales no la dejan; las papas francesas sí.
+                        </span>
+                      </span>
+                    </label>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
                         type="button"

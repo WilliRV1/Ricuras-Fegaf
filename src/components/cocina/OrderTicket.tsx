@@ -162,6 +162,12 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ order }) => {
           {!isMesa && order.cliente_nombre && (
             <span className={styles.clientName}><IconUser size={13} /> {order.cliente_nombre}</span>
           )}
+          {/* Pedido de evento: suele ser grande y de un solo cliente, cocina lo arma junto */}
+          {order.es_evento && (
+            <span className={styles.clientName}>
+              Evento{isMesa && order.cliente_nombre ? ` de ${order.cliente_nombre}` : ''}
+            </span>
+          )}
         </div>
         {horaEntregaLabel ? (
           <div className={`${styles.timer} ${styles.timerProgramado}`} title="Pedido programado">

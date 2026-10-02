@@ -348,6 +348,108 @@
   }
 }
 
+/* ── Precios de insumos ── */
+
+/* 177 insumos: la tabla se desplaza por dentro y no empuja el resto de la página */
+.tablaAlta {
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.tablaAlta .th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Segunda línea bajo el nombre o el precio: de dónde sale, desde cuándo */
+.enlace {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.modo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.modo input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+}
+
+.resultado {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.resultado strong {
+  color: var(--color-text);
+}
+
+/* Lo que cambió después de guardar un precio */
+.cambio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--color-background);
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-md);
+}
+
+.lotes {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lote:last-child {
+  border-bottom: none;
+}
+
+.btn:focus-visible,
+.accionBtn:focus-visible,
+.catalogoToggle:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
+}
+
 /* Insumo que es un producto del menú comprado hecho (bebidas) */
 .tagBebida {
   display: inline-block;

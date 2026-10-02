@@ -40,6 +40,7 @@ export interface Database {
           es_adicion: boolean
           created_at: string
           costo_manual: number | null
+          aporta_domiciliario: boolean
         }
         Insert: {
           id?: number
@@ -101,6 +102,8 @@ export interface Database {
           rehecho_en: number | null
           created_at: string
           closed_at: string | null
+          /** Pedido de evento: alguna línea se vendió a un precio especial */
+          es_evento: boolean
         }
         Insert: {
           id?: number
@@ -161,6 +164,7 @@ export interface Database {
           precio_unitario: number
           notas: string | null
           created_at: string
+          costo_unitario: number | null
         }
         Insert: {
           id?: number

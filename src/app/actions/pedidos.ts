@@ -1,7 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { CartItem, OrderType, OrderDetails, MetodoPago, PedidoWithDetalles } from '@/types';
+import { revalidatePath } from 'next/cache';
+import { CartItem, DatosEvento, LineaEvento, OrderType, OrderDetails, MetodoPago, PedidoWithDetalles } from '@/types';
 import { ESTADOS_PEDIDO, TIPOS_ATENCION, METODOS_PAGO } from '@/lib/constants';
 import { calcularRecargoDatafono } from '@/lib/utils';
 import { nombreDeSesion, sesionConAcceso } from '@/lib/sesionServidor';
@@ -181,6 +182,89 @@ export async function submitOrder(
     .maybeSingle();
 
   return { success: true, pedidoId: pedidoId as number, total: guardado?.total ?? null };
+}
+
+/**
+ * Pedido de evento: un pedido grande a un precio por unidad que fija
+ * administración según el cliente (audio del 1/10/2026). Cada línea viaja con
+ * `precio_especial`; la base exige rol admin/dev para aceptarlo y calcula el
+ * total con ese precio. De ahí en adelante es un pedido como cualquiera:
+ * cocina, cobro y reportes.
+ */
+export async function crearPedidoEvento(datos: DatosEvento, lineas: LineaEvento[]) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false as const, error: 'Solo administración puede crear pedidos de evento.' };
+  }
+
+  if (lineas.length === 0) {
+    return { success: false as const, error: 'Agrega al menos un producto al evento.' };
+  }
+  if (lineas.some((l) => !Number.isInteger(l.cantidad) || l.cantidad <= 0)) {
+    return { success: false as const, error: 'Las cantidades deben ser mayores a cero.' };
+  }
+  if (lineas.some((l) => !Number.isInteger(l.precio) || l.precio <= 0)) {
+    return { success: false as const, error: 'Cada producto necesita un precio mayor a cero, en pesos sin decimales.' };
+  }
+  if (!datos.clienteNombre.trim()) {
+    return { success: false as const, error: 'Escribe para quién es el evento.' };
+  }
+  if (datos.tipo === 'mesa' && !datos.numeroMesa) {
+    return { success: false as const, error: 'Escribe la mesa.' };
+  }
+
+  let horaEntregaISO: string | null = null;
+  if (datos.entrega) {
+    const entrega = new Date(`${datos.entrega}:00-05:00`);
+    if (Number.isNaN(entrega.getTime())) {
+      return { success: false as const, error: 'La fecha de entrega no es válida.' };
+    }
+    horaEntregaISO = entrega.toISOString();
+  }
+
+  const subtotal = lineas.reduce((suma, l) => suma + l.precio * l.cantidad, 0);
+  const metodoPago = datos.tipo === TIPOS_ATENCION.DOMICILIO ? datos.metodoPago ?? null : null;
+  const recargo =
+    datos.tipo === TIPOS_ATENCION.DOMICILIO && metodoPago === METODOS_PAGO.DATAFONO
+      ? calcularRecargoDatafono(subtotal, 0)
+      : 0;
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - Tipos no actualizados con el nuevo RPC
+  const { data: pedidoId, error: rpcError } = await supabase.rpc('create_order_with_details', {
+    p_tipo: datos.tipo,
+    p_numero_mesa: datos.tipo === TIPOS_ATENCION.MESA ? datos.numeroMesa ?? null : null,
+    p_cliente_nombre: datos.clienteNombre.trim(),
+    p_cliente_telefono: datos.clienteTelefono?.trim() || null,
+    p_cliente_direccion: datos.clienteDireccion?.trim() || null,
+    p_estado: ESTADOS_PEDIDO.PENDIENTE,
+    p_metodo_pago: metodoPago,
+    p_subtotal: subtotal,
+    p_recargo: recargo,
+    p_total: subtotal + recargo,
+    p_detalles: lineas.map((l) => ({
+      producto_id: l.productoId,
+      cantidad: l.cantidad,
+      precio_especial: l.precio,
+      notas: l.notas?.trim() || null,
+    })),
+    p_hora_entrega: horaEntregaISO,
+    p_paga_con: null,
+    p_costo_domicilio: 0,
+    p_creado_por: await nombreDeSesion(),
+  });
+
+  if (rpcError || !pedidoId) {
+    console.error('Error creando el pedido de evento:', rpcError);
+    const mensaje = rpcError?.message?.includes('PRECIO_ESPECIAL_INVALIDO')
+      ? 'Uno de los precios no es válido: deben ser pesos enteros mayores a cero.'
+      : mensajeDeErrorPedido(rpcError?.message);
+    return { success: false as const, error: mensaje ?? 'No se pudo crear el pedido del evento.' };
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/reportes');
+  return { success: true as const, pedidoId: pedidoId as number, total: subtotal + recargo };
 }
 
 /**

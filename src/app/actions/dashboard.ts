@@ -1,11 +1,20 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
 import { ESTADOS_PEDIDO, METODOS_PAGO, TIPOS_ATENCION } from '@/lib/constants';
 import { sesionConAcceso } from '@/lib/sesionServidor';
-import { getTimeWindow, normalizarRango } from '@/lib/rangoFechas';
+import { MENSAJE_ROL_NO_AUTORIZADO } from '@/lib/authErrors';
+import { esFechaValida, getTimeWindow, normalizarRango } from '@/lib/rangoFechas';
+import { calcularLiquidacion, totalesEntre } from '@/lib/domiciliario';
+import { rangoDeSemana, semanaDelAnio } from '@/lib/semanas';
 import { leerParametros } from '@/app/actions/parametros';
 import type { LiquidacionDomiciliario } from '@/types';
+
+// `productos.aporta_domiciliario` y `domiciliario_dias` no están en
+// database.types.ts: cliente sin tipar, como en recetas y parámetros.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ClienteSinTipar = { from: (table: string) => any };
 
 /**
  * Venta que le queda al restaurante de un pedido.
@@ -206,20 +215,18 @@ export async function getResumenDelDia(fromStr?: string, toStr?: string) {
 }
 
 /**
- * Pago al domiciliario del período (regla de la dueña, 19-21/9/2026):
- * se le paga la tarifa por cada unidad de COMIDA (las bebidas no cuentan)
- * entregada a domicilio, con un mínimo por día. Si la tarifa por productos
- * no alcanza el mínimo, el negocio paga solo lo calculado y el faltante sale
- * de un fondo aparte "porque el negocio no lo generó". El cobro por
- * "fuera del sector" es aparte y no entra aquí.
+ * Pago al domiciliario del período, como lo lleva el dueño (audio del
+ * 1/10/2026; el cálculo y la regla completa están en src/lib/domiciliario.ts):
+ * cada producto vendido que aporta deja la tarifa —en mesa o a domicilio—, el
+ * domiciliario recibe un fijo por día trabajado y la diferencia la pone la
+ * ganancia. El cobro por "fuera del sector" es aparte y no entra aquí.
  *
- * También puede haber un MÁXIMO por día (parámetro, 0 = sin tope): si la
- * tarifa por productos lo supera, el domiciliario recibe el tope y el
- * negocio paga solo el tope.
+ * Además del período pedido devuelve la semana completa (lunes a domingo) de
+ * la fecha final: él cuadra por semana, porque el sobrante de un sábado bueno
+ * cubre el viernes flojo.
  *
- * Con un rango de varios días, mínimo y máximo se aplican por día, solo en
- * los días que tuvieron algún domicilio. Para un solo día (hoy, ayer) el
- * mínimo se aplica siempre: es un día trabajado aunque no haya salido nada.
+ * Usa el día calendario de Bogotá, no la apertura de caja: el pago es por
+ * noche trabajada.
  */
 export async function getLiquidacionDomiciliario(
   fromStr?: string,
@@ -228,28 +235,35 @@ export async function getLiquidacionDomiciliario(
   if (!(await sesionConAcceso('/dashboard'))) return null;
 
   const supabase = await createClient();
-  const { startOfDay, endOfDay } = await getTimeWindow(supabase, fromStr, toStr);
+  const db = supabase as unknown as ClienteSinTipar;
   const { from, to } = normalizarRango(fromStr, toStr);
-  const esUnSoloDia = from === to;
+
+  const { anio, semana } = semanaDelAnio(to);
+  const rangoSemana = rangoDeSemana(anio, semana);
+  const desde = from < rangoSemana.from ? from : rangoSemana.from;
+  const hasta = to > rangoSemana.to ? to : rangoSemana.to;
 
   const parametros = await leerParametros();
   const tarifa = parametros.domiciliario_tarifa_producto ?? 1500;
-  const minimoDia = parametros.domiciliario_minimo_dia ?? 40000;
-  const maximoDia = parametros.domiciliario_maximo_dia ?? 0;
-  const categoriaBebidas = parametros.categoria_bebidas_id ?? 0;
+  const pagoDia = parametros.domiciliario_pago_dia ?? 40000;
 
-  // Pagados y fiados: ambos se entregaron. Cancelados no.
-  const { data, error } = await supabase
-    .from('detalle_pedidos')
-    .select('cantidad, productos(categoria_id), pedidos!inner(tipo, estado, created_at)')
-    .eq('pedidos.tipo', TIPOS_ATENCION.DOMICILIO)
-    .in('pedidos.estado', [ESTADOS_PEDIDO.PAGADO, ESTADOS_PEDIDO.DEBE])
-    .gte('pedidos.created_at', startOfDay)
-    .lt('pedidos.created_at', endOfDay);
+  // Pagados y fiados: ambos se vendieron. Cancelados no.
+  const [ventasRes, ajustesRes] = await Promise.all([
+    db
+      .from('detalle_pedidos')
+      .select('cantidad, productos(aporta_domiciliario), pedidos!inner(estado, created_at)')
+      .in('pedidos.estado', [ESTADOS_PEDIDO.PAGADO, ESTADOS_PEDIDO.DEBE])
+      .gte('pedidos.created_at', new Date(`${desde}T00:00:00-05:00`).toISOString())
+      .lte('pedidos.created_at', new Date(`${hasta}T23:59:59.999-05:00`).toISOString()),
+    db.from('domiciliario_dias').select('fecha, pago').gte('fecha', desde).lte('fecha', hasta),
+  ]);
 
-  if (error) {
-    console.error('Error calculando el pago al domiciliario:', error);
+  if (ventasRes.error) {
+    console.error('Error calculando el pago al domiciliario:', ventasRes.error);
     return null;
+  }
+  if (ajustesRes.error) {
+    console.error('Error leyendo los pagos ajustados del domiciliario:', ajustesRes.error);
   }
 
   const fechaBogota = new Intl.DateTimeFormat('fr-CA', {
@@ -259,61 +273,71 @@ export async function getLiquidacionDomiciliario(
     day: '2-digit',
   });
 
-  // Unidades de comida por día
-  const unidadesPorDia = new Map<string, number>();
-  for (const linea of data ?? []) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const categoriaId = (linea.productos as any)?.categoria_id as number | null;
-    if (categoriaBebidas && categoriaId === categoriaBebidas) continue;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dia = fechaBogota.format(new Date((linea.pedidos as any).created_at));
-    unidadesPorDia.set(dia, (unidadesPorDia.get(dia) ?? 0) + linea.cantidad);
+  type FilaVenta = {
+    cantidad: number;
+    productos: { aporta_domiciliario: boolean } | null;
+    pedidos: { created_at: string };
+  };
+
+  const lineas = ((ventasRes.data ?? []) as FilaVenta[]).map((linea) => ({
+    dia: fechaBogota.format(new Date(linea.pedidos.created_at)),
+    cantidad: linea.cantidad,
+    aporta: linea.productos?.aporta_domiciliario ?? false,
+  }));
+
+  const ajustes: Record<string, number> = {};
+  for (const fila of (ajustesRes.data ?? []) as { fecha: string; pago: number }[]) {
+    ajustes[fila.fecha] = Number(fila.pago);
   }
 
-  if (esUnSoloDia && !unidadesPorDia.has(from)) unidadesPorDia.set(from, 0);
-
-  let unidades = 0;
-  let porProductos = 0;
-  let delNegocio = 0;
-  let delFondo = 0;
-  let recibe = 0;
-  let diasConMinimo = 0;
-  let diasConMaximo = 0;
-
-  for (const cantidad of unidadesPorDia.values()) {
-    const pagoDia = cantidad * tarifa;
-    unidades += cantidad;
-    porProductos += pagoDia;
-
-    if (pagoDia < minimoDia) {
-      // No alcanzó: el negocio pone lo calculado, el fondo completa
-      delNegocio += pagoDia;
-      delFondo += minimoDia - pagoDia;
-      recibe += minimoDia;
-      diasConMinimo += 1;
-    } else if (maximoDia > 0 && pagoDia > maximoDia) {
-      // Pasó el tope: se paga el tope y nada más
-      delNegocio += maximoDia;
-      recibe += maximoDia;
-      diasConMaximo += 1;
-    } else {
-      delNegocio += pagoDia;
-      recibe += pagoDia;
-    }
-  }
+  const { dias } = calcularLiquidacion(lineas, { tarifa, pagoDia }, ajustes);
 
   return {
-    unidades,
     tarifa,
-    minimoDia,
-    maximoDia,
-    porProductos,
-    delNegocio,
-    delFondo,
-    recibe,
-    diasConMinimo,
-    diasConMaximo,
+    pagoDia,
+    ...totalesEntre(dias, from, to),
+    dias: dias.filter((d) => d.dia >= from && d.dia <= to),
+    semana: {
+      anio,
+      numero: semana,
+      ...rangoSemana,
+      ...totalesEntre(dias, rangoSemana.from, rangoSemana.to),
+    },
   };
+}
+
+/**
+ * Fija lo que se le pagó al domiciliario un día puntual ("ese día no vino",
+ * "le pagué otra cifra"). `pago` null quita el ajuste y el día vuelve al fijo.
+ */
+export async function fijarPagoDomiciliario(fecha: string, pago: number | null) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false as const, error: 'Necesitas una sesión de administración.' };
+  }
+
+  if (!esFechaValida(fecha)) {
+    return { success: false as const, error: 'La fecha no es válida.' };
+  }
+  if (pago !== null && (!Number.isInteger(pago) || pago < 0)) {
+    return { success: false as const, error: 'El pago no puede ser negativo.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - RPC nuevo, sin generar en database.types.ts
+  const { error } = await supabase.rpc('fijar_pago_domiciliario', { p_fecha: fecha, p_pago: pago });
+
+  if (error) {
+    if (error.message?.includes('ROL_NO_AUTORIZADO')) {
+      return { success: false as const, error: MENSAJE_ROL_NO_AUTORIZADO };
+    }
+    console.error('Error fijando el pago del domiciliario:', error);
+    return { success: false as const, error: 'No se pudo guardar el pago de ese día.' };
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/reportes');
+  return { success: true as const };
 }
 
 /**
@@ -429,7 +453,7 @@ export async function getPedidosRecientes(limit: number = 20, fromStr?: string, 
 
   const { data, error } = await supabase
     .from('pedidos')
-    .select('id, tipo, numero_mesa, cliente_nombre, deudor_nombre, estado, metodo_pago, subtotal, recargo, total, created_at, closed_at, pagos_pedido(metodo, monto)')
+    .select('id, tipo, numero_mesa, cliente_nombre, deudor_nombre, estado, metodo_pago, subtotal, recargo, total, created_at, closed_at, es_evento, pagos_pedido(metodo, monto)')
     .gte('created_at', startOfDay)
     .lt('created_at', endOfDay)
     .order('created_at', { ascending: false })

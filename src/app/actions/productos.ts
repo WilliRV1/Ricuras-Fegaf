@@ -220,6 +220,33 @@ export async function fijarCostoManual(productoId: number, costo: number | null)
   return { success: true as const };
 }
 
+/**
+ * Marca si cada unidad vendida del producto deja la tarifa del domiciliario
+ * (la línea "Pago auxiliares" del costeo). Bebidas y adicionales no; las
+ * papas francesas sí.
+ */
+export async function fijarAportaDomiciliario(productoId: number, aporta: boolean) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false as const, error: 'Necesitas una sesión de administración.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - RPC nuevo, sin generar en database.types.ts
+  const { error } = await supabase.rpc('fijar_aporta_domiciliario', {
+    p_producto_id: productoId,
+    p_aporta: aporta,
+  });
+
+  if (error) {
+    return { success: false as const, error: mensajeDeErrorProducto(error.message) };
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/reportes');
+  return { success: true as const };
+}
+
 export async function eliminarProducto(productoId: number) {
   if (!(await sesionConAcceso('/dashboard'))) {
     return { success: false as const, error: 'Necesitas una sesión de administración.' };

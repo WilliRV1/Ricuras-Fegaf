@@ -93,6 +93,17 @@ try {
   await client.query(sql);
   console.log('  ok    es idempotente (se puede correr dos veces)');
 
+  // Esta migración recrea las vistas de costo y create_order_with_details
+  // como eran en septiembre. Las que vinieron después las volvieron a
+  // definir (y el trigger de costo de cada línea depende de ellas): se
+  // reaplican para probar contra lo que de verdad está en producción.
+  for (const posterior of [
+    './supabase/migrations/20261004000000_insumos_enlazados.sql',
+    './supabase/migrations/20261005000000_eventos_precio_especial.sql',
+  ]) {
+    await client.query(fs.readFileSync(posterior, 'utf8'));
+  }
+
   // ── Datos de prueba ──────────────────────────────────────────────────
   // Solo productos activos: un agotado ya no se puede vender.
   const { rows: prods } = await client.query(

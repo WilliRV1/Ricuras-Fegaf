@@ -233,7 +233,8 @@ try {
   );
   const por = (n) => bebidas.find((b) => b.nombre.toLowerCase() === n.toLowerCase());
   check('Coca-Cola 400 ml costeada desde la paca', Math.round(Number(por('Gaseosa Coca-Cola 400 ml')?.costo_total)) === 2542, `(${por('Gaseosa Coca-Cola 400 ml')?.costo_total})`);
-  check('Coca-Cola 1,5 L promedia sus dos compras', Number(por('Gaseosa Coca-Cola 1,5 L')?.costo_total) === 6345, `(${por('Gaseosa Coca-Cola 1,5 L')?.costo_total})`);
+  // Desde 20261004000000 el costo es la última compra, no el promedio (era 6.345).
+  check('Coca-Cola 1,5 L vale su última compra', Number(por('Gaseosa Coca-Cola 1,5 L')?.costo_total) === 6200, `(${por('Gaseosa Coca-Cola 1,5 L')?.costo_total})`);
   check('Postobón 1,5 L a 4.250 (matrimonio)', Number(por('Gaseosa Postobón 1,5 L')?.costo_total) === 4250);
   check('Postobón 400 ml a 2.550', Number(por('Gaseosa Postobón 400 ml')?.costo_total) === 2550);
   check('Jugo Hit queda enlazado y costeado', Number(por('Jugo Hit 500 ml')?.costo_total) === 3000, `(${por('Jugo Hit 500 ml')?.costo_total})`);

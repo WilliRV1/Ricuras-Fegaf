@@ -8,6 +8,8 @@ import { ProductosRentablesTable } from '@/components/dashboard/ProductosRentabl
 import { DateRangeFilter } from '@/components/dashboard/DateRangeFilter';
 import { ToastContainer } from '@/components/ui/Toast';
 import { IconTrendingUp } from '@/components/ui/Icons';
+import { hoyBogota } from '@/lib/rangoFechas';
+import { describirRango, semanaExacta } from '@/lib/semanas';
 import styles from '../page.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +30,9 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
     getComparativoMensual(),
     getProductosMasRentables(fromParam, toParam),
   ]);
+
+  const semanaVista =
+    utilidad && utilidad.from !== utilidad.to ? semanaExacta(utilidad.from, utilidad.to, hoyBogota()) : null;
 
   return (
     <main className={styles.main}>
@@ -51,7 +56,11 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
           <DateRangeFilter from={utilidad.from} to={utilidad.to} basePath="/dashboard/reportes" />
 
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Utilidad Neta Real del Período</h2>
+            <h2 className={styles.sectionTitle}>
+              {semanaVista
+                ? `Utilidad Neta Real de la Semana ${semanaVista.semana}, del ${describirRango(utilidad.from, utilidad.to, 'long')}`
+                : 'Utilidad Neta Real del Período'}
+            </h2>
             <UtilidadCards utilidad={utilidad} />
           </section>
 

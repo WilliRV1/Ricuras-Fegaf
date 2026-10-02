@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { IconCalendar } from '@/components/ui/Icons';
+import { describirRango, lunesDe, rangoDeSemana, semanaDelAnio, semanaExacta, sumarDias } from '@/lib/semanas';
 import styles from './DateRangeFilter.module.css';
 
 interface DateRangeFilterProps {
@@ -22,28 +23,14 @@ function hoyBogota(): string {
   }).format(new Date());
 }
 
-function sumarDias(fecha: string, dias: number): string {
-  const d = new Date(`${fecha}T12:00:00`);
-  d.setDate(d.getDate() + dias);
-  return d.toISOString().split('T')[0];
-}
-
-/** Lunes de la semana que contiene `fecha` */
-function inicioDeSemana(fecha: string): string {
-  const d = new Date(`${fecha}T12:00:00`);
-  const dia = d.getDay(); // 0 = domingo
-  const offset = dia === 0 ? 6 : dia - 1;
-  d.setDate(d.getDate() - offset);
-  return d.toISOString().split('T')[0];
-}
-
 function inicioDeMes(fecha: string): string {
   return `${fecha.slice(0, 7)}-01`;
 }
 
 /**
- * Filtro de fechas del Dashboard: atajos comunes (Hoy, Ayer, Esta semana,
- * Este mes) más un rango personalizado para comparar cualquier tramo.
+ * Filtro de fechas del Dashboard: atajos comunes (Hoy, Ayer, Este mes), las
+ * semanas del año como las numera el dueño en su Excel, y un rango
+ * personalizado para comparar cualquier tramo.
  *
  * Cada botón navega a `/dashboard?from=...&to=...` — la página vuelve a
  * pedir los datos en el servidor, no hay estado que sincronizar aquí.
@@ -60,14 +47,26 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ from, to, base
   const presets = [
     { etiqueta: 'Hoy', f: hoy, t: hoy },
     { etiqueta: 'Ayer', f: sumarDias(hoy, -1), t: sumarDias(hoy, -1) },
-    { etiqueta: 'Esta semana', f: inicioDeSemana(hoy), t: hoy },
     { etiqueta: 'Este mes', f: inicioDeMes(hoy), t: hoy },
   ];
 
-  // Un lunes "Esta semana" es del lunes al lunes, o sea el mismo rango que
-  // "Hoy" (y el día 1 pasa igual con "Este mes"): se marcaban los dos. Se
+  // El día 1 "Este mes" es el mismo rango que "Hoy": se marcaban los dos. Se
   // resalta solo el primero que coincida, que es el más específico.
   const presetActivo = presets.findIndex((p) => from === p.f && to === p.t);
+
+  // La semana del selector es la de la fecha final de lo que se está mirando:
+  // así las flechas avanzan desde donde uno está, no desde hoy.
+  const { anio, semana } = semanaDelAnio(to);
+  const rangoSemana = rangoDeSemana(anio, semana);
+  // Un lunes, "Hoy" y la semana en curso son el mismo rango: gana "Hoy".
+  const semanaActiva = presetActivo === -1 && semanaExacta(from, to, hoy) !== null;
+  const haySiguiente = sumarDias(rangoSemana.from, 7) <= hoy;
+
+  /** Va a la semana que empieza en `lunes`; la semana en curso llega hasta hoy */
+  const irASemana = (lunes: string) => {
+    const domingo = sumarDias(lunes, 6);
+    ir(lunes, domingo > hoy ? hoy : domingo);
+  };
 
   const aplicarRango = () => {
     if (fromInput && toInput && fromInput <= toInput && toInput <= hoy) {
@@ -89,6 +88,37 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ from, to, base
             {p.etiqueta}
           </button>
         ))}
+
+        <div className={`${styles.semana} ${semanaActiva ? styles.semanaActiva : ''}`} role="group" aria-label="Semana del año">
+          <button
+            type="button"
+            className={styles.semanaFlecha}
+            onClick={() => irASemana(sumarDias(rangoSemana.from, -7))}
+            aria-label="Semana anterior"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className={styles.semanaBtn}
+            onClick={() => irASemana(lunesDe(to))}
+            aria-pressed={semanaActiva}
+          >
+            Semana {semana}
+            {anio !== Number(hoy.slice(0, 4)) ? ` de ${anio}` : ''}
+            <span className={styles.semanaFechas}>{describirRango(rangoSemana.from, rangoSemana.to)}</span>
+          </button>
+          <button
+            type="button"
+            className={styles.semanaFlecha}
+            onClick={() => irASemana(sumarDias(rangoSemana.from, 7))}
+            disabled={!haySiguiente}
+            aria-label="Semana siguiente"
+          >
+            ›
+          </button>
+        </div>
+
         <button
           type="button"
           className={`${styles.presetBtn} ${rangoAbierto ? styles.activo : ''}`}

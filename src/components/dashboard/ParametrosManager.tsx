@@ -16,11 +16,9 @@ const formatoCOP = new Intl.NumberFormat('es-CO', { style: 'currency', currency:
 
 /** Cómo se muestra cada parámetro: etiqueta corta y tipo de dato */
 const PRESENTACION: Record<string, { etiqueta: string; tipo: 'pesos' | 'minutos' | 'categoria' }> = {
-  domiciliario_tarifa_producto: { etiqueta: 'Pago al domiciliario por producto', tipo: 'pesos' },
-  domiciliario_minimo_dia: { etiqueta: 'Mínimo del domiciliario por día', tipo: 'pesos' },
-  domiciliario_maximo_dia: { etiqueta: 'Máximo del domiciliario por día (0 = sin tope)', tipo: 'pesos' },
+  domiciliario_tarifa_producto: { etiqueta: 'Lo que deja cada producto para el domiciliario', tipo: 'pesos' },
+  domiciliario_pago_dia: { etiqueta: 'Pago al domiciliario por día', tipo: 'pesos' },
   programados_minutos_antes: { etiqueta: 'Programados: minutos antes en cocina', tipo: 'minutos' },
-  categoria_bebidas_id: { etiqueta: 'Categoría de bebidas (no cuentan al domiciliario)', tipo: 'categoria' },
 };
 
 /**
@@ -36,7 +34,7 @@ export const ParametrosManager: React.FC<ParametrosManagerProps> = ({ parametros
 
   const mostrar = (p: Parametro) => {
     const tipo = PRESENTACION[p.clave]?.tipo ?? 'pesos';
-    if (tipo === 'pesos') return p.valor === 0 && p.clave === 'domiciliario_maximo_dia' ? 'Sin tope' : formatoCOP.format(p.valor);
+    if (tipo === 'pesos') return formatoCOP.format(p.valor);
     if (tipo === 'minutos') return `${p.valor} min`;
     return categorias.find((c) => c.id === p.valor)?.nombre ?? '(sin categoría)';
   };

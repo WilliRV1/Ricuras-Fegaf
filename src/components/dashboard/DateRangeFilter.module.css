@@ -38,6 +38,76 @@
   color: var(--color-primary-light);
 }
 
+/* Semanas del año: flecha, semana, flecha, pegadas como un solo control */
+.semana {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  overflow: hidden;
+}
+
+.semana.semanaActiva {
+  background-color: rgba(255, 107, 53, 0.14);
+  border-color: rgba(255, 107, 53, 0.4);
+}
+
+.semanaBtn,
+.semanaFlecha {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.semanaBtn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 6px;
+  white-space: nowrap;
+}
+
+.semanaFechas {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.semanaFlecha {
+  min-width: 34px;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.semanaBtn:hover,
+.semanaFlecha:hover:not(:disabled) {
+  color: var(--color-text);
+  background-color: var(--color-surface-hover);
+}
+
+.semanaActiva .semanaBtn {
+  color: var(--color-primary-light);
+}
+
+.semanaFlecha:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.presetBtn:focus-visible,
+.semanaBtn:focus-visible,
+.semanaFlecha:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: -2px;
+}
+
 .rangoCaja {
   display: flex;
   align-items: center;

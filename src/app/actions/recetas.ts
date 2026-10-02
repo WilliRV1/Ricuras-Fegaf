@@ -35,6 +35,13 @@ function mensajeDeError(mensaje: string | undefined): string {
   if (mensaje.includes('RENDIMIENTO_INVALIDO')) return 'El rendimiento debe ser mayor a cero.';
   if (mensaje.includes('PRODUCTO_NO_ENCONTRADO')) return 'Ese producto ya no existe.';
   if (mensaje.includes('ITEMS_REQUERIDOS')) return 'Agrega al menos un insumo a la receta.';
+  if (mensaje.includes('COMPRA_NO_ENCONTRADA')) return 'Esa compra ya no existe.';
+  if (mensaje.includes('ENLACE_EN_CADENA')) {
+    return 'No se puede: el insumo del que quieres tomar el precio ya toma el suyo de otro lado, o este insumo ya le da el precio a otro.';
+  }
+  if (mensaje.includes('ENLACE_CIRCULAR')) return 'No se puede: el enlace daría la vuelta sobre sí mismo.';
+  if (mensaje.includes('FACTOR_INVALIDO')) return 'La cantidad por la que se multiplica debe ser mayor a cero.';
+  if (mensaje.includes('UN_SOLO_ENLACE')) return 'Un insumo toma el precio de un solo lugar.';
   return 'No se pudo completar la operación.';
 }
 
@@ -51,15 +58,16 @@ export async function listarInsumos() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as unknown as { from: (table: string) => any };
 
-  const [insumosRes, costosRes, enlazadosRes] = await Promise.all([
+  const [insumosRes, costosRes, enlazadosRes, usosRes] = await Promise.all([
     db
       .from('insumos')
-      .select('id, nombre, unidad_base, activo, created_at')
+      .select('id, nombre, unidad_base, activo, created_at, enlace_insumo_id, enlace_producto_id, enlace_factor, promedia')
       .eq('activo', true)
       .order('nombre', { ascending: true }),
-    db.from('vw_insumo_costo_actual').select('insumo_id, costo_unitario'),
+    db.from('vw_insumo_costo_actual').select('insumo_id, costo_unitario, origen, fecha_ultima_compra'),
     // Insumos que son "el producto mismo" (bebidas que se compran hechas)
     db.from('productos').select('insumo_id').not('insumo_id', 'is', null),
+    db.from('receta_items').select('insumo_id'),
   ]);
 
   if (insumosRes.error) {
@@ -67,26 +75,44 @@ export async function listarInsumos() {
     return { success: false as const, error: 'No se pudieron cargar los insumos.' };
   }
 
-  const costoPorInsumo = new Map<number, number>(
-    (costosRes.data ?? []).map((c: { insumo_id: number; costo_unitario: number }) => [
-      c.insumo_id,
-      c.costo_unitario,
-    ])
+  type FilaCosto = {
+    insumo_id: number;
+    costo_unitario: number | null;
+    origen: InsumoConCosto['origen'];
+    fecha_ultima_compra: string | null;
+  };
+  const costoPorInsumo = new Map<number, FilaCosto>(
+    ((costosRes.data ?? []) as FilaCosto[]).map((c) => [c.insumo_id, c])
   );
 
   const seCompranHechos = new Set<number>(
     (enlazadosRes.data ?? []).map((p: { insumo_id: number }) => p.insumo_id)
   );
 
-  const insumos: InsumoConCosto[] = (insumosRes.data ?? []).map((fila: Record<string, unknown>) => ({
-    id: fila.id as number,
-    nombre: fila.nombre as string,
-    unidad_base: fila.unidad_base as string,
-    activo: fila.activo as boolean,
-    created_at: fila.created_at as string,
-    costo_unitario: costoPorInsumo.get(fila.id as number) ?? null,
-    se_compra_hecho: seCompranHechos.has(fila.id as number),
-  }));
+  const usos = new Map<number, number>();
+  for (const fila of (usosRes.data ?? []) as { insumo_id: number }[]) {
+    usos.set(fila.insumo_id, (usos.get(fila.insumo_id) ?? 0) + 1);
+  }
+
+  const insumos: InsumoConCosto[] = (insumosRes.data ?? []).map((fila: Record<string, unknown>) => {
+    const costo = costoPorInsumo.get(fila.id as number);
+    return {
+      id: fila.id as number,
+      nombre: fila.nombre as string,
+      unidad_base: fila.unidad_base as string,
+      activo: fila.activo as boolean,
+      created_at: fila.created_at as string,
+      costo_unitario: costo?.costo_unitario != null ? Number(costo.costo_unitario) : null,
+      se_compra_hecho: seCompranHechos.has(fila.id as number),
+      origen: costo?.origen ?? 'compra',
+      fecha_ultima_compra: costo?.fecha_ultima_compra ?? null,
+      enlace_insumo_id: (fila.enlace_insumo_id as number | null) ?? null,
+      enlace_producto_id: (fila.enlace_producto_id as number | null) ?? null,
+      enlace_factor: Number(fila.enlace_factor ?? 1),
+      promedia: Boolean(fila.promedia),
+      usos: usos.get(fila.id as number) ?? 0,
+    };
+  });
 
   return { success: true as const, insumos };
 }
@@ -106,7 +132,7 @@ export async function listarLotesDeInsumo(insumoId: number) {
     .eq('insumo_id', insumoId)
     .order('fecha', { ascending: false })
     .order('id', { ascending: false })
-    .limit(5);
+    .limit(12);
 
   if (error) {
     console.error('Error listando lotes de compra:', error);
@@ -155,6 +181,81 @@ export async function registrarCompraInsumo(
     p_precio_compra: precioCompra,
     p_rendimiento: rendimiento,
     p_fecha: fecha ?? null,
+  });
+
+  if (error) {
+    return { success: false as const, error: mensajeDeError(error.message) };
+  }
+
+  revalidatePath('/dashboard/recetas');
+  return { success: true as const };
+}
+
+/** Borra una compra mal escrita: el costo vuelve a salir de la compra anterior. */
+export async function eliminarCompraInsumo(compraId: number) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false as const, error: 'Necesitas una sesión de administración.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - RPC nuevo, sin generar en database.types.ts
+  const { error } = await supabase.rpc('eliminar_compra_insumo', { p_compra_id: compraId });
+
+  if (error) {
+    return { success: false as const, error: mensajeDeError(error.message) };
+  }
+
+  revalidatePath('/dashboard/recetas');
+  revalidatePath('/dashboard/reportes');
+  return { success: true as const };
+}
+
+/**
+ * Hace que un insumo tome su precio de otro insumo o del costo de un producto
+ * del menú, como las fórmulas del Excel. Los dos en null quita el enlace.
+ */
+export async function enlazarInsumo(
+  insumoId: number,
+  enlace: { insumoId: number | null; productoId: number | null; factor: number }
+) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false as const, error: 'Necesitas una sesión de administración.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - RPC nuevo, sin generar en database.types.ts
+  const { error } = await supabase.rpc('enlazar_insumo', {
+    p_insumo_id: insumoId,
+    p_enlace_insumo_id: enlace.insumoId,
+    p_enlace_producto_id: enlace.productoId,
+    p_factor: enlace.factor,
+  });
+
+  if (error) {
+    return { success: false as const, error: mensajeDeError(error.message) };
+  }
+
+  revalidatePath('/dashboard/recetas');
+  revalidatePath('/dashboard/reportes');
+  return { success: true as const };
+}
+
+/** Corrige nombre o unidad de un insumo y decide si su costo se promedia. */
+export async function actualizarInsumo(insumoId: number, nombre: string, unidadBase: string, promedia: boolean) {
+  if (!(await sesionConAcceso('/dashboard'))) {
+    return { success: false as const, error: 'Necesitas una sesión de administración.' };
+  }
+
+  const supabase = await createClient();
+
+  // @ts-expect-error - RPC nuevo, sin generar en database.types.ts
+  const { error } = await supabase.rpc('actualizar_insumo', {
+    p_insumo_id: insumoId,
+    p_nombre: nombre,
+    p_unidad_base: unidadBase,
+    p_promedia: promedia,
   });
 
   if (error) {

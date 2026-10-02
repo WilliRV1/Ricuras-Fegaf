@@ -9,19 +9,21 @@ import type { ComparativoMensual, ProductoRentable, ReporteUtilidad, ReporteUtil
 /**
  * Fase 2 / Módulo 8 — Inteligencia Financiera y Reportes.
  *
- * Utilidad neta real = ventas − costo de productos vendidos − TODO lo que
- * recibe el domiciliario, incluido lo que se completa para llegar al mínimo
- * del día. Así lo lleva la dueña en su Excel (fila AYUDANTE restada de la
- * utilidad): aunque esa plata salga de un fondo aparte, es un costo real del
- * día y la utilidad sin restarla salía inflada (pedido del 1/10/2026).
+ * Utilidad neta real = ventas − costo de productos vendidos − lo que el dueño
+ * tuvo que poner para completarle el pago al domiciliario. Así lo lleva en su
+ * Excel (audio del 1/10/2026):
  *   - VENTAS: se reutiliza `ventaRealDelDia` de `getResumenDelDia`
  *     (dashboard.ts) en vez de recalcular la venta — es la misma cifra con
  *     la que ella cuadra caja, no puede haber dos versiones de "cuánto se
  *     vendió" en la app.
  *   - COSTOS: costo de cada producto vendido según `vw_producto_costos`
  *     (Módulo 6): el costo manual si lo tiene, si no el de su receta. Ese
- *     costo NO incluye el pago al domiciliario por producto, que se resta
- *     aparte aquí.
+ *     costo YA incluye la línea "Pago auxiliares" ($1.500 por producto): es
+ *     la plata que cada venta deja para el domiciliario.
+ *   - DOMICILIARIO: como el costo ya trae lo recaudado, aquí solo se resta
+ *     la diferencia (pago − recaudo). Antes se restaba el pago completo y el
+ *     recaudo quedaba descontado dos veces. Si en el período sobró, esa
+ *     diferencia es negativa y vuelve a la utilidad.
  *
  * El Módulo 7 (gastos operativos) se quitó: mezclaba gastos del negocio con
  * gastos personales de la dueña en el Excel original, y no correspondía
@@ -51,7 +53,7 @@ async function costoProductosVendidosEnRango(
   const [detalleRes, costosRes] = await Promise.all([
     supabase
       .from('detalle_pedidos')
-      .select('producto_id, cantidad, pedidos!inner(estado, created_at)')
+      .select('producto_id, cantidad, costo_unitario, pedidos!inner(estado, created_at)')
       .in('pedidos.estado', ['pagado', 'debe'])
       .gte('pedidos.created_at', startOfDay)
       .lt('pedidos.created_at', endOfDay),
@@ -70,13 +72,16 @@ async function costoProductosVendidosEnRango(
     ])
   );
 
+  // Manda el costo que tenía el producto cuando se vendió (la foto de la
+  // línea): así subir el queso hoy no cambia la utilidad del mes pasado. Si
+  // la línea no tiene foto (el producto no tenía costo ese día), el de hoy.
   return (detalleRes.data ?? []).reduce((acc, linea) => {
-    const costoUnitario = costoPorProducto.get(linea.producto_id) ?? 0;
-    return acc + linea.cantidad * costoUnitario;
+    const costoUnitario = linea.costo_unitario ?? costoPorProducto.get(linea.producto_id) ?? 0;
+    return acc + linea.cantidad * Number(costoUnitario);
   }, 0);
 }
 
-/** Utilidad neta real del período: ventas reales − costo de productos vendidos. */
+/** Utilidad neta real del período: ventas reales − costo de productos vendidos − aporte al domiciliario. */
 export async function getUtilidadNetaReal(fromStr?: string, toStr?: string): Promise<ReporteUtilidad | null> {
   if (!(await sesionConAcceso('/dashboard'))) return null;
 
@@ -93,15 +98,17 @@ export async function getUtilidadNetaReal(fromStr?: string, toStr?: string): Pro
     getLiquidacionDomiciliario(fromStr, toStr),
   ]);
   const ventas = resumen.ventaRealDelDia;
-  const pagoDomiciliario = domiciliario?.recibe ?? 0;
+  const aporteDomiciliario = domiciliario?.aporte ?? 0;
 
   return {
     from,
     to,
     ventas,
     costoProductos,
-    pagoDomiciliario,
-    utilidadNeta: ventas - costoProductos - pagoDomiciliario,
+    recaudoDomiciliario: domiciliario?.recaudo ?? 0,
+    pagoDomiciliario: domiciliario?.pago ?? 0,
+    aporteDomiciliario,
+    utilidadNeta: ventas - costoProductos - aporteDomiciliario,
   };
 }
 
@@ -169,7 +176,7 @@ export async function getProductosMasRentables(fromStr?: string, toStr?: string)
   const [detalleRes, costosRes] = await Promise.all([
     supabase
       .from('detalle_pedidos')
-      .select('producto_id, cantidad, precio_unitario, productos(nombre), pedidos!inner(estado, created_at)')
+      .select('producto_id, cantidad, precio_unitario, costo_unitario, productos(nombre), pedidos!inner(estado, created_at)')
       .in('pedidos.estado', ['pagado', 'debe'])
       .gte('pedidos.created_at', startOfDay)
       .lt('pedidos.created_at', endOfDay),
@@ -193,7 +200,7 @@ export async function getProductosMasRentables(fromStr?: string, toStr?: string)
   for (const linea of detalleRes.data ?? []) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nombre = (linea.productos as any)?.nombre ?? 'Producto eliminado';
-    const costoUnitario = costoPorProducto.get(linea.producto_id) ?? 0;
+    const costoUnitario = Number(linea.costo_unitario ?? costoPorProducto.get(linea.producto_id) ?? 0);
     const ingresos = linea.precio_unitario * linea.cantidad;
     const costoTotal = costoUnitario * linea.cantidad;
 

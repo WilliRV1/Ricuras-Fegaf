@@ -2,6 +2,7 @@ import React from 'react';
 import styles from './ResumenCards.module.css';
 import { formatCurrency } from '@/lib/utils';
 import type { LiquidacionDomiciliario } from '@/types';
+import { AjustePagoDomiciliario } from './AjustePagoDomiciliario';
 import {
   IconBanknote,
   IconTrendingUp,
@@ -48,10 +49,12 @@ interface ResumenCardsProps {
     mesa: number;
     domicilio: number;
   };
-  /** Pago al domiciliario del período (tarifa × comida a domicilio, mínimo diario) */
+  /** Domiciliario del período: lo que dejaron los productos, lo que se le pagó y la diferencia */
   domiciliario?: LiquidacionDomiciliario | null;
   /** Qué se está mirando: cambia "hoy" por "ese día" o "el período" en los textos */
   periodo?: Periodo;
+  /** Si se mira un solo día, cuál ('YYYY-MM-DD'): habilita cambiar el pago de ese día */
+  dia?: string;
 }
 
 export type Periodo = 'hoy' | 'dia' | 'rango';
@@ -108,8 +111,15 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
   porTipo,
   domiciliario = null,
   periodo = 'hoy',
+  dia,
 }) => {
   const t = TEXTOS[periodo];
+  // Si lo que se mira ya es esa semana, la línea de la semana repetiría la cifra grande.
+  const semanaEsElPeriodo =
+    !!domiciliario &&
+    domiciliario.semana.aporte === domiciliario.aporte &&
+    domiciliario.semana.pago === domiciliario.pago &&
+    domiciliario.semana.recaudo === domiciliario.recaudo;
   return (
     <div className={styles.grid}>
       {/* ============================================================
@@ -204,37 +214,45 @@ export const ResumenCards: React.FC<ResumenCardsProps> = ({
       </div>
 
       {/*
-        Pago al domiciliario: tarifa por cada comida entregada a domicilio
-        (las bebidas no cuentan), con mínimo diario. Lo que falte para el
-        mínimo sale de un fondo aparte, pero igual se resta de la utilidad
-        (Reportes): es plata que se le paga al muchacho ese día.
+        Domiciliario, como lo lleva el dueño: cada producto vendido (mesa o
+        domicilio; sin bebidas ni adicionales, salvo las papas) deja la
+        tarifa, a él se le paga un fijo por día y la cifra grande es lo que
+        hay que poner de la ganancia para completarlo, o lo que sobró.
       */}
       {domiciliario && (
         <div className={`${styles.card} ${styles.accentOrange} ${styles.cardDestacada}`}>
           <div className={styles.cardIcon} style={{ color: '#FB923C' }}><IconScooter size={22} /></div>
-          <p className={styles.cardLabel}>Pago al Domiciliario</p>
-          <p className={styles.cardValue}>{formatCurrency(domiciliario.recibe)}</p>
-          <p className={styles.cardSub}>
-            {domiciliario.unidades} producto{domiciliario.unidades !== 1 ? 's' : ''} a domicilio (sin bebidas) ×{' '}
-            {formatCurrency(domiciliario.tarifa)} = {formatCurrency(domiciliario.porProductos)}
-            {domiciliario.delFondo > 0 && (
-              <>
-                {' '}· mínimo {formatCurrency(domiciliario.minimoDia)}
-                {domiciliario.diasConMinimo > 1 ? ` × ${domiciliario.diasConMinimo} días` : ''}
-              </>
-            )}
-            {domiciliario.diasConMaximo > 0 && (
-              <>
-                {' '}· tope {formatCurrency(domiciliario.maximoDia)}
-                {domiciliario.diasConMaximo > 1 ? ` × ${domiciliario.diasConMaximo} días` : ''}
-              </>
-            )}
+          <p className={styles.cardLabel}>
+            {domiciliario.aporte < 0 ? 'Sobra del Domiciliario' : 'Pone para el Domiciliario'}
           </p>
+          <p className={styles.cardValue}>{formatCurrency(Math.abs(domiciliario.aporte))}</p>
           <p className={styles.cardSub}>
-            <strong>Por productos: {formatCurrency(domiciliario.delNegocio)}</strong>
-            {domiciliario.delFondo > 0 && <> · completa el mínimo: {formatCurrency(domiciliario.delFondo)}</>}
-            {totalDomicilios > 0 && <> · + {formatCurrency(totalDomicilios)} fuera del sector</>}
+            {domiciliario.unidades} producto{domiciliario.unidades !== 1 ? 's' : ''} ×{' '}
+            {formatCurrency(domiciliario.tarifa)} = {formatCurrency(domiciliario.recaudo)} · se le paga
+            {domiciliario.diasPagados !== 1 ? 'n' : ''} {formatCurrency(domiciliario.pago)}
+            {domiciliario.diasPagados > 1 ? ` (${domiciliario.diasPagados} días)` : ''}
           </p>
+          {!semanaEsElPeriodo && (
+            <p className={styles.cardSub}>
+              <strong>
+                Semana {domiciliario.semana.numero}:{' '}
+                {domiciliario.semana.aporte < 0 ? 'sobran' : 'pone'}{' '}
+                {formatCurrency(Math.abs(domiciliario.semana.aporte))}
+              </strong>{' '}
+              · dejó {formatCurrency(domiciliario.semana.recaudo)}, pagó {formatCurrency(domiciliario.semana.pago)}
+            </p>
+          )}
+          {totalDomicilios > 0 && (
+            <p className={styles.cardSub}>Aparte: {formatCurrency(totalDomicilios)} de fuera del sector</p>
+          )}
+          {dia && (
+            <AjustePagoDomiciliario
+              dia={dia}
+              pagoActual={domiciliario.pago}
+              pagoFijo={domiciliario.pagoDia}
+              ajustado={domiciliario.dias.some((d) => d.dia === dia && d.ajustado)}
+            />
+          )}
         </div>
       )}
 

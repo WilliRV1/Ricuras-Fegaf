@@ -18,6 +18,8 @@ interface PedidoHistorial {
   tipo: string;
   numero_mesa: number | null;
   cliente_nombre: string | null;
+  /** Pedido de evento: se vendió a un precio especial */
+  es_evento?: boolean;
   /** Quién quedó debiendo, cuando el pedido está en estado 'debe' */
   deudor_nombre?: string | null;
   estado: string;
@@ -202,6 +204,11 @@ export const PedidosTable: React.FC<PedidosTableProps> = ({ pedidos, mostrarFech
                 {getNombre(pedido) && (
                   <div style={{ fontSize: '0.75rem', marginTop: '4px', color: 'var(--color-text-muted)' }}>
                     {getNombre(pedido)}
+                  </div>
+                )}
+                {pedido.es_evento && (
+                  <div style={{ fontSize: '0.75rem', marginTop: '4px', fontWeight: 700, color: 'var(--color-primary-light)' }}>
+                    Evento, precio especial
                   </div>
                 )}
               </td>
